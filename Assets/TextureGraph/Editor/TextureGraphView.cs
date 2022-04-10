@@ -12,8 +12,6 @@ public class TextureGraphView : GraphView
 
     public EditorWindow EditorWindow => mEditorWindow;
 
-
-
     public TextureGraphView(EditorWindow owner)
     {
         mEditorWindow = owner;
@@ -29,11 +27,10 @@ public class TextureGraphView : GraphView
     /// <summary>
     /// Adds new node
     /// </summary>
-    public TextureGraphNode CreateTextureNode(Vector2 position)
+    public ColorNode CreateColorNode(Vector2 worldPosition)
     {
-        var localPosition = GetLocalMousePosition(position);
-        var node = new TextureGraphNode();
-        node.Init(localPosition, this);
+        var localPosition = GetLocalMousePosition(worldPosition);
+        var node = new ColorNode(localPosition, this);
         node.Draw();
         AddElement(node);
         return node;
@@ -80,7 +77,7 @@ public class TextureGraphView : GraphView
         this.AddManipulator(new RectangleSelector());
 
         //Context menu to create new nodes
-        this.AddManipulator(new ContextualMenuManipulator(c => c.menu.AppendAction("Add node", act => AddElement(CreateTextureNode(act.eventInfo.mousePosition)))));
+        this.AddManipulator(new ContextualMenuManipulator(c => c.menu.AppendAction("Add node", act => AddElement(CreateColorNode(act.eventInfo.mousePosition)))));
         this.AddManipulator(new ContextualMenuManipulator(c => c.menu.AppendAction("Add group", act => AddElement(CreateGroupNode("Group", act.eventInfo.mousePosition)))));
     }
 
@@ -115,8 +112,6 @@ public class TextureGraphView : GraphView
         }
         nodeCreationRequest = context => SearchWindow.Open(new SearchWindowContext(context.screenMousePosition), m_SearchWindow);
     }
-
-
 
     /// <summary>
     /// This method overrides callback for node deletion

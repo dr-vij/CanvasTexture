@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
+public enum NodeTypes
+{
+    GroupNode,
+    TextureNode,
+}
+
+
 public class TextureGraphSearchWindow : ScriptableObject, ISearchWindowProvider
 {
     private TextureGraphView m_Graph;
@@ -25,20 +32,27 @@ public class TextureGraphSearchWindow : ScriptableObject, ISearchWindowProvider
             new SearchTreeEntry(new GUIContent("Color node",m_indentationIcon))
             {
                 level = 2,
-                userData = "",
-            }
+                userData = NodeTypes.TextureNode,
+            },
+            new SearchTreeEntry(new GUIContent("Group node", m_indentationIcon))
+            {
+                level = 1,
+                userData = NodeTypes.GroupNode,
+            },
         };
-
     }
 
     public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context)
     {
         var offset = -m_Graph.EditorWindow.position.position;
-
+        var position = context.screenMousePosition + offset;
         switch (SearchTreeEntry.userData)
         {
-            case string str:
-                m_Graph.CreateTextureNode(context.screenMousePosition + offset);
+            case NodeTypes.TextureNode:
+                m_Graph.CreateColorNode(position);
+                return true;
+            case NodeTypes.GroupNode:
+                m_Graph.CreateGroupNode("Group", position);
                 return true;
             default:
                 return false;
