@@ -33,10 +33,12 @@ public class TextureGraphSearchWindow : ScriptableObject, ISearchWindowProvider
 
     public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context)
     {
+        var offset = -m_Graph.EditorWindow.position.position;
+
         switch (SearchTreeEntry.userData)
         {
             case string str:
-                m_Graph.CreateTextureNode(context.screenMousePosition);
+                m_Graph.CreateTextureNode(context.screenMousePosition + offset);
                 return true;
             default:
                 return false;

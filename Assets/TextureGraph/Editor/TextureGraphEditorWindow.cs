@@ -25,7 +25,7 @@ public class TextureEditorWindow : EditorWindow
 
     private void AddGraph()
     {
-        var graph = new TextureGraphView();
+        var graph = new TextureGraphView(this);
         graph.StretchToParentSize();
         rootVisualElement.Add(graph);
     }
