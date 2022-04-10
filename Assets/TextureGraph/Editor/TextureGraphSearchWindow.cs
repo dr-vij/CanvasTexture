@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -5,10 +6,13 @@ using UnityEngine;
 
 public enum NodeTypes
 {
-    GroupNode,
-    TextureNode,
+    ColorNode,
+    ImageNode,
 }
 
+public class GroupType
+{
+}
 
 public class TextureGraphSearchWindow : ScriptableObject, ISearchWindowProvider
 {
@@ -29,16 +33,10 @@ public class TextureGraphSearchWindow : ScriptableObject, ISearchWindowProvider
         {
             new SearchTreeGroupEntry(new GUIContent("Create element", m_indentationIcon)),
             new SearchTreeGroupEntry(new GUIContent("Main Nodes",m_indentationIcon), 1),
-            new SearchTreeEntry(new GUIContent("Color node",m_indentationIcon))
-            {
-                level = 2,
-                userData = NodeTypes.TextureNode,
-            },
-            new SearchTreeEntry(new GUIContent("Group node", m_indentationIcon))
-            {
-                level = 1,
-                userData = NodeTypes.GroupNode,
-            },
+            CreateSearchEntry("Color Node", NodeTypes.ColorNode),
+            CreateSearchEntry("Image Node", NodeTypes.ImageNode),
+
+            CreateSearchEntry("Group", typeof(GroupType), 1),
         };
     }
 
@@ -48,14 +46,40 @@ public class TextureGraphSearchWindow : ScriptableObject, ISearchWindowProvider
         var position = context.screenMousePosition + offset;
         switch (SearchTreeEntry.userData)
         {
-            case NodeTypes.TextureNode:
-                m_Graph.CreateColorNode(position);
+            case NodeTypes.ImageNode:
+                m_Graph.CreateNode(NodeTypes.ImageNode, position);
                 return true;
-            case NodeTypes.GroupNode:
-                m_Graph.CreateGroupNode("Group", position);
+            case NodeTypes.ColorNode:
+                m_Graph.CreateNode(NodeTypes.ColorNode, position);
                 return true;
+            case Type type:
+                {
+                    if (type == typeof(GroupType))
+                        m_Graph.CreateGroupNode("Group", position);
+                    else
+                        Debug.LogError("Unknow node type");
+                    return true;
+                }
             default:
                 return false;
         }
+    }
+
+    private SearchTreeEntry CreateSearchEntry(string label, NodeTypes type, int level = 2)
+    {
+        return new SearchTreeEntry(new GUIContent(label, m_indentationIcon))
+        {
+            level = level,
+            userData = type,
+        };
+    }
+
+    private SearchTreeEntry CreateSearchEntry(string label, Type type, int level = 1)
+    {
+        return new SearchTreeEntry(new GUIContent(label, m_indentationIcon))
+        {
+            level = level,
+            userData = type,
+        };
     }
 }

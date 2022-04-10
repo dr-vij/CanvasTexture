@@ -26,7 +26,17 @@ public abstract class TextureGraphNode : Node
     //    base.BuildContextualMenu(evt);
     //}
 
-    public virtual void Draw()
+    public void Draw()
+    {
+        //override this methods to draw node correctly
+        InitTitleContainer();
+        InitPorts();
+        InitExtensionContainer();
+
+        RefreshExpandedState();
+    }
+
+    protected virtual void InitTitleContainer()
     {
         var textField = new TextField()
         {
@@ -34,10 +44,11 @@ public abstract class TextureGraphNode : Node
         };
 
         titleContainer.Insert(0, textField);
-        var inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(bool));
-
-        inputContainer.Add(inputPort);
     }
+
+    protected virtual void InitPorts() { }
+
+    protected virtual void InitExtensionContainer() {  }
 
     public void DisconnectAllPorts()
     {

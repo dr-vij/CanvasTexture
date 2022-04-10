@@ -24,13 +24,20 @@ public class TextureGraphView : GraphView
     }
 
     #region Node creation
-    /// <summary>
-    /// Adds new node
-    /// </summary>
-    public ColorNode CreateColorNode(Vector2 worldPosition)
+
+    public Node CreateNode(NodeTypes nodeType, Vector2 worldPosition)
     {
         var localPosition = GetLocalMousePosition(worldPosition);
-        var node = new ColorNode(localPosition, this);
+        TextureGraphNode node = null ;
+        switch (nodeType)
+        {
+            case NodeTypes.ColorNode:
+                node = new ColorNode(localPosition, this);
+                break;
+            case NodeTypes.ImageNode:
+                node = new ImageNode(localPosition, this);
+                break;
+        }
         node.Draw();
         AddElement(node);
         return node;
@@ -39,15 +46,11 @@ public class TextureGraphView : GraphView
     public TextureGraphGroup CreateGroupNode(string groupTitle, Vector2 position)
     {
         var group = new TextureGraphGroup(groupTitle, position);
-        AddElement(group);
-
         foreach (var selected in selection)
-        {
             if (selected is Node node)
-            {
                 group.AddElement(node);
-            }
-        }
+
+        AddElement(group);
         return group;
     }
 
@@ -77,7 +80,7 @@ public class TextureGraphView : GraphView
         this.AddManipulator(new RectangleSelector());
 
         //Context menu to create new nodes
-        this.AddManipulator(new ContextualMenuManipulator(c => c.menu.AppendAction("Add node", act => AddElement(CreateColorNode(act.eventInfo.mousePosition)))));
+        //this.AddManipulator(new ContextualMenuManipulator(c => c.menu.AppendAction("Add node", act => AddElement(CreateColorNode(act.eventInfo.mousePosition)))));
         this.AddManipulator(new ContextualMenuManipulator(c => c.menu.AppendAction("Add group", act => AddElement(CreateGroupNode("Group", act.eventInfo.mousePosition)))));
     }
 
