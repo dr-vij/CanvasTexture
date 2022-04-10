@@ -28,7 +28,7 @@ public class TextureGraphView : GraphView
     public Node CreateNode(NodeTypes nodeType, Vector2 worldPosition)
     {
         var localPosition = GetLocalMousePosition(worldPosition);
-        TextureGraphNode node = null ;
+        TextureGraphNode node = null;
         switch (nodeType)
         {
             case NodeTypes.ColorNode:
@@ -61,7 +61,11 @@ public class TextureGraphView : GraphView
         var compatablePorts = new List<Port>();
         ports.ForEach(port =>
         {
-            if (startPort.node != port.node && startPort.direction != port.direction)
+            var isSameNodes = startPort.node == port.node;
+            var isSameDirections = startPort.direction == port.direction;
+            var isSameTypes = startPort.portType == port.portType;
+
+            if (!isSameNodes && !isSameDirections && isSameTypes)
             {
                 compatablePorts.Add(port);
             }

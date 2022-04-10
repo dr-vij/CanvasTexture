@@ -66,4 +66,20 @@ public abstract class TextureGraphNode : Node
             if (port.connected)
                 m_GraphView.DeleteElements(port.connections);
     }
+
+    protected void AddInputPorts(params Port[] ports)
+    {
+        foreach(var port in ports)
+        {
+            inputContainer.Add(port);
+        }
+    }
+
+    protected void AddOutputPorts(params Port[] ports)
+    {
+        foreach (var port in ports)
+        {
+            outputContainer.Add(port);
+        }
+    }
 }
