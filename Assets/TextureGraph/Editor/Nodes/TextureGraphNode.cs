@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -5,26 +6,50 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+[Serializable]
+public class NodeSaveData
+{
+    public Vector2 Position;
+    public NodeTypes NodeType;
+}
+
+[Serializable]
+public class NodeDataContainer
+{
+    public ulong ID;
+    public NodeSaveData NodeSaveData;
+}
+
 public abstract class TextureGraphNode : Node
 {
     private GraphView m_GraphView;
+    private Vector2 mPosition;
+
+    public ulong ID { get; set; }
 
     public string NodeName { get; set; }
 
-    public TextureGraphNode(Vector2 position, GraphView graphView)
+    public Vector2 Position
+    {
+        get => mPosition;
+        set
+        {
+            mPosition = value;
+            SetPosition(new Rect(value, Vector2.zero));
+        }
+    }
+
+    public TextureGraphNode(GraphView graphView)
     {
         m_GraphView = graphView;
         NodeName = "Texture Node";
-        SetPosition(new Rect(position, Vector2.zero));
     }
 
-    //public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-    //{
-    //    evt.menu.AppendAction("Disconnect inputs", actionEvent => DisconnectInputPorts());
-    //    evt.menu.AppendAction("Disconnect outputs", actionEvent => DisconnectOutputPorts());
+    public abstract string Save();
 
-    //    base.BuildContextualMenu(evt);
-    //}
+    public abstract void Load(string data);
+
+    public abstract NodeTypes NodeType { get; }
 
     public void Draw()
     {
@@ -48,7 +73,7 @@ public abstract class TextureGraphNode : Node
 
     protected virtual void InitPorts() { }
 
-    protected virtual void InitExtensionContainer() {  }
+    protected virtual void InitExtensionContainer() { }
 
     public void DisconnectAllPorts()
     {
@@ -56,7 +81,7 @@ public abstract class TextureGraphNode : Node
         DisconnectOutputPorts();
     }
 
-    public void DisconnectInputPorts()=> DisconnectPorts(inputContainer);
+    public void DisconnectInputPorts() => DisconnectPorts(inputContainer);
 
     public void DisconnectOutputPorts() => DisconnectPorts(outputContainer);
 
@@ -69,7 +94,7 @@ public abstract class TextureGraphNode : Node
 
     protected void AddInputPorts(params Port[] ports)
     {
-        foreach(var port in ports)
+        foreach (var port in ports)
         {
             inputContainer.Add(port);
         }

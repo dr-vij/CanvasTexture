@@ -5,11 +5,18 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using System;
 
-public class ColorNode : TextureGraphNode
+[Serializable]
+public class ColorNodeData : NodeSaveData
+{
+}
+
+public class ColorNode : DataNode<ColorNodeData>
 {
     public Color Color { get; set; }
 
-    public ColorNode(Vector2 position, GraphView view) : base(position, view)
+    public override NodeTypes NodeType => NodeTypes.ColorNode;
+
+    public ColorNode(GraphView view) : base(view)
     {
     }
 

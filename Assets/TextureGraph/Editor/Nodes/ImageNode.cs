@@ -5,16 +5,18 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class ImageData
+public class ImageNodeData : NodeSaveData
 {
 }
 
-public class ImageNode : TextureGraphNode
+public class ImageNode : DataNode<ImageNodeData>
 {
     public Vector2Int Size { get; set; }
     public Color ClearColor { get; set; }
 
-    public ImageNode(Vector2 position, GraphView view) : base(position, view)
+    public override NodeTypes NodeType => NodeTypes.ImageNode;
+
+    public ImageNode(GraphView view) : base(view)
     {
         Size = new Vector2Int(512, 512);
     }
@@ -38,7 +40,7 @@ public class ImageNode : TextureGraphNode
         AddInputPorts(inSizePort, inColorPort);
 
         //OutPorts
-        var outImagePort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(ImageData));
+        var outImagePort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(ImageNodeData));
         AddOutputPorts(outImagePort);
     }
 }

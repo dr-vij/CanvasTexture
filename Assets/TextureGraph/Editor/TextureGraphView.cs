@@ -32,12 +32,13 @@ public class TextureGraphView : GraphView
         switch (nodeType)
         {
             case NodeTypes.ColorNode:
-                node = new ColorNode(localPosition, this);
+                node = new ColorNode(this);
                 break;
             case NodeTypes.ImageNode:
-                node = new ImageNode(localPosition, this);
+                node = new ImageNode(this);
                 break;
         }
+        node.Position = localPosition;
         node.Draw();
         AddElement(node);
         return node;
