@@ -11,18 +11,20 @@ public class TextureGraphView : GraphView
     {
         InitManipulators();
         InitBackground();
-        InitUSS();
+        InitStyles();
     }
 
-    /// <summary>
-    /// Adds new node
-    /// </summary>
-    private TextureGraphNode AddNode(Vector2 position)
+    public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
     {
-        var node = new TextureGraphNode();
-        node.Init(position);
-        node.Draw();
-        return node;
+        var compatablePorts = new List<Port>();
+        ports.ForEach(port =>
+        {
+            if (startPort.node != port.node && startPort.direction != port.direction)
+            {
+                compatablePorts.Add(port);
+            }
+        });
+        return compatablePorts;
     }
 
     /// <summary>
@@ -43,7 +45,7 @@ public class TextureGraphView : GraphView
     /// <returns></returns>
     private IManipulator CreateNodeContextMenu()
     {
-        return new ContextualMenuManipulator(c => c.menu.AppendAction("Add node", act => AddElement(AddNode(act.eventInfo.mousePosition))));
+        return new ContextualMenuManipulator(c => c.menu.AppendAction("Add node", act => AddElement(CreateTextureNode(act.eventInfo.mousePosition))));
     }
 
     /// <summary>
@@ -59,12 +61,23 @@ public class TextureGraphView : GraphView
     /// <summary>
     /// Initialize styles
     /// </summary>
-    private void InitUSS()
+    private void InitStyles()
     {
         var stylesheet = EditorGUIUtility.Load(GraphHelpers.PATH_TO_STYLES) as StyleSheet;
         if (stylesheet != null)
             styleSheets.Add(stylesheet);
         else
             Debug.LogWarning($"{GraphHelpers.PATH_TO_STYLES} was not found");
+    }
+
+    /// <summary>
+    /// Adds new node
+    /// </summary>
+    public TextureGraphNode CreateTextureNode(Vector2 position)
+    {
+        var node = new TextureGraphNode();
+        node.Init(position);
+        node.Draw();
+        return node;
     }
 }
