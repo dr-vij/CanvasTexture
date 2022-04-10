@@ -8,6 +8,7 @@ using System;
 [Serializable]
 public class ColorNodeData : NodeSaveData
 {
+    public Color Color;
 }
 
 public class ColorNode : DataNode<ColorNodeData>
@@ -18,6 +19,18 @@ public class ColorNode : DataNode<ColorNodeData>
 
     public ColorNode(GraphView view) : base(view)
     {
+    }
+
+    protected override void OnSaveData(ColorNodeData data)
+    {
+        base.OnSaveData(data);
+        data.Color = Color;
+    }
+
+    protected override void OnApplyData(ColorNodeData data)
+    {
+        base.OnApplyData(data);
+        Color = data.Color;
     }
 
     protected override void InitPorts()

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -11,6 +12,8 @@ public static class GraphHelpers
 
 public class TextureEditorWindow : EditorWindow
 {
+    private TextureGraphView mGraph;
+
     [MenuItem("Windows/TextureGraph")]
     public static void Open()
     {
@@ -20,16 +23,48 @@ public class TextureEditorWindow : EditorWindow
     private void OnEnable()
     {
         AddGraph();
+        AddToolbar();
         AddStyles();
     }
 
-    private void AddGraph()
+    /// <summary>
+    /// Adds toolbar with save load buttons and etc.
+    /// </summary>
+    private void AddToolbar()
     {
-        var graph = new TextureGraphView(this);
-        graph.StretchToParentSize();
-        rootVisualElement.Add(graph);
+        var toolbar = new Toolbar();
+
+        var saveButton = new Button(() => Save());
+        saveButton.text = "Save";
+        toolbar.Add(saveButton);
+
+        rootVisualElement.Add(toolbar);
     }
 
+    private void Save()
+    {
+        mGraph.graphElements.ForEach(element =>
+        {
+            if (element is TextureGraphNode node)
+            {
+                Debug.Log(node.Save());
+            }
+        });
+    }
+
+    /// <summary>
+    /// Adds graph itself
+    /// </summary>
+    private void AddGraph()
+    {
+        mGraph = new TextureGraphView(this);
+        mGraph.StretchToParentSize();
+        rootVisualElement.Add(mGraph);
+    }
+
+    /// <summary>
+    /// Adds graph styles
+    /// </summary>
     private void AddStyles()
     {
         var stylesheet = EditorGUIUtility.Load(GraphHelpers.PATH_TO_STYLES) as StyleSheet;
