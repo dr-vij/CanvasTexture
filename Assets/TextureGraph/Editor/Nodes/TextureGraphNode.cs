@@ -45,9 +45,9 @@ public abstract class TextureGraphNode : Node
         NodeName = "Texture Node";
     }
 
-    public abstract string Save();
+    public abstract NodeSaveData Save();
 
-    public abstract void Load(string data);
+    public abstract void Load(NodeSaveData data);
 
     public abstract NodeTypes NodeType { get; }
 

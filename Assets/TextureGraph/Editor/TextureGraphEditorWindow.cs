@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -43,13 +44,42 @@ public class TextureEditorWindow : EditorWindow
 
     private void Save()
     {
+        var nodesToSave = new List<NodeSaveData>();
         mGraph.graphElements.ForEach(element =>
         {
             if (element is TextureGraphNode node)
             {
-                Debug.Log(node.Save());
+                nodesToSave.Add(node.Save());
             }
         });
+
+        var so = CreateAsset<TextureGraph>("Assets", "test");
+        so.Save(nodesToSave);
+        SaveAsset(so);
+    }
+
+    public static T CreateAsset<T>(string folder, string name) where T : ScriptableObject
+    {
+        var path = Path.Combine(folder, $"{name}.asset");
+        var asset = LoadAsset<T>(path);
+        if (asset == null)
+        {
+            asset = ScriptableObject.CreateInstance<T>();
+            AssetDatabase.CreateAsset(asset, path);
+        }
+        return asset;
+    }
+
+    public static T LoadAsset<T>(string path) where T : ScriptableObject
+    {
+        return AssetDatabase.LoadAssetAtPath<T>(path);
+    }
+
+    public static void SaveAsset(Object asset)
+    {
+        EditorUtility.SetDirty(asset);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
     }
 
     /// <summary>

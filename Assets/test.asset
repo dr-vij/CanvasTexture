@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d9163fca50c84595a9c6d316aaabeba, type: 3}
+  m_Name: test
+  m_EditorClassIdentifier: 
+  m_SaveData:
+  - '{"Position":{"x":168.0,"y":114.0},"NodeType":0,"Color":{"r":0.0,"g":0.0,"b":0.0,"a":0.0}}'
+  - '{"Position":{"x":653.0,"y":251.0},"NodeType":1,"ImageSize":{"x":512,"y":512},"ClearColor":{"r":0.0,"g":0.0,"b":0.0,"a":0.0}}'

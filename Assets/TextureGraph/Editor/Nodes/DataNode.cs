@@ -9,14 +9,14 @@ public abstract class DataNode<T> : TextureGraphNode where T : NodeSaveData, new
     {
     }
 
-    public sealed override void Load(string data)
+    public sealed override void Load(NodeSaveData data)
     {
-        var loadData = JsonUtility.FromJson<T>(data);
+        var loadData = (T)data;
         Position = loadData.Position;
         OnApplyData(loadData);
     }
 
-    public sealed override string Save() => JsonUtility.ToJson(PrepareSaveData());
+    public sealed override NodeSaveData Save() => PrepareSaveData();
 
     protected T PrepareSaveData()
     {
