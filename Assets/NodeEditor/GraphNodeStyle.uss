@@ -1,0 +1,48 @@
+.node {
+    background-color: rgb(197, 193, 193);
+    min-width: 100px;
+    min-height: 30px;
+    max-width: 300px;
+    color: rgb(7, 7, 7);
+    position: absolute;
+    align-items: stretch;
+    justify-content: flex-start;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-color: rgba(255, 255, 255, 255);
+    border-right-color: rgba(255, 255, 255, 255);
+    border-top-color: rgba(255, 255, 255, 255);
+    border-bottom-color: rgba(255, 255, 255, 255);
+}
+
+.outputContainer {
+    align-items: flex-end;
+}
+
+.titleContainer {
+    background-color: rgba(60, 47, 47, 0.28);
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    color: rgba(255, 255, 255, 255);
+}
+
+.inputContainer {
+    align-items: flex-start;
+}
+
+.nodesContainer {
+    min-width: 30px;
+}
+
+.mainContainer {
+    flex-direction: row;
+    justify-content: space-between;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}

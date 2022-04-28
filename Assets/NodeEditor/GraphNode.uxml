@@ -1,0 +1,22 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="NodePin" src="project://database/Assets/NodeEditor/Window/NodePin.uxml?fileID=9197481963319205126&amp;guid=45b4b1cb1b81f4149b6d56a8374853d5&amp;type=3#NodePin" />
+    <Style src="project://database/Assets/NodeEditor/Window/GraphNodeStyle.uss?fileID=7433441132597879392&amp;guid=7c068f4a695b343e2a58c7c13be78715&amp;type=3#NodeEditor" />
+    <ui:VisualElement class="node">
+        <ui:VisualElement name="TitleContainer" class="titleContainer">
+            <ui:Label tabindex="-1" text="Label" display-tooltip-when-elided="true" />
+        </ui:VisualElement>
+        <ui:VisualElement name="MainContainer" class="mainContainer" style="border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px;">
+            <ui:VisualElement name="InputNodes" class="inputContainer nodesContainer">
+                <ui:Instance template="NodePin" name="NodePin" />
+                <ui:Instance template="NodePin" name="NodePin" />
+                <ui:Instance template="NodePin" name="NodePin" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MainContainer" />
+            <ui:VisualElement name="OutputNodes" class="outputContainer nodesContainer">
+                <ui:Instance template="NodePin" name="NodePin" />
+                <ui:Instance template="NodePin" name="NodePin" />
+                <ui:Instance template="NodePin" name="NodePin" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
