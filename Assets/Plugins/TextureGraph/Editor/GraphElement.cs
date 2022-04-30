@@ -53,5 +53,9 @@ namespace ViJ.GraphEditor
             get => m_BlackboardRoot.transform.scale.x;
             set => m_BlackboardRoot.transform.scale = new Vector2(value, value);
         }
+
+        public Vector2 BlackboardToWorld(Vector2 localPosition) => m_BlackboardRoot.LocalToWorld(localPosition);
+
+        public Vector2 WorldToBlackboard(Vector2 worldPosition) => m_BlackboardRoot.WorldToLocal(worldPosition);
     }
 }

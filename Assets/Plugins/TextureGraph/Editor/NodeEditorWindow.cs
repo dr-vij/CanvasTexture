@@ -35,12 +35,8 @@ namespace ViJ.GraphEditor
             m_node = node;
             graph.AddToBlackboard(node);
             node.transform.position = new Vector3(100, 100, 0);
-        }
 
-        public void OnGUI()
-        {
-            m_graph.Scale *= 0.999f;
-            m_graph.Position += Vector2.right * 0.1f;
+            var manipulator = new GraphManipulator(graph);
         }
     }
 }
