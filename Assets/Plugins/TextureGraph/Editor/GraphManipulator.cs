@@ -34,12 +34,58 @@ namespace ViJ.GraphEditor
 
         protected override void RegisterCallbacksOnTarget()
         {
+            //Scale/move with touchpad (optional)
             target.RegisterCallback<WheelEvent>(OnWheel);
+
+            //Grab
+            target.RegisterCallback<MouseDownEvent>(OnMouseDown);
+            target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
+            target.RegisterCallback<MouseUpEvent>(OnMouseUp);
+
         }
 
         protected override void UnregisterCallbacksFromTarget()
         {
             target.UnregisterCallback<WheelEvent>(OnWheel);
+
+            target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
+            target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
+            target.UnregisterCallback<MouseUpEvent>(OnMouseUp);
+        }
+
+        private bool m_IsDragStarted;
+        private Vector2 m_MouseDragStartPosition;
+
+        private void OnMouseDown(MouseDownEvent evt)
+        {
+            if (evt.altKey)
+            {
+                m_IsDragStarted = true;
+                m_MouseDragStartPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
+                target.CaptureMouse();
+                Debug.Log("start drag");
+            }
+        }
+
+        private void OnMouseMove(MouseMoveEvent evt)
+        {
+            if (m_IsDragStarted && target.HasMouseCapture())
+            {
+                var mouseNewPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
+                var localDelta = mouseNewPosition - m_MouseDragStartPosition;
+                var delta =  m_Graph.BlackboardPointToWorld(localDelta);
+                m_Graph.Position -= delta;
+                Debug.Log("drag");
+            }
+        }
+
+        private void OnMouseUp(MouseUpEvent evt)
+        {
+            if (m_IsDragStarted && target.HasMouseCapture())
+            {
+                Debug.Log("end drag");
+                target.ReleaseMouse();
+            }
         }
 
         private void OnWheel(WheelEvent evt)
@@ -64,7 +110,7 @@ namespace ViJ.GraphEditor
         {
             //Save position of pointer before scale
             var mousePosBefore = pointerPosition;
-            var mouseLocalPosBefore = m_Graph.WorldToBlackboard(mousePosBefore);
+            var mouseLocalPosBefore = m_Graph.WorldPointToBlackboard(mousePosBefore);
 
             //Scale
             var currentScale = m_Graph.Scale;
@@ -74,7 +120,7 @@ namespace ViJ.GraphEditor
             m_Graph.Scale = clampedScale;
 
             //Now reposition
-            var mousePosAfter = m_Graph.BlackboardToWorld(mouseLocalPosBefore);
+            var mousePosAfter = m_Graph.BlackboardPointToWorld(mouseLocalPosBefore);
             var moveDelta = mousePosAfter - mousePosBefore;
             m_Graph.Position -= moveDelta;
         }
