@@ -60,6 +60,16 @@ namespace ViJ.GraphEditor
 
         public Vector2 BlackboardDeltaToWorld(Vector2 localDelta)
         {
+            var p1 = m_BlackboardRoot.LocalToWorld(Vector2.zero);
+            var p2 = m_BlackboardRoot.LocalToWorld(localDelta);
+            return p2 - p1;
+        }
+
+        public Vector2 WorldDeltaToBlackboard(Vector2 worldDelta)
+        {
+            var p1 = m_BlackboardRoot.WorldToLocal(Vector2.zero);
+            var p2 = m_BlackboardRoot.WorldToLocal(worldDelta);
+            return p2 - p1;
         }
     }
 }

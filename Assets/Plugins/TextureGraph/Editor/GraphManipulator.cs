@@ -58,12 +58,11 @@ namespace ViJ.GraphEditor
 
         private void OnMouseDown(MouseDownEvent evt)
         {
-            if (evt.altKey)
+            if (evt.commandKey)
             {
                 m_IsDragStarted = true;
                 m_MouseDragStartPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
                 target.CaptureMouse();
-                Debug.Log("start drag");
             }
         }
 
@@ -73,9 +72,8 @@ namespace ViJ.GraphEditor
             {
                 var mouseNewPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
                 var localDelta = mouseNewPosition - m_MouseDragStartPosition;
-                var delta =  m_Graph.BlackboardPointToWorld(localDelta);
-                m_Graph.Position -= delta;
-                Debug.Log("drag");
+                var delta = m_Graph.BlackboardDeltaToWorld(localDelta);
+                m_Graph.Position += delta;
             }
         }
 
@@ -83,7 +81,6 @@ namespace ViJ.GraphEditor
         {
             if (m_IsDragStarted && target.HasMouseCapture())
             {
-                Debug.Log("end drag");
                 target.ReleaseMouse();
             }
         }
