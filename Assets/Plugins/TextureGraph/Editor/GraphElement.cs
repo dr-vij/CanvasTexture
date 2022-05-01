@@ -26,13 +26,19 @@ namespace ViJ.GraphEditor
         public Vector2 Position
         {
             get => m_BlackboardRoot.transform.position;
-            set => m_BlackboardRoot.transform.position = value;
+            set
+            {
+                m_BlackboardRoot.transform.position = value;
+            }
         }
 
         public float Scale
         {
             get => m_BlackboardRoot.transform.scale.x;
-            set => m_BlackboardRoot.transform.scale = new Vector2(value, value);
+            set
+            {
+                m_BlackboardRoot.transform.scale = new Vector2(value, value);
+            }
         }
 
         public GraphElement()
