@@ -6,8 +6,6 @@ namespace ViJ.GraphEditor
 {
     public class NodeEditorWindow : EditorWindow
     {
-        [SerializeField] private VisualTreeAsset m_BackgroundTreeAsset = default;
-
         [MenuItem("Windows/NodeEditor")]
         public static void ShowExample()
         {
@@ -27,10 +25,6 @@ namespace ViJ.GraphEditor
             m_graph = graph;
             root.Add(graph);
             graph.StretchToParentSize();
-
-            var bg = m_BackgroundTreeAsset.Instantiate();
-            bg.StretchToParentSize();
-            graph.AddToBg(bg);
 
             var node = new GraphNodeElement();
             m_node = node;

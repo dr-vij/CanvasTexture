@@ -11,7 +11,6 @@ namespace ViJ.GraphEditor
     {
         private const string UXML = nameof(GraphElement) + ".uxml";
         private const string ELEMENT_PATH = "Editor";
-        private const string BG_NAME = "BackgroundRoot";
         private const string BLACKBOARD_NAME = "BlackboardRoot";
         private const string SELECTIONBOX_NAME = "SelectionBox";
 
@@ -48,7 +47,11 @@ namespace ViJ.GraphEditor
             m_Root.StretchToParentSize();
             Add(m_Root);
 
-            m_BgRoot = m_Root.Q(BG_NAME);
+            //m_BgRoot = m_Root.Q(BG_NAME);
+            m_BgRoot = new BGElement();
+            m_BgRoot.StretchToParentSize();
+            m_Root.Insert(0, m_BgRoot);
+
             m_BlackboardRoot = m_Root.Q(BLACKBOARD_NAME);
             m_SelectionBox = m_Root.Q(SELECTIONBOX_NAME);
         }

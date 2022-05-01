@@ -1,4 +1,0 @@
-.background {
-    flex-grow: 1;
-    background-color: rgba(171, 171, 171, 255);
-}
