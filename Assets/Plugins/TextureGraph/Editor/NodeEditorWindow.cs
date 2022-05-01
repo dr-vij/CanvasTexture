@@ -13,6 +13,7 @@ namespace ViJ.GraphEditor
         {
             NodeEditorWindow wnd = GetWindow<NodeEditorWindow>();
             wnd.titleContent = new GUIContent("NodeEditor");
+            wnd.ShowPopup();
         }
 
         GraphElement m_graph;

@@ -2,4 +2,5 @@
     <Style src="project://database/Assets/Plugins/TextureGraph/Editor/GraphElementStyle.uss?fileID=7433441132597879392&amp;guid=234067d907f0240b58a988579c571ed2&amp;type=3#GraphElementStyle" />
     <ui:VisualElement name="BackgroundRoot" />
     <ui:VisualElement name="BlackboardRoot" />
+    <ui:VisualElement name="SelectionBox" />
 </ui:UXML>

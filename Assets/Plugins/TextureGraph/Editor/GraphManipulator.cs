@@ -9,6 +9,7 @@ namespace ViJ.GraphEditor
     {
         private GraphElement m_Graph;
         private bool m_IsDragStarted;
+        private bool m_IsSelectionStarted;
         private Vector2 m_MouseDragStartPosition;
 
         public float ScaleSensetivity { get; set; } = 0.01f;
@@ -47,14 +48,22 @@ namespace ViJ.GraphEditor
 
         #endregion
 
-        #region Drag handling
+        #region Input handling
 
         private void OnMouseDown(MouseDownEvent evt)
         {
-            if (evt.commandKey)
+            if (evt.commandKey && evt.button == 0)
             {
                 m_IsDragStarted = true;
                 m_MouseDragStartPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
+                target.CaptureMouse();
+            }
+            else if (evt.button == 0)
+            {
+                m_IsSelectionStarted = true;
+                m_MouseDragStartPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
+                var fromTo = m_Graph.WorldPointToRoot(evt.mousePosition);
+                m_Graph.StartSelectionBox(fromTo, fromTo);
                 target.CaptureMouse();
             }
         }
@@ -68,6 +77,12 @@ namespace ViJ.GraphEditor
                 var delta = m_Graph.BlackboardDeltaToWorld(localDelta);
                 m_Graph.Position += delta;
             }
+            else if (m_IsSelectionStarted && target.HasMouseCapture())
+            {
+                var from = m_Graph.BlackboardPointToRoot(m_MouseDragStartPosition);
+                var to = m_Graph.WorldPointToRoot(evt.mousePosition);
+                m_Graph.UpdateSelectionBox(from, to);
+            }
         }
 
         private void OnMouseUp(MouseUpEvent evt)
@@ -75,26 +90,42 @@ namespace ViJ.GraphEditor
             if (m_IsDragStarted && target.HasMouseCapture())
             {
                 target.ReleaseMouse();
+                m_IsDragStarted = false;
+            }
+            else if (m_IsSelectionStarted && target.HasMouseCapture())
+            {
+                target.ReleaseMouse();
+                var from = m_Graph.BlackboardPointToRoot(m_MouseDragStartPosition);
+                var to = m_Graph.WorldPointToRoot(evt.mousePosition);
+                m_Graph.EndSelectionBox(from, to);
+                m_IsSelectionStarted = false;
             }
         }
 
-        #endregion
-
         private void OnWheel(WheelEvent evt)
         {
+            //Move or scale. Option/alt swaps x/y
             if (evt.commandKey)
                 Scale(evt.mousePosition, evt.delta.y);
             else if (evt.altKey)
                 m_Graph.Position -= new Vector2(evt.delta.y, evt.delta.x) * MoveSensetivity;
             else
                 m_Graph.Position -= new Vector2(evt.delta.x, evt.delta.y) * MoveSensetivity;
+
+            //Update selection box if needed
+            if (m_IsSelectionStarted && target.HasMouseCapture())
+            {
+                var from = m_Graph.BlackboardPointToRoot(m_MouseDragStartPosition);
+                var to = m_Graph.WorldPointToRoot(evt.mousePosition);
+                m_Graph.UpdateSelectionBox(from, to);
+            }
         }
 
-        private void Scale(Vector2 pointerPosition, float scaleDelta)
+        private void Scale(Vector2 pointerWorldPos, float scaleDelta)
         {
             //Save position of pointer before scale
-            var mousePosBefore = pointerPosition;
-            var mouseLocalPosBefore = m_Graph.WorldPointToBlackboard(mousePosBefore);
+            var mousePosBefore = m_Graph.WorldPointToRoot(pointerWorldPos);
+            var mouseLocalPosBefore = m_Graph.WorldPointToBlackboard(pointerWorldPos);
 
             //Scale
             var currentScale = m_Graph.Scale;
@@ -104,9 +135,11 @@ namespace ViJ.GraphEditor
             m_Graph.Scale = clampedScale;
 
             //Now reposition
-            var mousePosAfter = m_Graph.BlackboardPointToWorld(mouseLocalPosBefore);
+            var mousePosAfter = m_Graph.BlackboardPointToRoot(mouseLocalPosBefore);
             var moveDelta = mousePosAfter - mousePosBefore;
             m_Graph.Position -= moveDelta;
         }
+
+        #endregion
     }
 }
