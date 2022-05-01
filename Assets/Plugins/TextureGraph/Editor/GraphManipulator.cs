@@ -5,19 +5,11 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public enum WheelMode
-    {
-        Unknown = 0,
-        WheelIsScale = 1,
-        WheelIsMovement = 2,
-    }
-
     public class GraphManipulator : Manipulator
     {
         private GraphElement m_Graph;
-        private VisualElement m_Root;
-
-        public WheelMode WheelMode { get; set; } = WheelMode.WheelIsMovement;
+        private bool m_IsDragStarted;
+        private Vector2 m_MouseDragStartPosition;
 
         public float ScaleSensetivity { get; set; } = 0.01f;
 
@@ -28,9 +20,10 @@ namespace ViJ.GraphEditor
         public GraphManipulator(GraphElement graph)
         {
             m_Graph = graph;
-            m_Root = graph.parent;
             target = graph;
         }
+
+        #region Callbacks
 
         protected override void RegisterCallbacksOnTarget()
         {
@@ -41,7 +34,6 @@ namespace ViJ.GraphEditor
             target.RegisterCallback<MouseDownEvent>(OnMouseDown);
             target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
             target.RegisterCallback<MouseUpEvent>(OnMouseUp);
-
         }
 
         protected override void UnregisterCallbacksFromTarget()
@@ -53,8 +45,9 @@ namespace ViJ.GraphEditor
             target.UnregisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
-        private bool m_IsDragStarted;
-        private Vector2 m_MouseDragStartPosition;
+        #endregion
+
+        #region Drag handling
 
         private void OnMouseDown(MouseDownEvent evt)
         {
@@ -85,22 +78,16 @@ namespace ViJ.GraphEditor
             }
         }
 
+        #endregion
+
         private void OnWheel(WheelEvent evt)
         {
-            switch (WheelMode)
-            {
-                case WheelMode.WheelIsMovement:
-                    if (evt.altKey)
-                        Scale(evt.mousePosition, evt.delta.y);
-                    else
-                        m_Graph.Position -= (Vector2)(evt.delta * MoveSensetivity);
-                    break;
-                case WheelMode.WheelIsScale:
-                    Scale(evt.mousePosition, evt.delta.y);
-                    break;
-                default:
-                    throw new System.ArgumentException("Unknown wheel mode");
-            }
+            if (evt.commandKey)
+                Scale(evt.mousePosition, evt.delta.y);
+            else if (evt.altKey)
+                m_Graph.Position -= new Vector2(evt.delta.y, evt.delta.x) * MoveSensetivity;
+            else
+                m_Graph.Position -= new Vector2(evt.delta.x, evt.delta.y) * MoveSensetivity;
         }
 
         private void Scale(Vector2 pointerPosition, float scaleDelta)
