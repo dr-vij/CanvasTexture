@@ -4,23 +4,24 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public class NodeEditorWindow : EditorWindow
+    public class GraphEditorWindow : EditorWindow
     {
-        [MenuItem("Windows/NodeEditor")]
+        [MenuItem("Windows/GraphEditor")]
         public static void ShowExample()
         {
-            NodeEditorWindow wnd = GetWindow<NodeEditorWindow>();
-            wnd.titleContent = new GUIContent("NodeEditor");
+            GraphEditorWindow wnd = GetWindow<GraphEditorWindow>();
+            wnd.titleContent = new GUIContent("GraphEditor");
             wnd.ShowPopup();
         }
 
-        GraphElement m_graph;
+        GraphVisualElement m_graph;
 
         public void CreateGUI()
         {
+            Debug.Log(GraphEditorSettings.Instance.PluginPath);
             var root = rootVisualElement;
 
-            var graph = new GraphElement();
+            var graph = new GraphVisualElement();
             m_graph = graph;
             root.Add(graph);
             graph.StretchToParentSize();

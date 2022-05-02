@@ -12,14 +12,14 @@ namespace ViJ.GraphEditor
     /// <summary>
     /// Base graph element
     /// </summary>
-    public class GraphElement : VisualElement
+    public class GraphVisualElement : VisualElement
     {
-        private const string UXML = nameof(GraphElement) + ".uxml";
+        private const string UXML = nameof(GraphVisualElement) + ".uxml";
         private const string ELEMENT_PATH = "Editor";
         private const string BLACKBOARD_NAME = "BlackboardRoot";
         private const string SELECTIONBOX_NAME = "SelectionBox";
 
-        public new class UxmlFactory : UxmlFactory<GraphElement, UxmlTraits> { }
+        public new class UxmlFactory : UxmlFactory<GraphVisualElement, UxmlTraits> { }
         public new class UxmlTraits : VisualElement.UxmlTraits { }
 
         private VisualElement m_Root;
@@ -33,7 +33,7 @@ namespace ViJ.GraphEditor
         private HashSet<int> mSelectedNodes = new HashSet<int>();
         private HashSet<int> mPreSelectedNodes = new HashSet<int>();
 
-        public event Action<GraphElement> GraphTransformChangeEvent;
+        public event Action<GraphVisualElement> GraphTransformChangeEvent;
 
         public Vector2 Position
         {
@@ -55,9 +55,9 @@ namespace ViJ.GraphEditor
             }
         }
 
-        public GraphElement()
+        public GraphVisualElement()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(TextureGraphSettings.PLUGIN_PATH, ELEMENT_PATH, UXML));
+            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, ELEMENT_PATH, UXML));
             m_Root = asset.Instantiate();
             m_Root.StretchToParentSize();
             Add(m_Root);

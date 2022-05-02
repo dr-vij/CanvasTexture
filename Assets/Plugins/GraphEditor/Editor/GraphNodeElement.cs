@@ -73,7 +73,7 @@ namespace ViJ.GraphEditor
 
         public GraphNodeElement()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(TextureGraphSettings.PLUGIN_PATH, "Editor", UXML));
+            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, "Editor", UXML));
             Add(asset.Instantiate());
             m_Node = this.Q<VisualElement>("Node");
 

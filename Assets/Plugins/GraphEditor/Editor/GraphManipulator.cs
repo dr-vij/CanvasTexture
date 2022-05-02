@@ -7,7 +7,7 @@ namespace ViJ.GraphEditor
 {
     public class GraphManipulator : Manipulator
     {
-        private GraphElement m_Graph;
+        private GraphVisualElement m_Graph;
         private bool m_IsDragStarted;
         private bool m_IsSelectionStarted;
         private Vector2 m_MouseDragStartPosition;
@@ -18,7 +18,7 @@ namespace ViJ.GraphEditor
 
         public Vector2 MinMaxScale { get; set; } = new Vector2(0.01f, 100);
 
-        public GraphManipulator(GraphElement graph)
+        public GraphManipulator(GraphVisualElement graph)
         {
             m_Graph = graph;
             target = graph;
