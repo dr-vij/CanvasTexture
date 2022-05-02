@@ -18,4 +18,10 @@
     border-bottom-color: rgb(109, 180, 255);
     background-color: rgba(255, 255, 255, 0.31);
     visibility: hidden;
+    transition-duration: 0.3s;
+    transition-property: opacity;
+}
+
+.graphBackground {
+    background-color: rgba(87, 87, 87, 255);
 }

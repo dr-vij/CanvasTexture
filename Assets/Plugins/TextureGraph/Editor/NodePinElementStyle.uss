@@ -19,10 +19,11 @@
     margin-right: 1px;
     margin-top: 1px;
     margin-bottom: 1px;
-    border-left-color: rgba(113, 113, 113, 255);
-    border-right-color: rgba(113, 113, 113, 255);
-    border-top-color: rgba(113, 113, 113, 255);
-    border-bottom-color: rgba(113, 113, 113, 255);
+    border-left-color: rgb(113, 113, 113);
+    border-right-color: rgb(113, 113, 113);
+    border-top-color: rgb(113, 113, 113);
+    border-bottom-color: rgb(113, 113, 113);
+    transition-duration: 0.3s;
 }
 
 .pin:hover {

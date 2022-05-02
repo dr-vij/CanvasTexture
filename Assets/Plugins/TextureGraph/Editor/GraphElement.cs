@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +8,9 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
+    /// <summary>
+    /// Base graph element
+    /// </summary>
     public class GraphElement : VisualElement
     {
         private const string UXML = nameof(GraphElement) + ".uxml";
@@ -18,9 +22,11 @@ namespace ViJ.GraphEditor
         public new class UxmlTraits : VisualElement.UxmlTraits { }
 
         private VisualElement m_Root;
-        private VisualElement m_BgRoot;
+        private VisualElement m_Background;
         private VisualElement m_BlackboardRoot;
         private VisualElement m_SelectionBox;
+
+        public event Action<GraphElement> GraphTransformChangeEvent;
 
         public Vector2 Position
         {
@@ -28,6 +34,7 @@ namespace ViJ.GraphEditor
             set
             {
                 m_BlackboardRoot.transform.position = value;
+                GraphTransformChangeEvent?.Invoke(this);
             }
         }
 
@@ -37,6 +44,7 @@ namespace ViJ.GraphEditor
             set
             {
                 m_BlackboardRoot.transform.scale = new Vector2(value, value);
+                GraphTransformChangeEvent?.Invoke(this);
             }
         }
 
@@ -47,18 +55,12 @@ namespace ViJ.GraphEditor
             m_Root.StretchToParentSize();
             Add(m_Root);
 
-            //m_BgRoot = m_Root.Q(BG_NAME);
-            m_BgRoot = new BGElement();
-            m_BgRoot.StretchToParentSize();
-            m_Root.Insert(0, m_BgRoot);
-
             m_BlackboardRoot = m_Root.Q(BLACKBOARD_NAME);
             m_SelectionBox = m_Root.Q(SELECTIONBOX_NAME);
-        }
 
-        public void AddToBg(VisualElement element)
-        {
-            m_BgRoot.Add(element);
+            //Create background
+            m_Background = new BackgroundElement(this);
+            m_Root.Insert(0, m_Background);
         }
 
         public void AddToBlackboard(VisualElement element)
@@ -68,7 +70,9 @@ namespace ViJ.GraphEditor
 
         public void StartSelectionBox(Vector2 from, Vector2 to)
         {
+            m_SelectionBox.pickingMode = PickingMode.Ignore;
             m_SelectionBox.style.visibility = Visibility.Visible;
+            m_SelectionBox.style.opacity = 1;
             UpdateVisualBox(from, to);
         }
 
@@ -80,7 +84,7 @@ namespace ViJ.GraphEditor
         public void EndSelectionBox(Vector2 from, Vector2 to)
         {
             UpdateVisualBox(from, to);
-            m_SelectionBox.style.visibility = Visibility.Hidden;
+            m_SelectionBox.style.opacity = 0;
         }
 
         private void UpdateVisualBox(Vector2 from, Vector2 to)
@@ -93,24 +97,42 @@ namespace ViJ.GraphEditor
         }
 
         #region Coords conversion
+
+        //POINT
         public Vector2 BlackboardPointToWorld(Vector2 localPosition) => m_BlackboardRoot.LocalToWorld(localPosition);
 
+        //POINT
         public Vector2 WorldPointToBlackboard(Vector2 worldPosition) => m_BlackboardRoot.WorldToLocal(worldPosition);
 
+        //POINT
         public Vector2 WorldPointToRoot(Vector2 worldPosition) => m_Root.WorldToLocal(worldPosition);
 
+        //POINT
+        public Vector2 RootPointToWorld(Vector2 localPosition) => m_Root.LocalToWorld(localPosition);
+
+        //POINT
         public Vector2 BlackboardPointToRoot(Vector2 localPosition)
         {
             var worldPos = m_BlackboardRoot.LocalToWorld(localPosition);
             return m_Root.WorldToLocal(worldPos);
         }
 
+        //POINT
         public Vector2 RootPointToBlackboard(Vector2 localPosition)
         {
             var worldPos = m_Root.LocalToWorld(localPosition);
             return m_BlackboardRoot.WorldToLocal(worldPos);
         }
 
+        //DELTA
+        public Vector2 BlackboardDeltaToRoot(Vector2 localDelta)
+        {
+            var p1 = m_Root.WorldToLocal(m_BlackboardRoot.LocalToWorld(Vector2.zero));
+            var p2 = m_Root.WorldToLocal(m_BlackboardRoot.LocalToWorld(localDelta));
+            return p2 - p1;
+        }
+
+        //DELTA
         public Vector2 BlackboardDeltaToWorld(Vector2 localDelta)
         {
             var p1 = m_BlackboardRoot.LocalToWorld(Vector2.zero);
@@ -118,12 +140,14 @@ namespace ViJ.GraphEditor
             return p2 - p1;
         }
 
+        //DELTA
         public Vector2 WorldDeltaToBlackboard(Vector2 worldDelta)
         {
             var p1 = m_BlackboardRoot.WorldToLocal(Vector2.zero);
             var p2 = m_BlackboardRoot.WorldToLocal(worldDelta);
             return p2 - p1;
         }
+
         #endregion
     }
 }
