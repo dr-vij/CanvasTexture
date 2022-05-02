@@ -15,7 +15,6 @@ namespace ViJ.GraphEditor
         }
 
         GraphElement m_graph;
-        GraphNodeElement m_node;
 
         public void CreateGUI()
         {
@@ -27,8 +26,7 @@ namespace ViJ.GraphEditor
             graph.StretchToParentSize();
 
             var node = new GraphNodeElement();
-            m_node = node;
-            graph.AddToBlackboard(node);
+            graph.AddNode(node);
             node.transform.position = new Vector3(100, 100, 0);
 
             var manipulator = new GraphManipulator(graph);

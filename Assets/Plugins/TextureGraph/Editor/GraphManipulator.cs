@@ -14,7 +14,7 @@ namespace ViJ.GraphEditor
 
         public float ScaleSensetivity { get; set; } = 0.01f;
 
-        public float MoveSensetivity { get; set; } = 1f;
+        public float MoveSensetivity { get; set; } = 3f;
 
         public Vector2 MinMaxScale { get; set; } = new Vector2(0.01f, 100);
 

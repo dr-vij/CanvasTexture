@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -25,9 +26,10 @@ namespace ViJ.GraphEditor
         private VisualElement m_Background;
         private VisualElement m_BlackboardRoot;
         private VisualElement m_SelectionBox;
+        private HashSet<int> m_Buffer = new HashSet<int>();
 
         private int m_NodeIdCounter;
-        private Dictionary<int, GraphNodeElement> mNodes = new Dictionary<int, GraphNodeElement>();
+        private Dictionary<int, GraphNodeElement> m_Nodes = new Dictionary<int, GraphNodeElement>();
         private HashSet<int> mSelectedNodes = new HashSet<int>();
         private HashSet<int> mPreSelectedNodes = new HashSet<int>();
 
@@ -68,23 +70,18 @@ namespace ViJ.GraphEditor
             m_Root.Insert(0, m_Background);
         }
 
-        public void AddToBlackboard(VisualElement element)
-        {
-            m_BlackboardRoot.Add(element);
-        }
-
         public void AddNode(GraphNodeElement node)
         {
             node.ID = GetNextId();
-            mNodes.Add(node.ID, node);
+            m_Nodes.Add(node.ID, node);
 
             m_BlackboardRoot.Add(node);
         }
 
         public void RemoveNode(int id)
         {
-            var node = mNodes[id];
-            mNodes.Remove(id);
+            var node = m_Nodes[id];
+            m_Nodes.Remove(id);
             mSelectedNodes.Remove(id);
             mPreSelectedNodes.Remove(id);
             node.RemoveFromHierarchy();
@@ -96,28 +93,76 @@ namespace ViJ.GraphEditor
             m_SelectionBox.style.visibility = Visibility.Visible;
             m_SelectionBox.style.opacity = 1;
             var rect = UpdateVisualBox(from, to);
+            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
+            SetPreselectedNodes(m_Buffer);
         }
 
         public void UpdateSelectionBox(Vector2 from, Vector2 to)
         {
             var rect = UpdateVisualBox(from, to);
+            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
+            SetPreselectedNodes(m_Buffer);
         }
 
         public void EndSelectionBox(Vector2 from, Vector2 to)
         {
             var rect = UpdateVisualBox(from, to);
             m_SelectionBox.style.opacity = 0;
+            SetPreselectedNodes(null);
+            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
+            SetSelectedNodes(m_Buffer);
         }
 
-        private IList<GraphNodeElement> GetOverlappedNodes(Rect rect)
+        private HashSet<int> GetOverlappedNodes(Rect rect, HashSet<int> outNodes = null)
         {
-            var ret = new List<GraphNodeElement>();
-            foreach(var node in mNodes.Values)
+            if (outNodes == null)
+                outNodes = new HashSet<int>();
+            else
+                outNodes.Clear();
+
+            foreach (var node in m_Nodes.Values)
             {
-                if (node.worldBound.Overlaps(rect))
-                    ret.Add(node);
+                if (node.NodeWorldBounds.Overlaps(rect))
+                    outNodes.Add(node.ID);
             }
-            return ret;
+            return outNodes;
+        }
+
+        private void SetPreselectedNodes(HashSet<int> nodes)
+        {
+            if (nodes == null)
+                nodes = new HashSet<int>();
+
+            var nodesToPreselect = nodes.Where(c => !mPreSelectedNodes.Contains(c)).ToList();
+            var nodesToUnselect = mPreSelectedNodes.Where(c => !nodes.Contains(c)).ToList();
+
+            foreach(var nodeId in nodesToPreselect)
+            {
+                m_Nodes[nodeId].IsPreSelected = true;
+                mPreSelectedNodes.Add(nodeId);
+            }
+            foreach(var nodeId in nodesToUnselect)
+            {
+                m_Nodes[nodeId].IsPreSelected = false;
+                mPreSelectedNodes.Remove(nodeId);
+            }    
+        }
+
+        private void SetSelectedNodes(HashSet<int> nodes)
+        {
+            var nodesToSelect = nodes.Where(c => !mSelectedNodes.Contains(c)).ToList();
+            var nodesToUnselect = mSelectedNodes.Where(c => !nodes.Contains(c)).ToList();
+
+            foreach (var nodeId in nodesToSelect)
+            {
+                m_Nodes[nodeId].IsSelected = true;
+                mSelectedNodes.Add(nodeId);
+            }
+            foreach (var nodeId in nodesToUnselect)
+            {
+                m_Nodes[nodeId].IsSelected = false;
+                mSelectedNodes.Remove(nodeId);
+            }
         }
 
         private Rect UpdateVisualBox(Vector2 from, Vector2 to)

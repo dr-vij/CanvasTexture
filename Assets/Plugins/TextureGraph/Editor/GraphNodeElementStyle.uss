@@ -1,20 +1,8 @@
-.node {
-    background-color: rgb(197, 193, 193);
-    min-width: 50px;
-    min-height: 30px;
-    max-width: 300px;
-    color: rgb(7, 7, 7);
-    position: absolute;
-    align-items: stretch;
-    justify-content: flex-start;
-    border-left-width: 1px;
-    border-right-width: 1px;
-    border-top-width: 1px;
-    border-bottom-width: 1px;
-    border-left-color: rgb(255, 255, 255);
-    border-right-color: rgb(255, 255, 255);
-    border-top-color: rgb(255, 255, 255);
-    border-bottom-color: rgb(255, 255, 255);
+.nodeSelected {
+    border-left-color: rgb(40, 201, 255);
+    border-right-color: rgb(40, 201, 255);
+    border-top-color: rgb(40, 201, 255);
+    border-bottom-color: rgb(40, 201, 255);
 }
 
 .outputContainer {
@@ -45,4 +33,33 @@
     padding-right: 5px;
     padding-top: 5px;
     padding-bottom: 5px;
+}
+
+.node {
+    background-color: rgb(197, 193, 193);
+    min-width: 50px;
+    min-height: 30px;
+    max-width: 300px;
+    color: rgb(7, 7, 7);
+    position: absolute;
+    align-items: stretch;
+    justify-content: flex-start;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+}
+
+.nodePreselected {
+    border-left-color: rgb(255, 255, 255);
+    border-right-color: rgb(255, 255, 255);
+    border-top-color: rgb(255, 255, 255);
+    border-bottom-color: rgb(255, 255, 255);
+}
+
+.nodeUnselected {
+    border-left-color: rgba(36, 36, 36, 255);
+    border-right-color: rgba(36, 36, 36, 255);
+    border-top-color: rgba(36, 36, 36, 255);
+    border-bottom-color: rgba(36, 36, 36, 255);
 }

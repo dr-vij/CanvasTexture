@@ -14,13 +14,13 @@ namespace ViJ.GraphEditor
         /// </summary>
         public float GridSize { get; set; } = 25;
 
-        public float GridLineWidth { get; set; } = 1f;
+        public float GridLineWidth { get; set; } = 2f;
 
         public Color GridLineColor { get; set; } = Color.gray;
 
         public BackgroundElement(GraphElement graph)
         {
-            this.AddToClassList("graphBackground");
+            AddToClassList("graphBackground");
             m_Graph = graph;
             this.StretchToParentSize();
             generateVisualContent += OnGenerateVisualContent;
@@ -48,7 +48,6 @@ namespace ViJ.GraphEditor
             var currentStart = rootStart;
             var currentEnd = new Vector2(rootStart.x, contentRect.height);
        
-
             while (currentStart.x <= contentRect.width)
             {
                 painter.MoveTo(currentStart);

@@ -12,6 +12,7 @@ namespace ViJ.GraphEditor
         private const string UXML = nameof(GraphNodeElement) + ".uxml";
         private const string SELECTED_NODE_CLASS = "nodeSelected";
         private const string PRESELECTED_NODE_CLASS = "nodePreselected";
+        private const string UNSELECTED_NODE_CLASS = "nodeUnselected";
 
         public new class UxmlFactory : UxmlFactory<GraphNodeElement, UxmlTraits> { }
         public new class UxmlTraits : VisualElement.UxmlTraits { }
@@ -19,6 +20,7 @@ namespace ViJ.GraphEditor
         private int m_ID = -1;
         private bool mIsSelected = false;
         private bool mIsPreselected = false;
+        private VisualElement m_Node;
 
         public int ID
         {
@@ -41,12 +43,14 @@ namespace ViJ.GraphEditor
 
         public bool HasId => m_ID != -1;
 
+        public Rect NodeWorldBounds => m_Node.worldBound;
+
         public bool IsSelected
         {
             get => mIsSelected;
             set
             {
-                if (mIsSelected !=value)
+                if (mIsSelected != value)
                 {
                     mIsSelected = value;
                     UpdateView();
@@ -59,7 +63,7 @@ namespace ViJ.GraphEditor
             get => mIsPreselected;
             set
             {
-                if (mIsPreselected !=value)
+                if (mIsPreselected != value)
                 {
                     mIsPreselected = value;
                     UpdateView();
@@ -71,19 +75,30 @@ namespace ViJ.GraphEditor
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(TextureGraphSettings.PLUGIN_PATH, "Editor", UXML));
             Add(asset.Instantiate());
+            m_Node = this.Q<VisualElement>("Node");
+
+            UpdateView();
         }
 
         private void UpdateView()
         {
-            if (mIsSelected)
-                AddToClassList(SELECTED_NODE_CLASS);
-            else
-                RemoveFromClassList(SELECTED_NODE_CLASS);
+            //node has unselected style if it is not selected or preselected
+            if (!mIsSelected && !mIsPreselected)
+                m_Node.AddToClassList(UNSELECTED_NODE_CLASS);
+            else if (mIsSelected || mIsPreselected)
+                m_Node.RemoveFromClassList(UNSELECTED_NODE_CLASS);
 
+            //preselected has higher priority
             if (mIsPreselected)
-                AddToClassList(PRESELECTED_NODE_CLASS);
+                m_Node.AddToClassList(PRESELECTED_NODE_CLASS);
             else
-                RemoveFromClassList(PRESELECTED_NODE_CLASS);
+                m_Node.RemoveFromClassList(PRESELECTED_NODE_CLASS);
+
+            //selected has lowest priority
+            if (mIsSelected && !mIsPreselected)
+                m_Node.AddToClassList(SELECTED_NODE_CLASS);
+            else
+                m_Node.RemoveFromClassList(SELECTED_NODE_CLASS);
         }
     }
 }
