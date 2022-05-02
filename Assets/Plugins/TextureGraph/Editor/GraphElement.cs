@@ -26,6 +26,11 @@ namespace ViJ.GraphEditor
         private VisualElement m_BlackboardRoot;
         private VisualElement m_SelectionBox;
 
+        private int m_NodeIdCounter;
+        private Dictionary<int, GraphNodeElement> mNodes = new Dictionary<int, GraphNodeElement>();
+        private HashSet<int> mSelectedNodes = new HashSet<int>();
+        private HashSet<int> mPreSelectedNodes = new HashSet<int>();
+
         public event Action<GraphElement> GraphTransformChangeEvent;
 
         public Vector2 Position
@@ -68,32 +73,61 @@ namespace ViJ.GraphEditor
             m_BlackboardRoot.Add(element);
         }
 
+        public void AddNode(GraphNodeElement node)
+        {
+            node.ID = GetNextId();
+            mNodes.Add(node.ID, node);
+
+            m_BlackboardRoot.Add(node);
+        }
+
+        public void RemoveNode(int id)
+        {
+            var node = mNodes[id];
+            mNodes.Remove(id);
+            mSelectedNodes.Remove(id);
+            mPreSelectedNodes.Remove(id);
+            node.RemoveFromHierarchy();
+        }
+
         public void StartSelectionBox(Vector2 from, Vector2 to)
         {
             m_SelectionBox.pickingMode = PickingMode.Ignore;
             m_SelectionBox.style.visibility = Visibility.Visible;
             m_SelectionBox.style.opacity = 1;
-            UpdateVisualBox(from, to);
+            var rect = UpdateVisualBox(from, to);
         }
 
         public void UpdateSelectionBox(Vector2 from, Vector2 to)
         {
-            UpdateVisualBox(from, to);
+            var rect = UpdateVisualBox(from, to);
         }
 
         public void EndSelectionBox(Vector2 from, Vector2 to)
         {
-            UpdateVisualBox(from, to);
+            var rect = UpdateVisualBox(from, to);
             m_SelectionBox.style.opacity = 0;
         }
 
-        private void UpdateVisualBox(Vector2 from, Vector2 to)
+        private IList<GraphNodeElement> GetOverlappedNodes(Rect rect)
+        {
+            var ret = new List<GraphNodeElement>();
+            foreach(var node in mNodes.Values)
+            {
+                if (node.worldBound.Overlaps(rect))
+                    ret.Add(node);
+            }
+            return ret;
+        }
+
+        private Rect UpdateVisualBox(Vector2 from, Vector2 to)
         {
             var fromCorrected = Vector2.Min(from, to);
             var toCorrected = Vector2.Max(from, to);
             m_SelectionBox.transform.position = fromCorrected;
             m_SelectionBox.style.width = Mathf.Abs(toCorrected.x - fromCorrected.x);
             m_SelectionBox.style.height = Mathf.Abs(toCorrected.y - fromCorrected.y);
+            return m_SelectionBox.worldBound;
         }
 
         #region Coords conversion
@@ -149,5 +183,10 @@ namespace ViJ.GraphEditor
         }
 
         #endregion
+
+        private int GetNextId()
+        {
+            return m_NodeIdCounter++;
+        }
     }
 }
