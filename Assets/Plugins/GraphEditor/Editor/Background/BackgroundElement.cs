@@ -7,7 +7,7 @@ namespace ViJ.GraphEditor
 {
     public class BackgroundElement : VisualElement
     {
-        private GraphVisualElement m_Graph;
+        private GraphElement m_Graph;
 
         /// <summary>
         /// Grid size in blackboard space
@@ -18,7 +18,7 @@ namespace ViJ.GraphEditor
 
         public Color GridLineColor { get; set; } = Color.gray;
 
-        public BackgroundElement(GraphVisualElement graph)
+        public BackgroundElement(GraphElement graph)
         {
             AddToClassList("graphBackground");
             m_Graph = graph;

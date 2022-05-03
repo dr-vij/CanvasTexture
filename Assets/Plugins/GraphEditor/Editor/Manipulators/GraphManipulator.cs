@@ -5,9 +5,37 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public class GraphManipulator : Manipulator
+    public abstract class GraphMouseManipulator : MouseManipulator
     {
-        private GraphVisualElement m_Graph;
+        /// <summary>
+        /// This method checks if evt current target is captured and stops propagation if so
+        /// </summary>
+        /// <param name="evt"></param>
+        /// <returns></returns>
+        protected bool TryHandleAndStopPropagation(EventBase evt, bool stopPropagationEvenIfNotCaptured = false)
+        {
+            var isTargetCaptured = evt.currentTarget.HasMouseCapture() && evt.currentTarget == target;
+            var canBeHadled = !evt.currentTarget.HasMouseCapture() || isTargetCaptured;
+            if (isTargetCaptured || (stopPropagationEvenIfNotCaptured && canBeHadled))
+                evt.StopPropagation();
+            return canBeHadled;
+        }
+
+        /// <summary>
+        /// This method checks if evt current event can be handled
+        /// </summary>
+        /// <param name="evt"></param>
+        /// <returns></returns>
+        protected bool TryHandle(EventBase evt)
+        {
+            var canBeHandled = !evt.currentTarget.HasMouseCapture() || evt.currentTarget == target;
+            return canBeHandled;
+        }
+    }
+
+    public class GraphManipulator : GraphMouseManipulator
+    {
+        private GraphElement m_Graph;
         private bool m_IsDragStarted;
         private bool m_IsSelectionStarted;
         private Vector2 m_MouseDragStartPosition;
@@ -18,13 +46,14 @@ namespace ViJ.GraphEditor
 
         public Vector2 MinMaxScale { get; set; } = new Vector2(0.01f, 100);
 
-        public GraphManipulator(GraphVisualElement graph)
+        public GraphManipulator(GraphElement graph)
         {
             m_Graph = graph;
             target = graph;
+            activators.Add(new ManipulatorActivationFilter() { button = MouseButton.LeftMouse });
         }
 
-        #region Callbacks
+        #region Callbacks Register/Unregister
 
         protected override void RegisterCallbacksOnTarget()
         {
@@ -52,13 +81,17 @@ namespace ViJ.GraphEditor
 
         private void OnMouseDown(MouseDownEvent evt)
         {
-            if (evt.commandKey && evt.button == 0)
+            if (!TryHandleAndStopPropagation(evt, true))
+                return;
+
+            Debug.Log("GraphDown");
+            if (evt.commandKey)
             {
                 m_IsDragStarted = true;
                 m_MouseDragStartPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
                 target.CaptureMouse();
             }
-            else if (evt.button == 0)
+            else
             {
                 m_IsSelectionStarted = true;
                 m_MouseDragStartPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
@@ -70,14 +103,17 @@ namespace ViJ.GraphEditor
 
         private void OnMouseMove(MouseMoveEvent evt)
         {
-            if (m_IsDragStarted && target.HasMouseCapture())
+            if (!TryHandleAndStopPropagation(evt))
+                return;
+
+            if (m_IsDragStarted)
             {
                 var mouseNewPosition = m_Graph.WorldPointToBlackboard(evt.mousePosition);
                 var localDelta = mouseNewPosition - m_MouseDragStartPosition;
                 var delta = m_Graph.BlackboardDeltaToWorld(localDelta);
                 m_Graph.Position += delta;
             }
-            else if (m_IsSelectionStarted && target.HasMouseCapture())
+            else if (m_IsSelectionStarted)
             {
                 var from = m_Graph.BlackboardPointToRoot(m_MouseDragStartPosition);
                 var to = m_Graph.WorldPointToRoot(evt.mousePosition);
@@ -87,12 +123,17 @@ namespace ViJ.GraphEditor
 
         private void OnMouseUp(MouseUpEvent evt)
         {
-            if (m_IsDragStarted && target.HasMouseCapture())
+            if (!TryHandleAndStopPropagation(evt))
+                return;
+
+            Debug.Log("GraphUp");
+
+            if (m_IsDragStarted)
             {
                 target.ReleaseMouse();
                 m_IsDragStarted = false;
             }
-            else if (m_IsSelectionStarted && target.HasMouseCapture())
+            else if (m_IsSelectionStarted)
             {
                 target.ReleaseMouse();
                 var from = m_Graph.BlackboardPointToRoot(m_MouseDragStartPosition);
@@ -104,6 +145,9 @@ namespace ViJ.GraphEditor
 
         private void OnWheel(WheelEvent evt)
         {
+            if (!TryHandle(evt))
+                return;
+
             //Move or scale. Option/alt swaps x/y
             if (evt.commandKey)
                 Scale(evt.mousePosition, evt.delta.y);
@@ -113,7 +157,7 @@ namespace ViJ.GraphEditor
                 m_Graph.Position -= new Vector2(evt.delta.x, evt.delta.y) * MoveSensetivity;
 
             //Update selection box if needed
-            if (m_IsSelectionStarted && target.HasMouseCapture())
+            if (m_IsSelectionStarted)
             {
                 var from = m_Graph.BlackboardPointToRoot(m_MouseDragStartPosition);
                 var to = m_Graph.WorldPointToRoot(evt.mousePosition);
@@ -121,6 +165,13 @@ namespace ViJ.GraphEditor
             }
         }
 
+        #endregion
+
+        /// <summary>
+        /// Scales graph relative to the current world mouse position
+        /// </summary>
+        /// <param name="pointerWorldPos"></param>
+        /// <param name="scaleDelta"></param>
         private void Scale(Vector2 pointerWorldPos, float scaleDelta)
         {
             //Save position of pointer before scale
@@ -139,7 +190,5 @@ namespace ViJ.GraphEditor
             var moveDelta = mousePosAfter - mousePosBefore;
             m_Graph.Position -= moveDelta;
         }
-
-        #endregion
     }
 }

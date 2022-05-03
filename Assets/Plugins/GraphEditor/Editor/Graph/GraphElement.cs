@@ -12,14 +12,14 @@ namespace ViJ.GraphEditor
     /// <summary>
     /// Base graph element
     /// </summary>
-    public class GraphVisualElement : VisualElement
+    public class GraphElement : VisualElement
     {
-        private const string UXML = nameof(GraphVisualElement) + ".uxml";
-        private const string ELEMENT_PATH = "Editor";
+        private const string UXML = nameof(GraphElement) + ".uxml";
+        private const string LOCAL_PATH = "Editor/Graph";
         private const string BLACKBOARD_NAME = "BlackboardRoot";
         private const string SELECTIONBOX_NAME = "SelectionBox";
 
-        public new class UxmlFactory : UxmlFactory<GraphVisualElement, UxmlTraits> { }
+        public new class UxmlFactory : UxmlFactory<GraphElement, UxmlTraits> { }
         public new class UxmlTraits : VisualElement.UxmlTraits { }
 
         private VisualElement m_Root;
@@ -29,11 +29,11 @@ namespace ViJ.GraphEditor
         private HashSet<int> m_Buffer = new HashSet<int>();
 
         private int m_NodeIdCounter;
-        private Dictionary<int, GraphNodeElement> m_Nodes = new Dictionary<int, GraphNodeElement>();
+        private Dictionary<int, NodeElement> m_Nodes = new Dictionary<int, NodeElement>();
         private HashSet<int> mSelectedNodes = new HashSet<int>();
         private HashSet<int> mPreSelectedNodes = new HashSet<int>();
 
-        public event Action<GraphVisualElement> GraphTransformChangeEvent;
+        public event Action<GraphElement> GraphTransformChangeEvent;
 
         public Vector2 Position
         {
@@ -55,9 +55,9 @@ namespace ViJ.GraphEditor
             }
         }
 
-        public GraphVisualElement()
+        public GraphElement()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, ELEMENT_PATH, UXML));
+            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, LOCAL_PATH, UXML));
             m_Root = asset.Instantiate();
             m_Root.StretchToParentSize();
             Add(m_Root);
@@ -70,11 +70,10 @@ namespace ViJ.GraphEditor
             m_Root.Insert(0, m_Background);
         }
 
-        public void AddNode(GraphNodeElement node)
+        public void AddNode(NodeElement node)
         {
             node.ID = GetNextId();
             m_Nodes.Add(node.ID, node);
-
             m_BlackboardRoot.Add(node);
         }
 
