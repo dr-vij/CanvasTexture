@@ -6,17 +6,30 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
+    public delegate void GraphDrag(Vector2 position);
+    public delegate void Slide(Vector2 delta);
+    public delegate void GraphZoom(Vector2 position, float delta);
+
     public class GraphInputModule : GenericInputModule<GraphElement>
     {
         private bool m_IsDragStarted;
         private bool m_IsSelectionStarted;
-        private Vector2 m_MouseDragStartPosition;
 
-        public float ScaleSensetivity { get; set; } = 0.01f;
+        //Drag by pointer
+        public event GraphDrag DragStartEvent;
+        public event GraphDrag DragEvent;
+        public event GraphDrag DragEndEvent;
 
-        public float MoveSensetivity { get; set; } = 3f;
+        //Selection by pointer
+        public event GraphDrag RectSelectionStartEvent;
+        public event GraphDrag RectSelectionEvent;
+        public event GraphDrag RectSelectionEndEvent;
 
-        public Vector2 MinMaxScale { get; set; } = new Vector2(0.01f, 100);
+        //Zoom to pointer
+        public event GraphZoom ZoomEvent;
+
+        //Slide with wheel or pad
+        public event Slide SlideEvent;
 
         public GraphInputModule(GraphElement graph) : base(graph)
         {
@@ -50,65 +63,49 @@ namespace ViJ.GraphEditor
 
         private void OnMouseDown(MouseDownEvent evt)
         {
-            if (!CanHandleEvent(evt, true))
-                return;
+            if (CanHandleEvent(evt, true))
+            {
+                m_TypedTarget.CaptureMouse();
 
-            Debug.Log("GraphDown");
-            if (evt.commandKey)
-            {
-                m_IsDragStarted = true;
-                m_MouseDragStartPosition = m_TypedTarget.WorldPointToBlackboard(evt.mousePosition);
-                m_TypedTarget.CaptureMouse();
-            }
-            else
-            {
-                m_IsSelectionStarted = true;
-                m_MouseDragStartPosition = m_TypedTarget.WorldPointToBlackboard(evt.mousePosition);
-                var fromTo = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
-                m_TypedTarget.StartSelectionBox(fromTo, fromTo);
-                m_TypedTarget.CaptureMouse();
+                if (evt.commandKey)
+                {
+                    m_IsDragStarted = true;
+                    DragStartEvent?.Invoke(evt.mousePosition);
+                }
+                else
+                {
+                    m_IsSelectionStarted = true;
+                    RectSelectionStartEvent?.Invoke(evt.mousePosition);
+                }
             }
         }
 
         private void OnMouseMove(MouseMoveEvent evt)
         {
-            if (!CanHandleEvent(evt))
-                return;
-
-            if (m_IsDragStarted)
+            if (CanHandleEvent(evt))
             {
-                var mouseNewPosition = m_TypedTarget.WorldPointToBlackboard(evt.mousePosition);
-                var localDelta = mouseNewPosition - m_MouseDragStartPosition;
-                var delta = m_TypedTarget.BlackboardDeltaToWorld(localDelta);
-                m_TypedTarget.Position += delta;
-            }
-            else if (m_IsSelectionStarted)
-            {
-                var from = m_TypedTarget.BlackboardPointToRoot(m_MouseDragStartPosition);
-                var to = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
-                m_TypedTarget.UpdateSelectionBox(from, to);
+                if (m_IsDragStarted)
+                    DragEvent?.Invoke(evt.mousePosition);
+                else if (m_IsSelectionStarted)
+                    RectSelectionEvent?.Invoke(evt.mousePosition);
             }
         }
 
         private void OnMouseUp(MouseUpEvent evt)
         {
-            if (!CanHandleEvent(evt))
-                return;
-
-            Debug.Log("GraphUp");
-
-            if (m_IsDragStarted)
+            if (CanHandleEvent(evt))
             {
                 m_TypedTarget.ReleaseMouse();
-                m_IsDragStarted = false;
-            }
-            else if (m_IsSelectionStarted)
-            {
-                m_TypedTarget.ReleaseMouse();
-                var from = m_TypedTarget.BlackboardPointToRoot(m_MouseDragStartPosition);
-                var to = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
-                m_TypedTarget.EndSelectionBox(from, to);
-                m_IsSelectionStarted = false;
+                if (m_IsDragStarted)
+                {
+                    m_IsDragStarted = false;
+                    DragEndEvent?.Invoke(evt.mousePosition);
+                }
+                else if (m_IsSelectionStarted)
+                {
+                    m_IsSelectionStarted = false;
+                    RectSelectionEndEvent?.Invoke(evt.mousePosition);
+                }
             }
         }
 
@@ -119,45 +116,17 @@ namespace ViJ.GraphEditor
 
             //Move or scale. Option/alt swaps x/y
             if (evt.commandKey)
-                Scale(evt.mousePosition, evt.delta.y);
+                ZoomEvent?.Invoke(evt.mousePosition, evt.delta.y);
             else if (evt.altKey)
-                m_TypedTarget.Position -= new Vector2(evt.delta.y, evt.delta.x) * MoveSensetivity;
+                SlideEvent?.Invoke(-new Vector2(evt.delta.y, evt.delta.x));
             else
-                m_TypedTarget.Position -= new Vector2(evt.delta.x, evt.delta.y) * MoveSensetivity;
+                SlideEvent?.Invoke(-new Vector2(evt.delta.x, evt.delta.y));
 
-            //Update selection box if needed
+            //Raise selection event to update rect
             if (m_IsSelectionStarted)
-            {
-                var from = m_TypedTarget.BlackboardPointToRoot(m_MouseDragStartPosition);
-                var to = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
-                m_TypedTarget.UpdateSelectionBox(from, to);
-            }
+                RectSelectionEvent?.Invoke(evt.mousePosition);
         }
 
         #endregion
-
-        /// <summary>
-        /// Scales graph relative to the current world mouse position
-        /// </summary>
-        /// <param name="pointerWorldPos"></param>
-        /// <param name="scaleDelta"></param>
-        private void Scale(Vector2 pointerWorldPos, float scaleDelta)
-        {
-            //Save position of pointer before scale
-            var mousePosBefore = m_TypedTarget.WorldPointToRoot(pointerWorldPos);
-            var mouseLocalPosBefore = m_TypedTarget.WorldPointToBlackboard(pointerWorldPos);
-
-            //Scale
-            var currentScale = m_TypedTarget.Scale;
-            var delta = Mathf.Clamp(1 + ScaleSensetivity * scaleDelta, 0.5f, 1.5f);
-            var wantedScale = currentScale * delta;
-            var clampedScale = Mathf.Clamp(wantedScale, MinMaxScale.x, MinMaxScale.y);
-            m_TypedTarget.Scale = clampedScale;
-
-            //Now reposition
-            var mousePosAfter = m_TypedTarget.BlackboardPointToRoot(mouseLocalPosBefore);
-            var moveDelta = mousePosAfter - mousePosBefore;
-            m_TypedTarget.Position -= moveDelta;
-        }
     }
 }

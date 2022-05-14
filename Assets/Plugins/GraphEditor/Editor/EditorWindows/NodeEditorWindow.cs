@@ -28,7 +28,6 @@ namespace ViJ.GraphEditor
             var node = new NodeElement();
             m_Graph.AddNode(node);
             node.transform.position = new Vector3(100, 100, 0);
-            var graphInputModule = new GraphInputModule(m_Graph);
         }
     }
 }

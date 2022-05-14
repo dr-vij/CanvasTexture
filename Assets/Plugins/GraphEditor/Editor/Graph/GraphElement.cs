@@ -19,14 +19,13 @@ namespace ViJ.GraphEditor
         private const string BLACKBOARD_NAME = "BlackboardRoot";
         private const string SELECTIONBOX_NAME = "SelectionBox";
 
-        //public new class UxmlFactory : UxmlFactory<GraphElement, UxmlTraits> { }
-        //public new class UxmlTraits : VisualElement.UxmlTraits { }
-
         private VisualElement m_Root;
         private VisualElement m_Background;
         private VisualElement m_BlackboardRoot;
         private VisualElement m_SelectionBox;
         private HashSet<int> m_Buffer = new HashSet<int>();
+
+        private GraphInputModule m_GraphInputModule;
 
         private int m_NodeIdCounter;
         private Dictionary<int, NodeElement> m_Nodes = new Dictionary<int, NodeElement>();
@@ -35,6 +34,12 @@ namespace ViJ.GraphEditor
         private HashSet<int> mPreSelectedNodes = new HashSet<int>();
 
         public event Action<GraphElement> GraphTransformChangeEvent;
+
+        public float ScaleSensetivity { get; set; } = 0.01f;
+
+        public float MoveSensetivity { get; set; } = 3f;
+
+        public Vector2 MinMaxScale { get; set; } = new Vector2(0.01f, 100);
 
         public Vector2 Position
         {
@@ -69,6 +74,20 @@ namespace ViJ.GraphEditor
             //Create background
             m_Background = new BackgroundElement(this);
             m_Root.Insert(0, m_Background);
+
+            //Connect Input
+            m_GraphInputModule = new GraphInputModule(this);
+
+            m_GraphInputModule.DragStartEvent += OnDragStart;
+            m_GraphInputModule.DragEvent += OnDrag;
+            m_GraphInputModule.DragEndEvent += OnDragEnd;
+
+            m_GraphInputModule.RectSelectionStartEvent += OnRectSelectionStart;
+            m_GraphInputModule.RectSelectionEvent += OnRectSelection;
+            m_GraphInputModule.RectSelectionEndEvent += OnRectSelectionEnd;
+
+            m_GraphInputModule.ZoomEvent += OnZoom;
+            m_GraphInputModule.SlideEvent += OnSlide;
         }
 
         public void AddNode(NodeElement node)
@@ -102,32 +121,6 @@ namespace ViJ.GraphEditor
             inputModule.NodeDragEndEvent -= OnNodeDragEnd;
             inputModule.Dispose();
             m_NodeInputs.Remove(id);
-        }
-
-        public void StartSelectionBox(Vector2 from, Vector2 to)
-        {
-            m_SelectionBox.pickingMode = PickingMode.Ignore;
-            m_SelectionBox.style.visibility = Visibility.Visible;
-            m_SelectionBox.style.opacity = 1;
-            var rect = UpdateVisualBox(from, to);
-            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
-            SetPreselectedNodes(m_Buffer);
-        }
-
-        public void UpdateSelectionBox(Vector2 from, Vector2 to)
-        {
-            var rect = UpdateVisualBox(from, to);
-            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
-            SetPreselectedNodes(m_Buffer);
-        }
-
-        public void EndSelectionBox(Vector2 from, Vector2 to)
-        {
-            var rect = UpdateVisualBox(from, to);
-            m_SelectionBox.style.opacity = 0;
-            SetPreselectedNodes(null);
-            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
-            SetSelectedNodes(m_Buffer);
         }
 
         private HashSet<int> GetOverlappedNodes(Rect rect, HashSet<int> outNodes = null)
@@ -192,9 +185,8 @@ namespace ViJ.GraphEditor
             return m_SelectionBox.worldBound;
         }
 
-        #region Coords conversion
-
         #region Nodes drag
+
         private Vector2 m_PointerDragStartPosition;
         private Vector2 m_NodeDragStartPosition;
 
@@ -218,6 +210,109 @@ namespace ViJ.GraphEditor
         }
 
         #endregion
+
+        #region Graph manipulations
+
+        private Vector2 m_GraphPointerDragStartPos;
+        private Vector2 m_SelectorRectDragStartPos;
+
+        private void OnDragStart(Vector2 pointerPosition)
+        {
+            m_GraphPointerDragStartPos = WorldPointToBlackboard(pointerPosition);
+        }
+
+        private void OnDrag(Vector2 pointerPosition)
+        {
+            var mouseNewPosition = WorldPointToBlackboard(pointerPosition);
+            var localDelta = mouseNewPosition - m_GraphPointerDragStartPos;
+            var delta = BlackboardDeltaToWorld(localDelta);
+            Position += delta;
+        }
+
+        private void OnDragEnd(Vector2 pointerPosition)
+        {
+        }
+
+        private void OnRectSelectionStart(Vector2 pointerPosition)
+        {
+            m_SelectorRectDragStartPos = WorldPointToBlackboard(pointerPosition);
+            var fromTo = WorldPointToRoot(pointerPosition);
+            StartSelectionBox(fromTo, fromTo);
+        }
+
+        private void OnRectSelection(Vector2 pointerPosition)
+        {
+            var from = BlackboardPointToRoot(m_SelectorRectDragStartPos);
+            var to = WorldPointToRoot(pointerPosition);
+            UpdateSelectionBox(from, to);
+        }
+
+        private void OnRectSelectionEnd(Vector2 pointerPosition)
+        {
+            var from = BlackboardPointToRoot(m_SelectorRectDragStartPos);
+            var to = WorldPointToRoot(pointerPosition);
+            EndSelectionBox(from, to);
+        }
+
+        private void OnSlide(Vector2 delta)
+        {
+            Position += delta * MoveSensetivity;
+        }
+
+        private void StartSelectionBox(Vector2 from, Vector2 to)
+        {
+            m_SelectionBox.pickingMode = PickingMode.Ignore;
+            m_SelectionBox.style.visibility = Visibility.Visible;
+            m_SelectionBox.style.opacity = 1;
+            var rect = UpdateVisualBox(from, to);
+            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
+            SetPreselectedNodes(m_Buffer);
+        }
+
+        private void UpdateSelectionBox(Vector2 from, Vector2 to)
+        {
+            var rect = UpdateVisualBox(from, to);
+            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
+            SetPreselectedNodes(m_Buffer);
+        }
+
+        private void EndSelectionBox(Vector2 from, Vector2 to)
+        {
+            var rect = UpdateVisualBox(from, to);
+            m_SelectionBox.style.opacity = 0;
+            SetPreselectedNodes(null);
+            m_Buffer = GetOverlappedNodes(rect, m_Buffer);
+            SetSelectedNodes(m_Buffer);
+        }
+
+        /// <summary>
+        /// Scales graph relative to the given world position
+        /// </summary>
+        /// <param name="pointerWorldPos"></param>
+        /// <param name="scaleDelta"></param>
+        private void OnZoom(Vector2 worldPosition, float scaleDelta)
+        {
+            //Save position of pointer before scale
+            var mousePosBefore = WorldPointToRoot(worldPosition);
+            var mouseLocalPosBefore = WorldPointToBlackboard(worldPosition);
+
+            //Scale
+            var currentScale = Scale;
+            var delta = Mathf.Clamp(1 + ScaleSensetivity * scaleDelta, 0.5f, 1.5f);
+            var wantedScale = currentScale * delta;
+            var clampedScale = Mathf.Clamp(wantedScale, MinMaxScale.x, MinMaxScale.y);
+            Scale = clampedScale;
+
+            //Now reposition
+            var mousePosAfter = BlackboardPointToRoot(mouseLocalPosBefore);
+            var moveDelta = mousePosAfter - mousePosBefore;
+            Position -= moveDelta;
+        }
+
+
+        #endregion
+
+        #region Coords conversions
 
         //POINT
         public Vector2 BlackboardPointToWorld(Vector2 localPosition) => m_BlackboardRoot.LocalToWorld(localPosition);

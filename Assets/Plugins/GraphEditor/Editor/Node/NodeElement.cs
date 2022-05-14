@@ -16,9 +16,6 @@ namespace ViJ.GraphEditor
         private const string PRESELECTED_NODE_CLASS = "nodePreselected";
         private const string UNSELECTED_NODE_CLASS = "nodeUnselected";
 
-        public new class UxmlFactory : UxmlFactory<NodeElement, UxmlTraits> { }
-        public new class UxmlTraits : VisualElement.UxmlTraits { }
-
         private int m_ID = -1;
         private bool mIsSelected = false;
         private bool mIsPreselected = false;
