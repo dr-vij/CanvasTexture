@@ -5,17 +5,18 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
+    public delegate void NodeDragAction(NodeElement node, Vector2 pointerPosition);
+
     public class NodeInputModule : GenericInputModule<NodeElement>
     {
-        private GraphElement m_Graph;
-
         private bool m_DragStarted;
-        private Vector2 m_MouseDragStartPosition;
-        private Vector2 m_NodeDragStartPosition;
 
-        public NodeInputModule(NodeElement node, GraphElement graph) : base(node)
+        public event NodeDragAction NodeDragStartEvent;
+        public event NodeDragAction NodeDragEvent;
+        public event NodeDragAction NodeDragEndEvent;
+
+        public NodeInputModule(NodeElement node) : base(node)
         {
-            m_Graph = graph;
         }
 
         protected override void OnSubscribeEvents(NodeElement node)
@@ -34,41 +35,29 @@ namespace ViJ.GraphEditor
 
         private void OnMouseDown(MouseDownEvent evt)
         {
-            if (!CanHandleEvent(evt, true))
-                return;
-
-            Debug.Log("NodeDown");
-
-            m_TypedTarget.CaptureMouse();
-            m_DragStarted = true;
-            m_MouseDragStartPosition = evt.mousePosition;
-            m_NodeDragStartPosition = m_TypedTarget.BlackboardPosition;
+            if (CanHandleEvent(evt, true))
+            {
+                m_TypedTarget.CaptureMouse();
+                m_DragStarted = true;
+                NodeDragStartEvent?.Invoke(m_TypedTarget, evt.mousePosition);
+            }
         }
 
         private void OnMouseMove(MouseMoveEvent evt)
         {
-            if (!CanHandleEvent(evt))
-                return;
-
-            if (m_DragStarted)
+            if (CanHandleEvent(evt) && m_DragStarted)
             {
-                var mouseDelta = evt.mousePosition - m_MouseDragStartPosition;
-                var blackboardDelta = m_Graph.WorldDeltaToBlackboard(mouseDelta);
-                m_TypedTarget.BlackboardPosition = m_NodeDragStartPosition + blackboardDelta;
+                NodeDragEvent?.Invoke(m_TypedTarget, evt.mousePosition);
             }
         }
 
         private void OnMouseUp(MouseUpEvent evt)
         {
-            if (!CanHandleEvent(evt))
-                return;
-
-            Debug.Log("NodeUp");
-
-            if (m_DragStarted)
+            if (CanHandleEvent(evt) && m_DragStarted)
             {
                 m_DragStarted = false;
                 m_TypedTarget.ReleaseMouse();
+                NodeDragEndEvent?.Invoke(m_TypedTarget, evt.mousePosition);
             }
         }
     }

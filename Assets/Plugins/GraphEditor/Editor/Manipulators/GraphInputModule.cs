@@ -6,58 +6,158 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public abstract class InputModuleBase : IDisposable
+    public class GraphInputModule : GenericInputModule<GraphElement>
     {
-        private bool m_IsDisposed = false;
-        protected VisualElement m_Target;
+        private bool m_IsDragStarted;
+        private bool m_IsSelectionStarted;
+        private Vector2 m_MouseDragStartPosition;
 
-        public InputModuleBase(VisualElement target)
+        public float ScaleSensetivity { get; set; } = 0.01f;
+
+        public float MoveSensetivity { get; set; } = 3f;
+
+        public Vector2 MinMaxScale { get; set; } = new Vector2(0.01f, 100);
+
+        public GraphInputModule(GraphElement graph) : base(graph)
         {
-            m_Target = target;
-            OnTargetSet(target);
-            SubscribeEvents(target);
         }
 
-        protected abstract void OnTargetSet(VisualElement target);
-        protected abstract void SubscribeEvents(VisualElement eventHandler);
-        protected abstract void UnsubscribeEvents(VisualElement eventHandler);
+        #region Callbacks Register/Unregister
 
-        /// <summary>
-        /// This method checks if evt current target is captured and stops propagation if needed
-        /// </summary>
-        /// <param name="evt"></param>
-        /// <returns></returns>
-        protected virtual bool CanHandleEvent(EventBase evt, bool stopPropagationEvenIfNotCaptured)
+        protected override void OnSubscribeEvents(GraphElement handler)
         {
-            var isTargetCaptured = evt.currentTarget.HasMouseCapture() && m_Target == evt.currentTarget;
-            var canBeHadled = !evt.currentTarget.HasMouseCapture() || isTargetCaptured;
-            if (isTargetCaptured || (stopPropagationEvenIfNotCaptured && canBeHadled))
-                evt.StopPropagation();
-            return canBeHadled;
+            //Scale/move with touchpad (optional)
+            handler.RegisterCallback<WheelEvent>(OnWheel);
+
+            //Grab
+            handler.RegisterCallback<MouseDownEvent>(OnMouseDown);
+            handler.RegisterCallback<MouseMoveEvent>(OnMouseMove);
+            handler.RegisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
-        /// <summary>
-        /// This method checks if evt current event can be handled
-        /// </summary>
-        /// <param name="evt"></param>
-        /// <returns></returns>
-        protected virtual bool CanHandleEvent(EventBase evt)
+        protected override void OnUnsubscribeEvents(GraphElement handler)
         {
-            return !evt.currentTarget.HasMouseCapture() || m_Target == evt.currentTarget;
+            handler.UnregisterCallback<WheelEvent>(OnWheel);
+
+            handler.UnregisterCallback<MouseDownEvent>(OnMouseDown);
+            handler.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
+            handler.UnregisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
-        public void Dispose()
+        #endregion
+
+        #region Input handling
+
+        private void OnMouseDown(MouseDownEvent evt)
         {
-            if (!m_IsDisposed)
+            if (!CanHandleEvent(evt, true))
+                return;
+
+            Debug.Log("GraphDown");
+            if (evt.commandKey)
             {
-                UnsubscribeEvents(m_Target);
-                OnDispose();
-                m_IsDisposed = true;
+                m_IsDragStarted = true;
+                m_MouseDragStartPosition = m_TypedTarget.WorldPointToBlackboard(evt.mousePosition);
+                m_TypedTarget.CaptureMouse();
+            }
+            else
+            {
+                m_IsSelectionStarted = true;
+                m_MouseDragStartPosition = m_TypedTarget.WorldPointToBlackboard(evt.mousePosition);
+                var fromTo = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
+                m_TypedTarget.StartSelectionBox(fromTo, fromTo);
+                m_TypedTarget.CaptureMouse();
             }
         }
 
-        protected virtual void OnDispose()
+        private void OnMouseMove(MouseMoveEvent evt)
         {
+            if (!CanHandleEvent(evt))
+                return;
+
+            if (m_IsDragStarted)
+            {
+                var mouseNewPosition = m_TypedTarget.WorldPointToBlackboard(evt.mousePosition);
+                var localDelta = mouseNewPosition - m_MouseDragStartPosition;
+                var delta = m_TypedTarget.BlackboardDeltaToWorld(localDelta);
+                m_TypedTarget.Position += delta;
+            }
+            else if (m_IsSelectionStarted)
+            {
+                var from = m_TypedTarget.BlackboardPointToRoot(m_MouseDragStartPosition);
+                var to = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
+                m_TypedTarget.UpdateSelectionBox(from, to);
+            }
+        }
+
+        private void OnMouseUp(MouseUpEvent evt)
+        {
+            if (!CanHandleEvent(evt))
+                return;
+
+            Debug.Log("GraphUp");
+
+            if (m_IsDragStarted)
+            {
+                m_TypedTarget.ReleaseMouse();
+                m_IsDragStarted = false;
+            }
+            else if (m_IsSelectionStarted)
+            {
+                m_TypedTarget.ReleaseMouse();
+                var from = m_TypedTarget.BlackboardPointToRoot(m_MouseDragStartPosition);
+                var to = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
+                m_TypedTarget.EndSelectionBox(from, to);
+                m_IsSelectionStarted = false;
+            }
+        }
+
+        private void OnWheel(WheelEvent evt)
+        {
+            if (!CanHandleEvent(evt))
+                return;
+
+            //Move or scale. Option/alt swaps x/y
+            if (evt.commandKey)
+                Scale(evt.mousePosition, evt.delta.y);
+            else if (evt.altKey)
+                m_TypedTarget.Position -= new Vector2(evt.delta.y, evt.delta.x) * MoveSensetivity;
+            else
+                m_TypedTarget.Position -= new Vector2(evt.delta.x, evt.delta.y) * MoveSensetivity;
+
+            //Update selection box if needed
+            if (m_IsSelectionStarted)
+            {
+                var from = m_TypedTarget.BlackboardPointToRoot(m_MouseDragStartPosition);
+                var to = m_TypedTarget.WorldPointToRoot(evt.mousePosition);
+                m_TypedTarget.UpdateSelectionBox(from, to);
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Scales graph relative to the current world mouse position
+        /// </summary>
+        /// <param name="pointerWorldPos"></param>
+        /// <param name="scaleDelta"></param>
+        private void Scale(Vector2 pointerWorldPos, float scaleDelta)
+        {
+            //Save position of pointer before scale
+            var mousePosBefore = m_TypedTarget.WorldPointToRoot(pointerWorldPos);
+            var mouseLocalPosBefore = m_TypedTarget.WorldPointToBlackboard(pointerWorldPos);
+
+            //Scale
+            var currentScale = m_TypedTarget.Scale;
+            var delta = Mathf.Clamp(1 + ScaleSensetivity * scaleDelta, 0.5f, 1.5f);
+            var wantedScale = currentScale * delta;
+            var clampedScale = Mathf.Clamp(wantedScale, MinMaxScale.x, MinMaxScale.y);
+            m_TypedTarget.Scale = clampedScale;
+
+            //Now reposition
+            var mousePosAfter = m_TypedTarget.BlackboardPointToRoot(mouseLocalPosBefore);
+            var moveDelta = mousePosAfter - mousePosBefore;
+            m_TypedTarget.Position -= moveDelta;
         }
     }
 }

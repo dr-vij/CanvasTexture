@@ -90,7 +90,6 @@ namespace ViJ.GraphEditor
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, LOCAL_PATH, UXML));
             Add(asset.Instantiate());
             m_Node = this.Q<VisualElement>("Node");
-
             UpdateView();
         }
 

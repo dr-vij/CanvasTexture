@@ -19,8 +19,8 @@ namespace ViJ.GraphEditor
         private const string BLACKBOARD_NAME = "BlackboardRoot";
         private const string SELECTIONBOX_NAME = "SelectionBox";
 
-        public new class UxmlFactory : UxmlFactory<GraphElement, UxmlTraits> { }
-        public new class UxmlTraits : VisualElement.UxmlTraits { }
+        //public new class UxmlFactory : UxmlFactory<GraphElement, UxmlTraits> { }
+        //public new class UxmlTraits : VisualElement.UxmlTraits { }
 
         private VisualElement m_Root;
         private VisualElement m_Background;
@@ -30,6 +30,7 @@ namespace ViJ.GraphEditor
 
         private int m_NodeIdCounter;
         private Dictionary<int, NodeElement> m_Nodes = new Dictionary<int, NodeElement>();
+        private Dictionary<int, NodeInputModule> m_NodeInputs = new Dictionary<int, NodeInputModule>();
         private HashSet<int> mSelectedNodes = new HashSet<int>();
         private HashSet<int> mPreSelectedNodes = new HashSet<int>();
 
@@ -72,18 +73,35 @@ namespace ViJ.GraphEditor
 
         public void AddNode(NodeElement node)
         {
+            //Create node and add it to blackboard
             node.ID = GetNextId();
             m_Nodes.Add(node.ID, node);
             m_BlackboardRoot.Add(node);
+
+            //Create input for node and subscribe it
+            var inputModule = new NodeInputModule(node);
+            inputModule.NodeDragStartEvent += OnNodeDragStart;
+            inputModule.NodeDragEvent += OnNodeDrag;
+            inputModule.NodeDragEndEvent += OnNodeDragEnd;
+            m_NodeInputs.Add(node.ID, inputModule);
         }
 
         public void RemoveNode(int id)
         {
+            //Remove node from blackboard
             var node = m_Nodes[id];
             m_Nodes.Remove(id);
             mSelectedNodes.Remove(id);
             mPreSelectedNodes.Remove(id);
             node.RemoveFromHierarchy();
+
+            //Disconnect input
+            var inputModule = m_NodeInputs[id];
+            inputModule.NodeDragStartEvent -= OnNodeDragStart;
+            inputModule.NodeDragEvent -= OnNodeDrag;
+            inputModule.NodeDragEndEvent -= OnNodeDragEnd;
+            inputModule.Dispose();
+            m_NodeInputs.Remove(id);
         }
 
         public void StartSelectionBox(Vector2 from, Vector2 to)
@@ -135,16 +153,16 @@ namespace ViJ.GraphEditor
             var nodesToPreselect = nodes.Where(c => !mPreSelectedNodes.Contains(c)).ToList();
             var nodesToUnselect = mPreSelectedNodes.Where(c => !nodes.Contains(c)).ToList();
 
-            foreach(var nodeId in nodesToPreselect)
+            foreach (var nodeId in nodesToPreselect)
             {
                 m_Nodes[nodeId].IsPreSelected = true;
                 mPreSelectedNodes.Add(nodeId);
             }
-            foreach(var nodeId in nodesToUnselect)
+            foreach (var nodeId in nodesToUnselect)
             {
                 m_Nodes[nodeId].IsPreSelected = false;
                 mPreSelectedNodes.Remove(nodeId);
-            }    
+            }
         }
 
         private void SetSelectedNodes(HashSet<int> nodes)
@@ -175,6 +193,31 @@ namespace ViJ.GraphEditor
         }
 
         #region Coords conversion
+
+        #region Nodes drag
+        private Vector2 m_PointerDragStartPosition;
+        private Vector2 m_NodeDragStartPosition;
+
+        private void OnNodeDragStart(NodeElement node, Vector2 pointerPosition)
+        {
+            //TODO: Select if not selected. Move group if group selected
+
+            m_PointerDragStartPosition = pointerPosition;
+            m_NodeDragStartPosition = node.BlackboardPosition;
+        }
+
+        private void OnNodeDrag(NodeElement node, Vector2 pointerPosition)
+        {
+            var pointerTotalDelta = pointerPosition - m_PointerDragStartPosition;
+            var blackboardDelta = WorldDeltaToBlackboard(pointerTotalDelta);
+            node.BlackboardPosition = m_NodeDragStartPosition + blackboardDelta;
+        }
+
+        private void OnNodeDragEnd(NodeElement node, Vector2 pointerPosition)
+        {
+        }
+
+        #endregion
 
         //POINT
         public Vector2 BlackboardPointToWorld(Vector2 localPosition) => m_BlackboardRoot.LocalToWorld(localPosition);
