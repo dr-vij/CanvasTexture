@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.IO;
 using System;
+using System.Linq;
 
 namespace ViJ.GraphEditor
 {
@@ -54,7 +55,10 @@ namespace ViJ.GraphEditor
         private VisualElement m_OutputContainer;
         private DragInputModule m_DragInputModule;
 
-        public event Action NodePositionChangeEvent;
+        private int m_PinsCounter = -1;
+        private Dictionary<int, NodePinElement> m_Pins = new Dictionary<int, NodePinElement>();
+
+        public event Action NodeTransformChangeEvent;
 
         public event NodeDrag NodeDragStartEvent;
         public event NodeDrag NodeDragEvent;
@@ -72,7 +76,7 @@ namespace ViJ.GraphEditor
             set
             {
                 transform.position = value;
-                NodePositionChangeEvent?.Invoke();
+                NodeTransformChangeEvent?.Invoke();
             }
         }
 
@@ -106,7 +110,9 @@ namespace ViJ.GraphEditor
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, LOCAL_PATH, UXML));
             Add(asset.Instantiate());
-            m_Node = this.Q<VisualElement>("Node");
+            m_Node = this.Q("Node");
+            m_InputContainer = this.Q(className: INPUT_CONTAINER_CLASS);
+            m_OutputContainer = this.Q(className: OUTPUT_CONTAINER_CLASS);
             UpdateView();
 
             //Connect input;
@@ -114,28 +120,53 @@ namespace ViJ.GraphEditor
             m_DragInputModule.NodeDragStartEvent += (coord) => NodeDragStartEvent?.Invoke(this, coord);
             m_DragInputModule.NodeDragEvent += (coord) => NodeDragEvent?.Invoke(this, coord);
             m_DragInputModule.NodeDragEndEvent += (coord) => NodeDragEndEvent?.Invoke(this, coord);
+
+            //TODO: REMOVE TEST PINS
+            AddOutputPin(new NodePinElement());
+            AddOutputPin(new NodePinElement());
+            AddOutputPin(new NodePinElement());
+            AddOutputPin(new NodePinElement());
+
+            AddInputPin(new NodePinElement());
+            AddInputPin(new NodePinElement());
         }
 
-        public void AddOutputPin(NodePinElement pin)
+        public List<NodePinElement> GetAllPins() => m_Pins.Values.ToList();
+
+        public bool TryGetPin(int pinId, out NodePinElement pin) => m_Pins.TryGetValue(pinId, out pin);
+
+        public int AddOutputPin(NodePinElement pin)
         {
             m_OutputContainer.Add(pin);
             pin.IsReversed = false;
             pin.PinType = PinType.Output;
+            var id =  RegisterPin(pin);
+            NodeTransformChangeEvent?.Invoke();
+            return id;
         }
 
-        public void AddInputPin(NodePinElement pin)
+        public int AddInputPin(NodePinElement pin)
         {
             m_InputContainer.Add(pin);
             pin.IsReversed = true;
             pin.PinType = PinType.Input;
+            var id = RegisterPin(pin);
+            NodeTransformChangeEvent?.Invoke();
+            return id;
         }
 
-        private void AddPin(NodePinElement pin)
+        private int RegisterPin(NodePinElement pin)
         {
+            if (!pin.HasId)
+                pin.ID = ++m_PinsCounter;
+
             pin.Owner = this;
             pin.PinDragStartEvent += (pin, coord) => PinDragStartEvent?.Invoke(pin, coord);
             pin.PinDragEvent += (pin, coord) => PinDragEvent?.Invoke(pin, coord);
             pin.PinDragEndEvent += (pin, coord) => PinDragEndEvent?.Invoke(pin, coord);
+
+            m_Pins.Add(pin.ID, pin);
+            return pin.ID;
         }
 
         /// <summary>

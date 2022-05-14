@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -33,6 +36,10 @@ namespace ViJ.GraphEditor
         public event PinDrag PinDragEvent;
         public event PinDrag PinDragEndEvent;
 
+        public event Action PinPositionChangeEvent;
+
+        public Vector2 PinWorldPosition => m_Pin.LocalToWorld(m_Pin.contentRect.center);
+
         public PinType PinType
         {
             get => m_PinType;
@@ -55,11 +62,17 @@ namespace ViJ.GraphEditor
         public NodeElement Owner
         {
             get => m_Owner;
-            set => m_Owner = value;
+            set
+            {
+                m_Owner = value;
+                m_Owner.NodeTransformChangeEvent += () => PinPositionChangeEvent?.Invoke();
+            }
         }
 
         public NodePinElement()
         {
+            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, LOCAL_PATH, UXML));
+            Add(asset.Instantiate());
             m_Pin = this.Q(className: PIN_CLASSNAME);
             m_PinContainer = this.Q(className: PIN_CONTAINER_CLASS);
 

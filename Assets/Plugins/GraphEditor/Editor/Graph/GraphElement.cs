@@ -89,6 +89,13 @@ namespace ViJ.GraphEditor
             m_GraphInputModule.SlideEvent += OnSlide;
         }
 
+        public void ConnectPins(NodePinElement pin0, NodePinElement pin1)
+        {
+            var connection = new ConnectionElement();
+            m_BlackboardRoot.Add(connection);
+            connection.SetPins(pin0, pin1);
+        }
+
         public void AddNode(NodeElement node)
         {
             //Create node and add it to blackboard

@@ -32,6 +32,10 @@ namespace ViJ.GraphEditor
             var node2 = new NodeElement();
             m_Graph.AddNode(node2);
             node2.BlackboardPosition = new Vector2(200, 200);
+
+            node1.TryGetPin(0, out var pin0);
+            node2.TryGetPin(0, out var pin1);
+            m_Graph.ConnectPins(pin0, pin1);
         }
     }
 }
