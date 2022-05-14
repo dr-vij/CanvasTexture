@@ -8,20 +8,11 @@ using System;
 
 namespace ViJ.GraphEditor
 {
-    public class NodeElement : VisualElement
+    public delegate void NodeDrag(NodeElement node, Vector2 position);
+
+    public class IdentifiedVisualElement : VisualElement
     {
-        private const string UXML = nameof(NodeElement) + ".uxml";
-        private const string LOCAL_PATH = "Editor/Node";
-        private const string SELECTED_NODE_CLASS = "nodeSelected";
-        private const string PRESELECTED_NODE_CLASS = "nodePreselected";
-        private const string UNSELECTED_NODE_CLASS = "nodeUnselected";
-
         private int m_ID = -1;
-        private bool mIsSelected = false;
-        private bool mIsPreselected = false;
-        private VisualElement m_Node;
-
-        public event Action NodePositionChangeEvent;
 
         public int ID
         {
@@ -43,6 +34,31 @@ namespace ViJ.GraphEditor
         }
 
         public bool HasId => m_ID != -1;
+    }
+
+    public class NodeElement : IdentifiedVisualElement
+    {
+        private const string UXML = nameof(NodeElement) + ".uxml";
+        private const string LOCAL_PATH = "Editor/Node";
+        private const string SELECTED_NODE_CLASS = "nodeSelected";
+        private const string PRESELECTED_NODE_CLASS = "nodePreselected";
+        private const string UNSELECTED_NODE_CLASS = "nodeUnselected";
+
+        private const string INPUT_CONTAINER_CLASS = "inputContainer";
+        private const string OUTPUT_CONTAINER_CLASS = "outputContainer";
+
+        private bool mIsSelected = false;
+        private bool mIsPreselected = false;
+        private VisualElement m_Node;
+        private VisualElement m_InputContainer;
+        private VisualElement m_OutputContainer;
+        private DragInputModule m_DragInputModule;
+
+        public event Action NodePositionChangeEvent;
+
+        public event NodeDrag NodeDragStartEvent;
+        public event NodeDrag NodeDragEvent;
+        public event NodeDrag NodeDragEndEvent;
 
         public Rect NodeWorldBounds => m_Node.worldBound;
 
@@ -88,6 +104,29 @@ namespace ViJ.GraphEditor
             Add(asset.Instantiate());
             m_Node = this.Q<VisualElement>("Node");
             UpdateView();
+
+            //Connect input;
+            m_DragInputModule = new DragInputModule(this);
+            m_DragInputModule.NodeDragStartEvent += (coord) => NodeDragStartEvent?.Invoke(this, coord);
+            m_DragInputModule.NodeDragEvent += (coord) => NodeDragEvent?.Invoke(this, coord);
+            m_DragInputModule.NodeDragEndEvent += (coord) => NodeDragEndEvent?.Invoke(this, coord);
+        }
+
+        public void AddOutputPin(NodePinElement pin)
+        {
+            m_OutputContainer.Add(pin);
+            pin.IsReversed = false;
+        }
+
+        public void AddInputPin(NodePinElement pin)
+        {
+            m_InputContainer.Add(pin);
+            pin.IsReversed = true;
+        }
+
+        private void AddPin(NodePinElement pin)
+        {
+            //pin.PinDragStartEvent += 
         }
 
         /// <summary>

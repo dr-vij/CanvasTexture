@@ -6,21 +6,34 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public abstract class InputModuleBase : IDisposable
+    public abstract class InputModuleBase
     {
-        private bool m_IsDisposed = false;
         protected VisualElement m_Target;
 
-        public InputModuleBase(VisualElement target)
+        public VisualElement Target
         {
-            m_Target = target;
-            OnTargetSet(target);
-            SubscribeEvents(target);
+            get => m_Target;
+            set
+            {
+                if (m_Target != null)
+                    UnsubscribeEvents(value);
+                m_Target = value;
+                OnTargetSet(value);
+                if (m_Target != null)
+                    SubscribeEvents(m_Target);
+            }
         }
 
-        protected abstract void OnTargetSet(VisualElement target);
+        public InputModuleBase() { }
+
+        public InputModuleBase(VisualElement target) => Target = target;
+
         protected abstract void SubscribeEvents(VisualElement eventHandler);
         protected abstract void UnsubscribeEvents(VisualElement eventHandler);
+
+        protected virtual void OnTargetSet(VisualElement target)
+        {
+        }
 
         /// <summary>
         /// This method checks if evt current target is captured and stops propagation if needed
@@ -29,6 +42,9 @@ namespace ViJ.GraphEditor
         /// <returns></returns>
         protected virtual bool CanHandleEvent(EventBase evt, bool stopPropagationEvenIfNotCaptured)
         {
+            if (m_Target == null)
+                return false;
+
             var isTargetCaptured = evt.currentTarget.HasMouseCapture() && m_Target == evt.currentTarget;
             var canBeHadled = !evt.currentTarget.HasMouseCapture() || isTargetCaptured;
             if (isTargetCaptured || (stopPropagationEvenIfNotCaptured && canBeHadled))
@@ -43,21 +59,10 @@ namespace ViJ.GraphEditor
         /// <returns></returns>
         protected virtual bool CanHandleEvent(EventBase evt)
         {
+            if (m_Target == null)
+                return false;
+
             return !evt.currentTarget.HasMouseCapture() || m_Target == evt.currentTarget;
-        }
-
-        public void Dispose()
-        {
-            if (!m_IsDisposed)
-            {
-                UnsubscribeEvents(m_Target);
-                OnDispose();
-                m_IsDisposed = true;
-            }
-        }
-
-        protected virtual void OnDispose()
-        {
         }
     }
 }

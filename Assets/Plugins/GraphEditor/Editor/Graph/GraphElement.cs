@@ -29,7 +29,6 @@ namespace ViJ.GraphEditor
 
         private int m_NodeIdCounter;
         private Dictionary<int, NodeElement> m_Nodes = new Dictionary<int, NodeElement>();
-        private Dictionary<int, NodeInputModule> m_NodeInputs = new Dictionary<int, NodeInputModule>();
         private HashSet<int> mSelectedNodes = new HashSet<int>();
         private HashSet<int> mPreSelectedNodes = new HashSet<int>();
 
@@ -97,12 +96,10 @@ namespace ViJ.GraphEditor
             m_Nodes.Add(node.ID, node);
             m_BlackboardRoot.Add(node);
 
-            //Create input for node and subscribe it
-            var inputModule = new NodeInputModule(node);
-            inputModule.NodeDragStartEvent += OnNodeDragStart;
-            inputModule.NodeDragEvent += OnNodeDrag;
-            inputModule.NodeDragEndEvent += OnNodeDragEnd;
-            m_NodeInputs.Add(node.ID, inputModule);
+            //Connect input
+            node.NodeDragStartEvent += OnNodeDragStart;
+            node.NodeDragEvent += OnNodeDrag;
+            node.NodeDragEndEvent += OnNodeDragEnd;
         }
 
         public void RemoveNode(int id)
@@ -115,12 +112,9 @@ namespace ViJ.GraphEditor
             node.RemoveFromHierarchy();
 
             //Disconnect input
-            var inputModule = m_NodeInputs[id];
-            inputModule.NodeDragStartEvent -= OnNodeDragStart;
-            inputModule.NodeDragEvent -= OnNodeDrag;
-            inputModule.NodeDragEndEvent -= OnNodeDragEnd;
-            inputModule.Dispose();
-            m_NodeInputs.Remove(id);
+            node.NodeDragStartEvent -= OnNodeDragStart;
+            node.NodeDragEvent -= OnNodeDrag;
+            node.NodeDragEndEvent -= OnNodeDragEnd;
         }
 
         private HashSet<int> GetOverlappedNodes(Rect rect, HashSet<int> outNodes = null)
@@ -138,7 +132,7 @@ namespace ViJ.GraphEditor
             return outNodes;
         }
 
-        private void SetPreselectedNodes(HashSet<int> nodes)
+        private void PreselectNodes(HashSet<int> nodes)
         {
             if (nodes == null)
                 nodes = new HashSet<int>();
@@ -158,7 +152,7 @@ namespace ViJ.GraphEditor
             }
         }
 
-        private void SetSelectedNodes(HashSet<int> nodes)
+        private void SelectNodes(HashSet<int> nodes)
         {
             var nodesToSelect = nodes.Where(c => !mSelectedNodes.Contains(c)).ToList();
             var nodesToUnselect = mSelectedNodes.Where(c => !nodes.Contains(c)).ToList();
@@ -185,7 +179,7 @@ namespace ViJ.GraphEditor
             return m_SelectionBox.worldBound;
         }
 
-        #region Nodes drag
+        #region Nodes manipulations
 
         private Vector2 m_PointerDragStartPosition;
         private Vector2 m_NodeDragStartPosition;
@@ -201,7 +195,7 @@ namespace ViJ.GraphEditor
         private void OnNodeDrag(NodeElement node, Vector2 pointerPosition)
         {
             var pointerTotalDelta = pointerPosition - m_PointerDragStartPosition;
-            var blackboardDelta = WorldDeltaToBlackboard(pointerTotalDelta);
+            var blackboardDelta = TransformDeltaWorldToBlackboard(pointerTotalDelta);
             node.BlackboardPosition = m_NodeDragStartPosition + blackboardDelta;
         }
 
@@ -218,14 +212,14 @@ namespace ViJ.GraphEditor
 
         private void OnDragStart(Vector2 pointerPosition)
         {
-            m_GraphPointerDragStartPos = WorldPointToBlackboard(pointerPosition);
+            m_GraphPointerDragStartPos = TransformPositionWorldToBlackboard(pointerPosition);
         }
 
         private void OnDrag(Vector2 pointerPosition)
         {
-            var mouseNewPosition = WorldPointToBlackboard(pointerPosition);
+            var mouseNewPosition = TransformPositionWorldToBlackboard(pointerPosition);
             var localDelta = mouseNewPosition - m_GraphPointerDragStartPos;
-            var delta = BlackboardDeltaToWorld(localDelta);
+            var delta = TransformDeltaBlackboardToWorld(localDelta);
             Position += delta;
         }
 
@@ -235,22 +229,22 @@ namespace ViJ.GraphEditor
 
         private void OnRectSelectionStart(Vector2 pointerPosition)
         {
-            m_SelectorRectDragStartPos = WorldPointToBlackboard(pointerPosition);
-            var fromTo = WorldPointToRoot(pointerPosition);
+            m_SelectorRectDragStartPos = TransformPositionWorldToBlackboard(pointerPosition);
+            var fromTo = TransformPositionWorldToRoot(pointerPosition);
             StartSelectionBox(fromTo, fromTo);
         }
 
         private void OnRectSelection(Vector2 pointerPosition)
         {
-            var from = BlackboardPointToRoot(m_SelectorRectDragStartPos);
-            var to = WorldPointToRoot(pointerPosition);
+            var from = TransformPositionBlackboardToRoot(m_SelectorRectDragStartPos);
+            var to = TransformPositionWorldToRoot(pointerPosition);
             UpdateSelectionBox(from, to);
         }
 
         private void OnRectSelectionEnd(Vector2 pointerPosition)
         {
-            var from = BlackboardPointToRoot(m_SelectorRectDragStartPos);
-            var to = WorldPointToRoot(pointerPosition);
+            var from = TransformPositionBlackboardToRoot(m_SelectorRectDragStartPos);
+            var to = TransformPositionWorldToRoot(pointerPosition);
             EndSelectionBox(from, to);
         }
 
@@ -266,23 +260,23 @@ namespace ViJ.GraphEditor
             m_SelectionBox.style.opacity = 1;
             var rect = UpdateVisualBox(from, to);
             m_Buffer = GetOverlappedNodes(rect, m_Buffer);
-            SetPreselectedNodes(m_Buffer);
+            PreselectNodes(m_Buffer);
         }
 
         private void UpdateSelectionBox(Vector2 from, Vector2 to)
         {
             var rect = UpdateVisualBox(from, to);
             m_Buffer = GetOverlappedNodes(rect, m_Buffer);
-            SetPreselectedNodes(m_Buffer);
+            PreselectNodes(m_Buffer);
         }
 
         private void EndSelectionBox(Vector2 from, Vector2 to)
         {
             var rect = UpdateVisualBox(from, to);
             m_SelectionBox.style.opacity = 0;
-            SetPreselectedNodes(null);
+            PreselectNodes(null);
             m_Buffer = GetOverlappedNodes(rect, m_Buffer);
-            SetSelectedNodes(m_Buffer);
+            SelectNodes(m_Buffer);
         }
 
         /// <summary>
@@ -293,8 +287,8 @@ namespace ViJ.GraphEditor
         private void OnZoom(Vector2 worldPosition, float scaleDelta)
         {
             //Save position of pointer before scale
-            var mousePosBefore = WorldPointToRoot(worldPosition);
-            var mouseLocalPosBefore = WorldPointToBlackboard(worldPosition);
+            var mousePosBefore = TransformPositionWorldToRoot(worldPosition);
+            var mouseLocalPosBefore = TransformPositionWorldToBlackboard(worldPosition);
 
             //Scale
             var currentScale = Scale;
@@ -304,71 +298,30 @@ namespace ViJ.GraphEditor
             Scale = clampedScale;
 
             //Now reposition
-            var mousePosAfter = BlackboardPointToRoot(mouseLocalPosBefore);
+            var mousePosAfter = TransformPositionBlackboardToRoot(mouseLocalPosBefore);
             var moveDelta = mousePosAfter - mousePosBefore;
             Position -= moveDelta;
         }
-
 
         #endregion
 
         #region Coords conversions
 
-        //POINT
-        public Vector2 BlackboardPointToWorld(Vector2 localPosition) => m_BlackboardRoot.LocalToWorld(localPosition);
+        public Vector2 TransformPositionBlackboardToWorld(Vector2 localPosition) => m_BlackboardRoot.LocalToWorld(localPosition);
+        public Vector2 TransformPositionWorldToBlackboard(Vector2 worldPosition) => m_BlackboardRoot.WorldToLocal(worldPosition);
 
-        //POINT
-        public Vector2 WorldPointToBlackboard(Vector2 worldPosition) => m_BlackboardRoot.WorldToLocal(worldPosition);
+        public Vector2 TransformPositionWorldToRoot(Vector2 worldPosition) => m_Root.WorldToLocal(worldPosition);
+        public Vector2 TransformPositionRootToWorld(Vector2 localPosition) => m_Root.LocalToWorld(localPosition);
 
-        //POINT
-        public Vector2 WorldPointToRoot(Vector2 worldPosition) => m_Root.WorldToLocal(worldPosition);
+        public Vector2 TransformPositionBlackboardToRoot(Vector2 localPosition) => m_BlackboardRoot.ChangeCoordinatesTo(m_Root, localPosition);
+        public Vector2 TransformPositionRootToBlackboard(Vector2 localPosition) => m_Root.ChangeCoordinatesTo(m_BlackboardRoot, localPosition);
 
-        //POINT
-        public Vector2 RootPointToWorld(Vector2 localPosition) => m_Root.LocalToWorld(localPosition);
-
-        //POINT
-        public Vector2 BlackboardPointToRoot(Vector2 localPosition)
-        {
-            var worldPos = m_BlackboardRoot.LocalToWorld(localPosition);
-            return m_Root.WorldToLocal(worldPos);
-        }
-
-        //POINT
-        public Vector2 RootPointToBlackboard(Vector2 localPosition)
-        {
-            var worldPos = m_Root.LocalToWorld(localPosition);
-            return m_BlackboardRoot.WorldToLocal(worldPos);
-        }
-
-        //DELTA
-        public Vector2 BlackboardDeltaToRoot(Vector2 localDelta)
-        {
-            var p1 = m_Root.WorldToLocal(m_BlackboardRoot.LocalToWorld(Vector2.zero));
-            var p2 = m_Root.WorldToLocal(m_BlackboardRoot.LocalToWorld(localDelta));
-            return p2 - p1;
-        }
-
-        //DELTA
-        public Vector2 BlackboardDeltaToWorld(Vector2 localDelta)
-        {
-            var p1 = m_BlackboardRoot.LocalToWorld(Vector2.zero);
-            var p2 = m_BlackboardRoot.LocalToWorld(localDelta);
-            return p2 - p1;
-        }
-
-        //DELTA
-        public Vector2 WorldDeltaToBlackboard(Vector2 worldDelta)
-        {
-            var p1 = m_BlackboardRoot.WorldToLocal(Vector2.zero);
-            var p2 = m_BlackboardRoot.WorldToLocal(worldDelta);
-            return p2 - p1;
-        }
+        public Vector2 TransformDeltaBlackboardToRoot(Vector2 localDelta) => m_BlackboardRoot.ChangeCoordinatesTo(m_Root, localDelta) - m_BlackboardRoot.ChangeCoordinatesTo(m_Root, Vector2.zero);
+        public Vector2 TransformDeltaBlackboardToWorld(Vector2 localDelta) => m_BlackboardRoot.LocalToWorld(localDelta) - m_BlackboardRoot.LocalToWorld(Vector2.zero);
+        public Vector2 TransformDeltaWorldToBlackboard(Vector2 worldDelta) => m_BlackboardRoot.WorldToLocal(worldDelta) - m_BlackboardRoot.WorldToLocal(Vector2.zero);
 
         #endregion
 
-        private int GetNextId()
-        {
-            return m_NodeIdCounter++;
-        }
+        private int GetNextId() => m_NodeIdCounter++;
     }
 }

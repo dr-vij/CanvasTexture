@@ -1,4 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Plugins/TextureGraph/Editor/NodePinElementStyle.uss?fileID=7433441132597879392&amp;guid=424ea9d975200433d85f0389b07f6ed8&amp;type=3#NodePinElementStyle" />
-    <ui:VisualElement name="Pin" class="outerPart pin" style="border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; width: 5px; height: 5px;" />
+    <Style src="project://database/Assets/Plugins/GraphEditor/Editor/Pin/NodePinElementStyle.uss?fileID=7433441132597879392&amp;guid=424ea9d975200433d85f0389b07f6ed8&amp;type=3#NodePinElementStyle" />
+    <ui:VisualElement name="PinContainer" class="pinContainer">
+        <ui:VisualElement name="Pin" class="outerPart pin" style="border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px;" />
+    </ui:VisualElement>
 </ui:UXML>

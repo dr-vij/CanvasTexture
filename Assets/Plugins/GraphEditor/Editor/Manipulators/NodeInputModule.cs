@@ -5,28 +5,28 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public delegate void NodeDragAction(NodeElement node, Vector2 pointerPosition);
+    public delegate void DragHandler(Vector2 pointerPosition);
 
-    public class NodeInputModule : GenericInputModule<NodeElement>
+    public class DragInputModule : InputModuleBase
     {
         private bool m_DragStarted;
 
-        public event NodeDragAction NodeDragStartEvent;
-        public event NodeDragAction NodeDragEvent;
-        public event NodeDragAction NodeDragEndEvent;
+        public event DragHandler NodeDragStartEvent;
+        public event DragHandler NodeDragEvent;
+        public event DragHandler NodeDragEndEvent;
 
-        public NodeInputModule(NodeElement node) : base(node)
+        public DragInputModule(VisualElement node) : base(node)
         {
         }
 
-        protected override void OnSubscribeEvents(NodeElement node)
+        protected override void SubscribeEvents(VisualElement handler)
         {
-            node.RegisterCallback<MouseDownEvent>(OnMouseDown);
-            node.RegisterCallback<MouseMoveEvent>(OnMouseMove);
-            node.RegisterCallback<MouseUpEvent>(OnMouseUp);
+            handler.RegisterCallback<MouseDownEvent>(OnMouseDown);
+            handler.RegisterCallback<MouseMoveEvent>(OnMouseMove);
+            handler.RegisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
-        protected override void OnUnsubscribeEvents(NodeElement node)
+        protected override void UnsubscribeEvents(VisualElement node)
         {
             node.UnregisterCallback<MouseDownEvent>(OnMouseDown);
             node.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
@@ -37,9 +37,9 @@ namespace ViJ.GraphEditor
         {
             if (CanHandleEvent(evt, true))
             {
-                m_TypedTarget.CaptureMouse();
+                m_Target.CaptureMouse();
                 m_DragStarted = true;
-                NodeDragStartEvent?.Invoke(m_TypedTarget, evt.mousePosition);
+                NodeDragStartEvent?.Invoke(evt.mousePosition);
             }
         }
 
@@ -47,7 +47,7 @@ namespace ViJ.GraphEditor
         {
             if (CanHandleEvent(evt) && m_DragStarted)
             {
-                NodeDragEvent?.Invoke(m_TypedTarget, evt.mousePosition);
+                NodeDragEvent?.Invoke(evt.mousePosition);
             }
         }
 
@@ -56,8 +56,8 @@ namespace ViJ.GraphEditor
             if (CanHandleEvent(evt) && m_DragStarted)
             {
                 m_DragStarted = false;
-                m_TypedTarget.ReleaseMouse();
-                NodeDragEndEvent?.Invoke(m_TypedTarget, evt.mousePosition);
+                m_Target.ReleaseMouse();
+                NodeDragEndEvent?.Invoke(evt.mousePosition);
             }
         }
     }

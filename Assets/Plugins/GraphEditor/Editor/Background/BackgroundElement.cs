@@ -33,10 +33,10 @@ namespace ViJ.GraphEditor
                 return;
 
             //Calculate grid parameters
-            var blackBoardStart = m_Graph.RootPointToBlackboard(Vector2.zero) / GridSize;
+            var blackBoardStart = m_Graph.TransformPositionRootToBlackboard(Vector2.zero) / GridSize;
             blackBoardStart = new Vector2(Mathf.Floor(blackBoardStart.x), Mathf.Floor(blackBoardStart.y)) * GridSize;
-            var rootStart = m_Graph.BlackboardPointToRoot(blackBoardStart);
-            var rootDelta = m_Graph.BlackboardDeltaToRoot(Vector2.one * GridSize);
+            var rootStart = m_Graph.TransformPositionBlackboardToRoot(blackBoardStart);
+            var rootDelta = m_Graph.TransformDeltaBlackboardToRoot(Vector2.one * GridSize);
 
             //Prepare painter
             var painter = mgc.painter2D;

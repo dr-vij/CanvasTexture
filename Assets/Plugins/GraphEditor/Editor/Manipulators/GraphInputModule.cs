@@ -10,7 +10,7 @@ namespace ViJ.GraphEditor
     public delegate void Slide(Vector2 delta);
     public delegate void GraphZoom(Vector2 position, float delta);
 
-    public class GraphInputModule : GenericInputModule<GraphElement>
+    public class GraphInputModule : InputModuleBase
     {
         private bool m_IsDragStarted;
         private bool m_IsSelectionStarted;
@@ -37,7 +37,7 @@ namespace ViJ.GraphEditor
 
         #region Callbacks Register/Unregister
 
-        protected override void OnSubscribeEvents(GraphElement handler)
+        protected override void SubscribeEvents(VisualElement handler)
         {
             //Scale/move with touchpad (optional)
             handler.RegisterCallback<WheelEvent>(OnWheel);
@@ -48,7 +48,7 @@ namespace ViJ.GraphEditor
             handler.RegisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
-        protected override void OnUnsubscribeEvents(GraphElement handler)
+        protected override void UnsubscribeEvents(VisualElement handler)
         {
             handler.UnregisterCallback<WheelEvent>(OnWheel);
 
@@ -65,7 +65,7 @@ namespace ViJ.GraphEditor
         {
             if (CanHandleEvent(evt, true))
             {
-                m_TypedTarget.CaptureMouse();
+                m_Target.CaptureMouse();
 
                 if (evt.commandKey)
                 {
@@ -95,7 +95,7 @@ namespace ViJ.GraphEditor
         {
             if (CanHandleEvent(evt))
             {
-                m_TypedTarget.ReleaseMouse();
+                m_Target.ReleaseMouse();
                 if (m_IsDragStarted)
                 {
                     m_IsDragStarted = false;
