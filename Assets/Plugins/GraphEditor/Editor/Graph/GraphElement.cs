@@ -29,7 +29,7 @@ namespace ViJ.GraphEditor
 
         private int m_NodeIdCounter;
         private Dictionary<int, NodeElement> m_Nodes = new Dictionary<int, NodeElement>();
-        private HashSet<int> mSelectedNodes = new HashSet<int>();
+        private HashSet<int> m_SelectedNodes = new HashSet<int>();
         private HashSet<int> mPreSelectedNodes = new HashSet<int>();
 
         public event Action<GraphElement> GraphTransformChangeEvent;
@@ -107,7 +107,7 @@ namespace ViJ.GraphEditor
             //Remove node from blackboard
             var node = m_Nodes[id];
             m_Nodes.Remove(id);
-            mSelectedNodes.Remove(id);
+            m_SelectedNodes.Remove(id);
             mPreSelectedNodes.Remove(id);
             node.RemoveFromHierarchy();
 
@@ -154,18 +154,18 @@ namespace ViJ.GraphEditor
 
         private void SelectNodes(HashSet<int> nodes)
         {
-            var nodesToSelect = nodes.Where(c => !mSelectedNodes.Contains(c)).ToList();
-            var nodesToUnselect = mSelectedNodes.Where(c => !nodes.Contains(c)).ToList();
+            var nodesToSelect = nodes.Where(c => !m_SelectedNodes.Contains(c)).ToList();
+            var nodesToUnselect = m_SelectedNodes.Where(c => !nodes.Contains(c)).ToList();
 
             foreach (var nodeId in nodesToSelect)
             {
                 m_Nodes[nodeId].IsSelected = true;
-                mSelectedNodes.Add(nodeId);
+                m_SelectedNodes.Add(nodeId);
             }
             foreach (var nodeId in nodesToUnselect)
             {
                 m_Nodes[nodeId].IsSelected = false;
-                mSelectedNodes.Remove(nodeId);
+                m_SelectedNodes.Remove(nodeId);
             }
         }
 
@@ -179,24 +179,51 @@ namespace ViJ.GraphEditor
             return m_SelectionBox.worldBound;
         }
 
+        #region Pin manipulations
+
+        private void OnPinDragStart(NodePinElement pin, Vector2 position)
+        {
+
+        }
+
+        private void OnPinDrag(NodePinElement pin, Vector2 position)
+        {
+
+        }
+
+        private void OnPinDragEnd(NodePinElement pin, Vector2 position)
+        {
+
+        }
+
+        #endregion
+
         #region Nodes manipulations
 
         private Vector2 m_PointerDragStartPosition;
-        private Vector2 m_NodeDragStartPosition;
+        private Dictionary<int, Vector2> m_DragStartPositions = new Dictionary<int, Vector2>();
 
         private void OnNodeDragStart(NodeElement node, Vector2 pointerPosition)
         {
+            m_DragStartPositions.Clear();
+
             //TODO: Select if not selected. Move group if group selected
+            if (!m_SelectedNodes.Contains(node.ID))
+                SelectNodes(new HashSet<int>(new[] { node.ID }));
+
+            foreach (var selectedId in m_SelectedNodes)
+                m_DragStartPositions[selectedId] = m_Nodes[selectedId].BlackboardPosition;
 
             m_PointerDragStartPosition = pointerPosition;
-            m_NodeDragStartPosition = node.BlackboardPosition;
         }
 
         private void OnNodeDrag(NodeElement node, Vector2 pointerPosition)
         {
             var pointerTotalDelta = pointerPosition - m_PointerDragStartPosition;
             var blackboardDelta = TransformDeltaWorldToBlackboard(pointerTotalDelta);
-            node.BlackboardPosition = m_NodeDragStartPosition + blackboardDelta;
+
+            foreach (var selectedId in m_SelectedNodes)
+                m_Nodes[selectedId].BlackboardPosition = m_DragStartPositions[selectedId] + blackboardDelta;
         }
 
         private void OnNodeDragEnd(NodeElement node, Vector2 pointerPosition)

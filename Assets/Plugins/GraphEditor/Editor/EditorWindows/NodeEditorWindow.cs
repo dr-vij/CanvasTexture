@@ -25,9 +25,13 @@ namespace ViJ.GraphEditor
             root.Add(m_Graph);
             m_Graph.StretchToParentSize();
 
-            var node = new NodeElement();
-            m_Graph.AddNode(node);
-            node.transform.position = new Vector3(100, 100, 0);
+            var node1 = new NodeElement();
+            m_Graph.AddNode(node1);
+            node1.BlackboardPosition = new Vector2(100, 100);
+
+            var node2 = new NodeElement();
+            m_Graph.AddNode(node2);
+            node2.BlackboardPosition = new Vector2(200, 200);
         }
     }
 }

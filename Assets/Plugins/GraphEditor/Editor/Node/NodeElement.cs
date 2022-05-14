@@ -60,6 +60,10 @@ namespace ViJ.GraphEditor
         public event NodeDrag NodeDragEvent;
         public event NodeDrag NodeDragEndEvent;
 
+        public event PinDrag PinDragStartEvent;
+        public event PinDrag PinDragEvent;
+        public event PinDrag PinDragEndEvent;
+
         public Rect NodeWorldBounds => m_Node.worldBound;
 
         public Vector2 BlackboardPosition
@@ -116,17 +120,22 @@ namespace ViJ.GraphEditor
         {
             m_OutputContainer.Add(pin);
             pin.IsReversed = false;
+            pin.PinType = PinType.Output;
         }
 
         public void AddInputPin(NodePinElement pin)
         {
             m_InputContainer.Add(pin);
             pin.IsReversed = true;
+            pin.PinType = PinType.Input;
         }
 
         private void AddPin(NodePinElement pin)
         {
-            //pin.PinDragStartEvent += 
+            pin.Owner = this;
+            pin.PinDragStartEvent += (pin, coord) => PinDragStartEvent?.Invoke(pin, coord);
+            pin.PinDragEvent += (pin, coord) => PinDragEvent?.Invoke(pin, coord);
+            pin.PinDragEndEvent += (pin, coord) => PinDragEndEvent?.Invoke(pin, coord);
         }
 
         /// <summary>

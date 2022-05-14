@@ -5,7 +5,14 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public delegate void PinDragHandler(NodePinElement pin, Vector2 position);
+    public delegate void PinDrag(NodePinElement pin, Vector2 position);
+
+    public enum PinType
+    {
+        None,
+        Input,
+        Output,
+    }
 
     public class NodePinElement : IdentifiedVisualElement
     {
@@ -20,10 +27,17 @@ namespace ViJ.GraphEditor
         private VisualElement m_Pin;
         private VisualElement m_PinContainer;
         private bool m_IsReversed;
+        private PinType m_PinType = PinType.None;
 
-        public event PinDragHandler PinDragStartEvent;
-        public event PinDragHandler PinDragEvent;
-        public event PinDragHandler PinDragEndEvent;
+        public event PinDrag PinDragStartEvent;
+        public event PinDrag PinDragEvent;
+        public event PinDrag PinDragEndEvent;
+
+        public PinType PinType
+        {
+            get => m_PinType;
+            set => m_PinType = value;
+        }
 
         public bool IsReversed
         {
@@ -41,20 +55,7 @@ namespace ViJ.GraphEditor
         public NodeElement Owner
         {
             get => m_Owner;
-            set
-            {
-                if (m_Owner == null)
-                {
-                    if (value != null)
-                        m_Owner = value;
-                    else
-                        throw new System.Exception("Owner of pin must not be set null");
-                }
-                else
-                {
-                    throw new System.Exception("Owner of pin must not be changed");
-                }
-            }
+            set => m_Owner = value;
         }
 
         public NodePinElement()
