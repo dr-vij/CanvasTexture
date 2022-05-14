@@ -5,65 +5,62 @@ using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
 {
-    public class NodeManipulator : GraphMouseManipulator
+    public class NodeInputModule : GenericInputModule<NodeElement>
     {
-        private NodeElement m_Node;
         private GraphElement m_Graph;
 
         private bool m_DragStarted;
         private Vector2 m_MouseDragStartPosition;
         private Vector2 m_NodeDragStartPosition;
 
-        public NodeManipulator(NodeElement node, GraphElement graph)
+        public NodeInputModule(NodeElement node, GraphElement graph) : base(node)
         {
-            m_Node = node;
             m_Graph = graph;
-            target = node;
         }
 
-        protected override void RegisterCallbacksOnTarget()
+        protected override void OnSubscribeEvents(NodeElement node)
         {
-            target.RegisterCallback<MouseDownEvent>(OnMouseDown);
-            target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
-            target.RegisterCallback<MouseUpEvent>(OnMouseUp);
+            node.RegisterCallback<MouseDownEvent>(OnMouseDown);
+            node.RegisterCallback<MouseMoveEvent>(OnMouseMove);
+            node.RegisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
-        protected override void UnregisterCallbacksFromTarget()
+        protected override void OnUnsubscribeEvents(NodeElement node)
         {
-            target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
-            target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
-            target.UnregisterCallback<MouseUpEvent>(OnMouseUp);
+            node.UnregisterCallback<MouseDownEvent>(OnMouseDown);
+            node.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
+            node.UnregisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
         private void OnMouseDown(MouseDownEvent evt)
         {
-            if (!TryHandleAndStopPropagation(evt, true))
+            if (!CanHandleEvent(evt, true))
                 return;
 
             Debug.Log("NodeDown");
 
-            target.CaptureMouse();
+            m_TypedTarget.CaptureMouse();
             m_DragStarted = true;
             m_MouseDragStartPosition = evt.mousePosition;
-            m_NodeDragStartPosition = m_Node.BlackboardPosition;
+            m_NodeDragStartPosition = m_TypedTarget.BlackboardPosition;
         }
 
         private void OnMouseMove(MouseMoveEvent evt)
         {
-            if (!TryHandleAndStopPropagation(evt))
+            if (!CanHandleEvent(evt))
                 return;
 
             if (m_DragStarted)
             {
                 var mouseDelta = evt.mousePosition - m_MouseDragStartPosition;
                 var blackboardDelta = m_Graph.WorldDeltaToBlackboard(mouseDelta);
-                m_Node.BlackboardPosition = m_NodeDragStartPosition + blackboardDelta;
+                m_TypedTarget.BlackboardPosition = m_NodeDragStartPosition + blackboardDelta;
             }
         }
 
         private void OnMouseUp(MouseUpEvent evt)
         {
-            if (!TryHandleAndStopPropagation(evt))
+            if (!CanHandleEvent(evt))
                 return;
 
             Debug.Log("NodeUp");
@@ -71,7 +68,7 @@ namespace ViJ.GraphEditor
             if (m_DragStarted)
             {
                 m_DragStarted = false;
-                target.ReleaseMouse();
+                m_TypedTarget.ReleaseMouse();
             }
         }
     }

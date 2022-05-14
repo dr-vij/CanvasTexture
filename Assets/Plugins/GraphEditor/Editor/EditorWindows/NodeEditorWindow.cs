@@ -7,33 +7,29 @@ namespace ViJ.GraphEditor
     public class GraphEditorWindow : EditorWindow
     {
         [MenuItem("Windows/GraphEditor")]
-        public static void ShowExample()
+        public static void CreateGraphWindow()
         {
             GraphEditorWindow wnd = GetWindow<GraphEditorWindow>();
             wnd.titleContent = new GUIContent("GraphEditor");
             wnd.ShowPopup();
         }
 
-        GraphElement m_graph;
+        private GraphElement m_Graph;
 
         public void CreateGUI()
         {
             Debug.Log(GraphEditorSettings.Instance.PluginPath);
             var root = rootVisualElement;
 
-            var graph = new GraphElement();
-            m_graph = graph;
-            root.Add(graph);
-            graph.StretchToParentSize();
+            m_Graph = new GraphElement();
+            root.Add(m_Graph);
+            m_Graph.StretchToParentSize();
 
             var node = new NodeElement();
-            graph.AddNode(node);
-            node.AddManipulator(new NodeManipulator(node, graph));
+            m_Graph.AddNode(node);
             node.transform.position = new Vector3(100, 100, 0);
-
-            var manipulator = new GraphManipulator(graph);
-            graph.AddManipulator(manipulator);
+            var nodeInputModule = new NodeInputModule(node, m_Graph);
+            var graphInputModule = new GraphInputModule(m_Graph);
         }
     }
 }
-
