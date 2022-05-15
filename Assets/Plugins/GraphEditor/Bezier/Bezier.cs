@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
 
-//https://pomax.github.io/bezierinfo/
+// usefull links:
+// some cool stuff about bezier: https://pomax.github.io/bezierinfo/ 
+// Binominals explained: https://ru.wikipedia.org/wiki/%D0%A2%D1%80%D0%B5%D1%83%D0%B3%D0%BE%D0%BB%D1%8C%D0%BD%D0%B8%D0%BA_%D0%9F%D0%B0%D1%81%D0%BA%D0%B0%D0%BB%D1%8F
 public class Bezier
 {
     private List<int[]> m_LookupTable = new List<int[]>();
@@ -26,8 +28,6 @@ public class Bezier
                     throw new System.Exception("Error in binominals");
             }
         }
-
-        //Now Check that generic binominal and quadratic and cubic are the same
     }
 
     public int BinominalLookup(int n, int k)
@@ -46,7 +46,6 @@ public class Bezier
         return m_LookupTable[n][k];
     }
 
-    //https://ru.wikipedia.org/wiki/%D0%A2%D1%80%D0%B5%D1%83%D0%B3%D0%BE%D0%BB%D1%8C%D0%BD%D0%B8%D0%BA_%D0%9F%D0%B0%D1%81%D0%BA%D0%B0%D0%BB%D1%8F
     public int BinominalBruteforce(int n, int k)
     {
         return Factorial(n) / (Factorial(k) * Factorial(n - k));
@@ -103,6 +102,8 @@ public class Bezier
 
     #region weighted basis functions
 
+    //1D:
+
     public float CalcBezier1D(int n, float t, float[] w)
     {
         var sum = 0f;
@@ -129,6 +130,8 @@ public class Bezier
         return w[0] * mt3 + 3 * w[1] * mt2 * t + 3 * w[2] * mt * t2 + w[3] * t3;
     }
 
+    //2D:
+
     public float2 CalcBezier2D(int n, float t, float2[] w)
     {
         var sum = float2.zero;
@@ -154,6 +157,8 @@ public class Bezier
         var mt3 = mt2 * mt;
         return w[0] * mt3 + 3 * w[1] * mt2 * t + 3 * w[2] * mt * t2 + w[3] * t3;
     }
+
+    //3D:
 
     public float3 CalcBezier3D(int n, float t, float3[] w)
     {
@@ -182,4 +187,100 @@ public class Bezier
     }
 
     #endregion
+
+    #region Casteljau's algorithm
+
+    public float CalcBezierCasteljau1D(float t, float[] points)
+    {
+        if (points.Length == 1)
+            return (points[0]);
+
+        var newPoints = new float[points.Length - 1];
+        for (int i = 0; i < newPoints.Length; i++)
+            newPoints[i] = (1 - t) * points[i] + t * points[i + 1];
+        return CalcBezierCasteljau1D(t, newPoints);
+    }
+
+    public float2 CalcBezierCasteljau2D(float t, float2[] points)
+    {
+        if (points.Length == 1)
+            return (points[0]);
+
+        var newPoints = new float2[points.Length - 1];
+        for (int i = 0; i < newPoints.Length; i++)
+            newPoints[i] = (1 - t) * points[i] + t * points[i + 1];
+        return CalcBezierCasteljau2D(t, newPoints);
+    }
+
+    public float3 CalcBezierCasteljau3D(float t, float3[] points)
+    {
+        if (points.Length == 1)
+            return (points[0]);
+
+        var newPoints = new float3[points.Length - 1];
+        for (int i = 0; i < newPoints.Length; i++)
+            newPoints[i] = (1 - t) * points[i] + t * points[i + 1];
+        return CalcBezierCasteljau3D(t, newPoints);
+    }
+
+    #endregion
+
+    #region Flattening curve
+
+    public List<float> GetPoints1D(float[] points, int segmentCount, List<float> result = null)
+    {
+        if (result == null)
+            result = new List<float>(segmentCount + 1);
+        else
+            result.Clear();
+
+        var step = 1f / segmentCount;
+        for (int i = 0; i < segmentCount; i++)
+        {
+            var t = i * step;
+            result.Add(CalcBezier1D(points.Length - 1, t, points));
+        }
+        result.Add(CalcBezier1D(points.Length - 1, 1f, points));
+
+        return result;
+    }
+
+    public List<float2> GetPoints2D(float2[] points, int segmentCount, List<float2> result = null)
+    {
+        if (result == null)
+            result = new List<float2>(segmentCount + 1);
+        else
+            result.Clear();
+
+        var step = 1f / segmentCount;
+        for (int i = 0; i < segmentCount; i++)
+        {
+            var t = i * step;
+            result.Add(CalcBezier2D(points.Length - 1, t, points));
+        }
+        result.Add(CalcBezier2D(points.Length - 1, 1f, points));
+
+        return result;
+    }
+
+    public List<float3> GetPoints3D(float3[] points, int segmentCount, List<float3> result = null)
+    {
+        if (result == null)
+            result = new List<float3>(segmentCount + 1);
+        else
+            result.Clear();
+
+        var step = 1f / segmentCount;
+        for (int i = 0; i < segmentCount; i++)
+        {
+            var t = i * step;
+            result.Add(CalcBezier3D(points.Length - 1, t, points));
+        }
+        result.Add(CalcBezier3D(points.Length - 1, 1f, points));
+
+        return result;
+    }
+
+    #endregion
+
 }
