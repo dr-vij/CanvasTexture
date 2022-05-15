@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
+using System.Linq;
 
 // usefull links:
 // some cool stuff about bezier: https://pomax.github.io/bezierinfo/ 
@@ -30,6 +31,12 @@ public class Bezier
         }
     }
 
+    /// <summary>
+    /// Gets binominal from lookup table and fills it if table is not completed
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="k"></param>
+    /// <returns></returns>
     public int BinominalLookup(int n, int k)
     {
         while (n >= m_LookupTable.Count)
@@ -46,11 +53,23 @@ public class Bezier
         return m_LookupTable[n][k];
     }
 
+    /// <summary>
+    /// Calculates binominal (really heavy function, dont recommend to use it)
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="k"></param>
+    /// <returns></returns>
     public int BinominalBruteforce(int n, int k)
     {
         return Factorial(n) / (Factorial(k) * Factorial(n - k));
     }
 
+    /// <summary>
+    /// Recursive version of Factorial
+    /// </summary>
+    /// <param name="x"></param>
+    /// <returns></returns>
+    /// <exception cref="System.Exception"></exception>
     public int Factorial(int x)
     {
         if (x > 12)
@@ -283,4 +302,196 @@ public class Bezier
 
     #endregion
 
+    #region Derivatives and root finding helpers
+
+    public float[] GetFirstDerivativePointsForCubic1D(float[] points)
+    {
+        var A = points[0];
+        var B = points[1];
+        var C = points[2];
+        var D = points[3];
+        var newPoints = new float[] { 3 * (B - A), 3 * (C - B), 3 * (D - C) };
+        return newPoints;
+    }
+
+    public float[] GetFirstDerivativePointsForQuadratic1D(float[] points)
+    {
+        var A = points[0];
+        var B = points[1];
+        var C = points[2];
+        var newPoints = new float[] { 2 * (B - A), 2 * (C - B) };
+        return newPoints;
+    }
+
+    public List<float> GetLinearRoots(float[] points, List<float> result = null)
+    {
+        if (result == null)
+            result = new List<float>();
+        else
+            result.Clear();
+
+        var A = points[0];
+        var B = points[1];
+        if (B - A != 0)
+        {
+            var root = -A / (B - A);
+            if (root >= 0 && root <= 1)
+                result.Add(root);
+        }
+
+        return result;
+    }
+
+    public List<float> GetQuadraticRoots(float[] points, List<float> result = null)
+    {
+        if (result == null)
+            result = new List<float>();
+        else
+            result.Clear();
+
+        var v1 = points[0];
+        var v2 = points[1];
+        var v3 = points[2];
+
+        var a = v1 - 2 * v2 + v3;
+        var b = 2 * (v2 - v1);
+        var c = v1;
+
+        var b2min4ac = b * b - 4 * a * c;
+
+        if (b2min4ac >= 0)
+        {
+            var root1 = (-b - math.sqrt(b2min4ac)) / (2 * a);
+            var root2 = (-b + math.sqrt(b2min4ac)) / (2 * a);
+
+            if (root1 >= 0 && root1 <= 1)
+                result.Add(root1);
+            if (root2 >= 0 && root2 <= 1)
+                result.Add(root2);
+        }
+
+        return result;
+    }
+
+
+    public float FirstDerivativeCubic1D(float t, float[] points) => CalcBezierQuadratic1D(t, GetFirstDerivativePointsForCubic1D(points));
+
+    public float FirstDerivativeQuadratic1D(float t, float[] points) => CalcBezier1D(2, t, GetFirstDerivativePointsForQuadratic1D(points));
+
+    #endregion
+
+    #region BezierCurve Min Max helpers
+
+    /// <summary>
+    /// Get min max for quadratic bezier 3D
+    /// </summary>
+    /// <param name="controlPoints"></param>
+    /// <returns></returns>
+    public (float3 min, float3 max) GetMinMaxQuadraticBezier3D(float3[] controlPoints)
+    {
+        var minMaxX = GetMinMaxQuadraticBezier1D(controlPoints.Select(c => c.x).ToArray());
+        var minMaxY = GetMinMaxQuadraticBezier1D(controlPoints.Select(c => c.y).ToArray());
+        var minMaxZ = GetMinMaxQuadraticBezier1D(controlPoints.Select(c => c.z).ToArray());
+
+        return (new float3(minMaxX.min, minMaxY.min, minMaxZ.min), new float3(minMaxX.max, minMaxY.max, minMaxZ.max));
+    }
+
+    /// <summary>
+    /// Get min max for cubic bezier 3D
+    /// </summary>
+    /// <param name="controlPoints"></param>
+    /// <returns></returns>
+    public (float3 min, float3 max) GetMinMaxCubicBezier3D(float3[] controlPoints)
+    {
+        var minMaxX = GetMinMaxCubicBezier1D(controlPoints.Select(c => c.x).ToArray());
+        var minMaxY = GetMinMaxCubicBezier1D(controlPoints.Select(c => c.y).ToArray());
+        var minMaxZ = GetMinMaxCubicBezier1D(controlPoints.Select(c => c.z).ToArray());
+
+        return (new float3(minMaxX.min, minMaxY.min, minMaxZ.min), new float3(minMaxX.max, minMaxY.max, minMaxZ.max));
+    }
+
+    /// <summary>
+    /// Get min max for quadratic bezier 2D
+    /// </summary>
+    /// <param name="controlPoints"></param>
+    /// <returns></returns>
+    public (float2 min, float2 max) GetMinMaxQuadraticBezier2D(float2[] controlPoints)
+    {
+        var minMaxX = GetMinMaxQuadraticBezier1D(controlPoints.Select(c => c.x).ToArray());
+        var minMaxY = GetMinMaxQuadraticBezier1D(controlPoints.Select(c => c.y).ToArray());
+        return (new float2(minMaxX.min, minMaxY.min), new float2(minMaxX.max, minMaxY.max));
+    }
+
+    /// <summary>
+    /// Get min max for cubic bezier 2D
+    /// </summary>
+    /// <param name="controlPoints"></param>
+    /// <returns></returns>
+    public (float2 min, float2 max) GetMinMaxCubicBezier2D(float2[] controlPoints)
+    {
+        var minMaxX = GetMinMaxCubicBezier1D(controlPoints.Select(c => c.x).ToArray());
+        var minMaxY = GetMinMaxCubicBezier1D(controlPoints.Select(c => c.y).ToArray());
+        return (new float2(minMaxX.min, minMaxY.min), new float2(minMaxX.max, minMaxY.max));
+    }
+
+    /// <summary>
+    /// Get min max for quadratic bezier
+    /// </summary>
+    /// <param name="controlPoints"></param>
+    /// <returns></returns>
+    public (float min, float max) GetMinMaxQuadraticBezier1D(float[] controlPoints)
+    {
+        //We need just the first derivative
+        var derivativePoints = GetFirstDerivativePointsForQuadratic1D(controlPoints);
+        var roots = GetLinearRoots(derivativePoints);
+        var zeroT = CalcBezierQuadratic1D(0, controlPoints);
+        var oneT = CalcBezierQuadratic1D(1, controlPoints);
+
+        //calculate values at roots
+        for (int i = 0; i < roots.Count; i++)
+            roots[i] = CalcBezierQuadratic1D(roots[i], controlPoints);
+
+        return GetMinMax(zeroT, oneT, roots);
+    }
+
+    /// <summary>
+    /// Get min max for cubic bezier
+    /// </summary>
+    /// <param name="controlPoints"></param>
+    /// <returns></returns>
+    public (float min, float max) GetMinMaxCubicBezier1D(float[] controlPoints)
+    {
+        //Find roots for first derivative
+        var derivativePoints = GetFirstDerivativePointsForCubic1D(controlPoints);
+        var roots = GetQuadraticRoots(derivativePoints);
+        var zeroT = CalcBezierCubic1D(0, controlPoints);
+        var oneT = CalcBezierCubic1D(1, controlPoints);
+
+        //Find roots for second derivative
+        var secondDerivativePoints = GetFirstDerivativePointsForQuadratic1D(derivativePoints);
+        var secondRoots = GetLinearRoots(secondDerivativePoints);
+        roots.AddRange(secondRoots);
+
+        //calculate values at roots
+        for (int i = 0; i < roots.Count; i++)
+            roots[i] = CalcBezierQuadratic1D(roots[i], controlPoints);
+
+        return GetMinMax(zeroT, oneT, roots);
+    }
+
+    //Just a helper function to get min and max from given val0 val1 and list :)
+    private (float min, float max) GetMinMax(float val0, float val1, List<float> others)
+    {
+        var min = math.min(val0, val1);
+        var max = math.max(val0, val1);
+        foreach (var root in others)
+        {
+            min = math.min(min, root);
+            max = math.max(max, root);
+        }
+
+        return (min, max);
+    }
+
+    #endregion
 }
