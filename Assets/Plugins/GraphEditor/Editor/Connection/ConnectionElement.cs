@@ -32,13 +32,20 @@ namespace ViJ.GraphEditor
                 return;
 
             var painter = context.painter2D;
+            painter.lineWidth = 2f;
+            painter.strokeColor = Color.white;
+            painter.lineCap = LineCap.Round;
             painter.BeginPath();
 
             var fromPosition = this.WorldToLocal(m_Pin0.PinWorldPosition);
             var toPosition = this.WorldToLocal(m_Pin1.PinWorldPosition);
 
+            var scale = 50f;
+            var offset = Vector2.right * scale;
+
             painter.MoveTo(fromPosition);
-            painter.LineTo(toPosition);
+            painter.BezierCurveTo(fromPosition + offset, toPosition - offset, toPosition);
+
             painter.Stroke();
         }
     }
