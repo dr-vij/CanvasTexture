@@ -4,6 +4,153 @@ using UnityEngine;
 using Unity.Mathematics;
 using System.Linq;
 
+public struct BezierSamplePoint
+{
+    public float2 Position;
+    public float T;
+}
+
+public class CubicBezierSegment2D
+{
+    private float2 m_P0;
+    private float2 m_P1;
+    private float2 m_P2;
+    private float2 m_P3;
+
+    private float2 m_Der1A;
+    private float2 m_Der1B;
+    private float2 m_Der1C;
+
+    private float2 der2A;
+    private float2 der2B;
+
+    private float[] m_Roots = new float[3];
+
+    public CubicBezierSegment2D(float2 p0, float2 p1, float2 p2, float2 p3)
+    {
+        m_P0 = p0;
+        m_P1 = p1;
+        m_P2 = p2;
+        m_P3 = p3;
+
+        CalcDerivativePoints();
+    }
+
+    public float2 Sample(float t)
+    {
+        var t2 = t * t;
+        var t3 = t2 * t;
+        var mt = 1 - t;
+        var mt2 = mt * mt;
+        var mt3 = mt2 * mt;
+        return m_P0 * mt3 + 3 * m_P1 * mt2 * t + 3 * m_P2 * mt * t2 + m_P3 * t3;
+    }
+
+    public List<BezierSamplePoint> FlattenSpline(int segmentCount, List<BezierSamplePoint> result = null)
+    {
+        if (result == null)
+            result = new List<BezierSamplePoint>(segmentCount + 1);
+        else
+            result.Clear();
+
+        var step = 1f / segmentCount;
+        for (int i = 0; i < segmentCount; i++)
+        {
+            var t = i * step;
+            result.Add(new BezierSamplePoint()
+            {
+                Position = Sample(t),
+                T = t,
+            });
+        }
+        result.Add(new BezierSamplePoint()
+        {
+            Position = Sample(1f),
+            T = 1,
+        });
+        return result;
+    }
+
+    public (float2 min, float2 max) GetMinMax()
+    {
+        var min = math.min(m_P0, m_P3);
+        var max = math.max(m_P0, m_P3);
+
+        for (int i = 0; i < 2; i++)
+        {
+            GetAllDimensionRoots(i, m_Roots);
+            foreach (var root in m_Roots)
+            {
+                if (root != 0)
+                {
+                    var val = Sample(root);
+                    min = math.min(min, val);
+                    max = math.max(max, val);
+                }
+            }
+        }
+
+        return (min, max);
+    }
+
+    private void GetAllDimensionRoots(int dimension, float[] roots)
+    {
+        SearchQuadRoots(dimension, out var t1, out var t2);
+        var t3 = SearchLinearRoots(dimension);
+        roots[0] = t1;
+        roots[1] = t2;
+        roots[2] = t3;
+    }
+
+    private void SearchQuadRoots(int dimension, out float resultT1, out float resultT2)
+    {
+        resultT1 = 0;
+        resultT2 = 0;
+
+        var a = m_Der1A[dimension] - 2 * m_Der1B[dimension] + m_Der1C[dimension];
+        var b = 2 * (m_Der1B[dimension] - m_Der1A[dimension]);
+        var c = m_Der1A[dimension];
+
+        var b2min4ac = b * b - 4 * a * c;
+        if (b2min4ac >= 0)
+        {
+            var aBy2 = 2 * a;
+            var sqrt = math.sqrt(b2min4ac);
+            var root1 = (-b - sqrt) / (aBy2);
+            var root2 = (-b + sqrt) / (aBy2);
+
+            if (root1 >= 0 && root1 <= 1)
+                resultT1 = root1;
+            if (root2 >= 0 && root2 <= 1)
+                resultT2 = root2;
+        }
+    }
+
+    private float SearchLinearRoots(int dimension)
+    {
+        var a = der2A[dimension];
+        var b = der2B[dimension];
+        var bSubA = b - a;
+        if (b - a != 0)
+        {
+            var root = -a / (bSubA);
+            if (root >= 0 && root <= 1)
+                return root;
+        }
+        return 0f;
+    }
+
+    private void CalcDerivativePoints()
+    {
+        m_Der1A = 3 * (m_P1 - m_P0);
+        m_Der1B = 3 * (m_P2 - m_P1);
+        m_Der1C = 3 * (m_P3 - m_P2);
+
+        der2A = 2 * (m_Der1B - m_Der1A);
+        der2B = 2 * (m_Der1C - m_Der1B);
+    }
+}
+
 // usefull links:
 // some cool stuff about bezier: https://pomax.github.io/bezierinfo/ 
 // Binominals explained: https://ru.wikipedia.org/wiki/%D0%A2%D1%80%D0%B5%D1%83%D0%B3%D0%BE%D0%BB%D1%8C%D0%BD%D0%B8%D0%BA_%D0%9F%D0%B0%D1%81%D0%BA%D0%B0%D0%BB%D1%8F
@@ -372,7 +519,6 @@ public class Bezier
 
         return result;
     }
-
 
     public float FirstDerivativeCubic1D(float t, float[] points) => CalcBezierQuadratic1D(t, GetFirstDerivativePointsForCubic1D(points));
 
