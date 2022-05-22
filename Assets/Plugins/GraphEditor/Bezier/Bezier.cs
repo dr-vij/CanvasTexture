@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
 using System.Linq;
+using System;
+using System.Numerics;
 
 public struct BezierSamplePoint
 {
@@ -10,6 +12,9 @@ public struct BezierSamplePoint
     public float T;
 }
 
+//https://hal.inria.fr/file/index/docid/518379/filename/Xiao-DiaoChen2007c.pdf
+//https://stackoverflow.com/questions/2742610/closest-point-on-a-cubic-bezier-curve
+//http://jazzros.blogspot.com/2011/03/projecting-point-on-bezier-curve.html
 public class CubicBezierSegment2D
 {
     private float2 m_P0;
@@ -17,13 +22,17 @@ public class CubicBezierSegment2D
     private float2 m_P2;
     private float2 m_P3;
 
+
+    //First derivativer
     private float2 m_Der1A;
     private float2 m_Der1B;
     private float2 m_Der1C;
 
+    //Second derivative
     private float2 der2A;
     private float2 der2B;
 
+    //Buffer for calculations
     private float[] m_Roots = new float[3];
 
     public CubicBezierSegment2D(float2 p0, float2 p1, float2 p2, float2 p3)
@@ -33,7 +42,7 @@ public class CubicBezierSegment2D
         m_P2 = p2;
         m_P3 = p3;
 
-        CalcDerivativePoints();
+        CalcDerivativePointsForBoundsCalculation();
     }
 
     public float2 Sample(float t)
@@ -44,6 +53,65 @@ public class CubicBezierSegment2D
         var mt2 = mt * mt;
         var mt3 = mt2 * mt;
         return m_P0 * mt3 + 3 * m_P1 * mt2 * t + 3 * m_P2 * mt * t2 + m_P3 * t3;
+    }
+
+    private float ComponentalSum(float2 point)
+    {
+        return point.x + point.y;
+    }
+
+    private List<Complex> m_ComplexRoots = new List<Complex>();
+
+    public float DistanceTo(float2 point, out float2 result)
+    {
+        var p0 = m_P0 - point;
+        var p1 = m_P1 - point;
+        var p2 = m_P2 - point;
+        var p3 = m_P3 - point;
+
+        var A = p3 - 3 * p2 + 3 * p1 - p0;
+        var B = 3 * p2 - 6 * p1 + 3 * p0;
+        var C = 3 * (p1 - p0);
+
+        var q5 = 3 * A * A;
+        var q4 = 5 * A * B;
+        var q3 = 4 * A * C + 2 * B * B;
+        var q2 = 3 * B * C + 3 * A * p0;
+        var q1 = C * C + 2 * B * p0;
+        var q0 = C * p0;
+
+        result = float2.zero;
+        var minSqDistance = float.PositiveInfinity;
+
+        //First lets check the first and the last points
+        var distToFirst = math.distancesq(m_P0, point);
+        if (math.distance(m_P0, point) < minSqDistance)
+        {
+            minSqDistance = distToFirst;
+            result = m_P0;
+        }
+        var distToLast = math.distancesq(m_P3, point);
+        if (math.distance(m_P3, point) < minSqDistance)
+        {
+            minSqDistance = distToLast;
+            result = m_P3;
+        }
+
+        //Than try to solve equation and get real roots
+        var roots = RealPolynomialRootFinder.FindRoots(m_ComplexRoots, ComponentalSum(q5), ComponentalSum(q4), ComponentalSum(q3), ComponentalSum(q2), ComponentalSum(q1), ComponentalSum(q0));
+        var filtered = roots.Where(c => c.Imaginary == 0 && c.Real <= 1 && c.Real >= 0).Select(c => (float)c.Real);
+        foreach (var root in filtered)
+        {
+            var valueAtRoot = Sample(root);
+            var distanceSq = math.distancesq(valueAtRoot, point);
+            if (distanceSq < minSqDistance)
+            {
+                minSqDistance = distanceSq;
+                result = valueAtRoot;
+            }
+        }
+
+        return math.sqrt(minSqDistance);
     }
 
     public List<BezierSamplePoint> FlattenSpline(int segmentCount, List<BezierSamplePoint> result = null)
@@ -140,7 +208,7 @@ public class CubicBezierSegment2D
         return 0f;
     }
 
-    private void CalcDerivativePoints()
+    private void CalcDerivativePointsForBoundsCalculation()
     {
         m_Der1A = 3 * (m_P1 - m_P0);
         m_Der1B = 3 * (m_P2 - m_P1);
