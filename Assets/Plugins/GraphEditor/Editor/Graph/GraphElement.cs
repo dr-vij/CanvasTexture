@@ -92,6 +92,9 @@ namespace ViJ.GraphEditor
         public void ConnectPins(NodePinElement pin0, NodePinElement pin1)
         {
             var connection = new ConnectionElement();
+
+            connection.RegisterCallback<MouseMoveEvent>((c) => connection.SetTestPoint(c.mousePosition));
+
             m_BlackboardRoot.Add(connection);
             connection.SetPins(pin0, pin1);
         }
