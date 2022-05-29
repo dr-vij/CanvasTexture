@@ -25,16 +25,14 @@ namespace ViJ.GraphEditor
             root.Add(m_Graph);
             m_Graph.StretchToParentSize();
 
-            var node1 = new NodeElement();
-            m_Graph.AddNode(node1);
+            var node1 = new NodeElement(m_Graph);
             node1.BlackboardPosition = new Vector2(100, 100);
 
-            var node2 = new NodeElement();
-            m_Graph.AddNode(node2);
+            var node2 = new NodeElement(m_Graph);
             node2.BlackboardPosition = new Vector2(200, 200);
 
             node1.TryGetPin(0, out var pin0);
-            node2.TryGetPin(0, out var pin1);
+            node2.TryGetPin(4, out var pin1);
             m_Graph.ConnectPins(pin0, pin1);
         }
     }

@@ -12,31 +12,53 @@ namespace ViJ.GraphEditor
         private NodePinElement m_Pin0;
         private NodePinElement m_Pin1;
 
+        private GraphElement m_GraphElement;
+
         private CubicBezierSegment2D m_Spline;
         private List<BezierSamplePoint> mFlattennedSpline = new List<BezierSamplePoint>();
 
-        private Vector2 mTestPosition;
+        private float m_LineWidth = 2f;
+        private Color m_LineColor = Color.white;
+        private bool m_IsHover;
 
-        public ConnectionElement()
+        public float LineWidth
         {
+            get => m_LineWidth;
+            set => m_LineWidth = value;
+        }
+
+        public Color LineColor
+        {
+            get => m_LineColor;
+            set => m_LineColor = value;
+        }
+
+        public ConnectionElement(GraphElement graphElement)
+        {
+            m_GraphElement = graphElement;
+
             generateVisualContent += OnMeshGenerationContext;
             style.position = Position.Absolute;
+            RegisterHovering();
         }
 
         public void SetPins(NodePinElement pin0, NodePinElement pin1)
         {
             m_Pin0 = pin0;
             m_Pin1 = pin1;
-
-            m_Pin0.PinPositionChangeEvent += () => OnNeedRefreshPosition();
-            m_Pin1.PinPositionChangeEvent += () => OnNeedRefreshPosition();
-
-            MarkDirtyRepaint();
+            m_Pin0.PinPositionChangeEvent += MarkForRecalc;
+            m_Pin1.PinPositionChangeEvent += MarkForRecalc;
+            MarkForRecalc();
         }
 
-        private void OnNeedRefreshPosition()
+        private void MarkForRecalc()
         {
-            var min = Vector2.Min(m_Pin0.PinWorldPosition, m_Pin1.PinWorldPosition);
+            schedule.Execute(RecalculateSpline);
+        }
+
+        private void RecalculateSpline()
+        {
+            var min = m_GraphElement.TransformPositionWorldToBlackboard(Vector2.Min(m_Pin0.PinWorldPosition, m_Pin1.PinWorldPosition));
             transform.position = min;
             var delta = m_Pin0.PinWorldPosition - m_Pin1.PinWorldPosition;
             delta = new Vector2(Mathf.Abs(delta.x), Mathf.Abs(delta.y));
@@ -46,20 +68,9 @@ namespace ViJ.GraphEditor
             MarkDirtyRepaint();
         }
 
-        public void SetTestPoint(Vector2 worldPos)
-        {
-            mTestPosition = worldPos;
-            MarkDirtyRepaint();
-        }
-
         public override bool ContainsPoint(Vector2 localPoint)
         {
-            return true;
-        }
-
-        public override bool Overlaps(Rect rectangle)
-        {
-            return true;
+            return m_Spline.DistanceTo(localPoint, out _) < m_LineWidth / 2;
         }
 
         private void OnMeshGenerationContext(MeshGenerationContext context)
@@ -68,8 +79,8 @@ namespace ViJ.GraphEditor
                 return;
 
             var painter = context.painter2D;
-            painter.lineWidth = 2f;
-            painter.strokeColor = Color.white;
+            painter.lineWidth = m_IsHover ? m_LineWidth * 1.5f : m_LineWidth;
+            painter.strokeColor = m_IsHover ? Color.white : Color.gray * 1.9f;
             painter.lineCap = LineCap.Round;
             painter.BeginPath();
 
@@ -87,13 +98,25 @@ namespace ViJ.GraphEditor
                 painter.LineTo(mFlattennedSpline[i].Position);
                 painter.MoveTo(mFlattennedSpline[i].Position);
             }
-
-            var pos = this.WorldToLocal(mTestPosition);
-            var radius = 20f;
-            painter.MoveTo(pos + Vector2.right * radius);
-            painter.Arc(pos, radius, new Angle(0), new Angle(360));
-
             painter.Stroke();
+        }
+
+        private void RegisterHovering()
+        {
+            RegisterCallback<MouseEnterEvent>(OnMouseEnter);
+            RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
+        }
+
+        private void OnMouseEnter(MouseEnterEvent evt)
+        {
+            m_IsHover = true;
+            MarkDirtyRepaint();
+        }
+
+        private void OnMouseLeave(MouseLeaveEvent evt)
+        {
+            m_IsHover = false;
+            MarkDirtyRepaint();
         }
     }
 }

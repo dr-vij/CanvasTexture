@@ -55,6 +55,8 @@ namespace ViJ.GraphEditor
         private VisualElement m_OutputContainer;
         private DragInputModule m_DragInputModule;
 
+        private GraphElement m_Owner;
+
         private int m_PinsCounter = -1;
         private Dictionary<int, NodePinElement> m_Pins = new Dictionary<int, NodePinElement>();
 
@@ -106,8 +108,11 @@ namespace ViJ.GraphEditor
             }
         }
 
-        public NodeElement()
+        public NodeElement(GraphElement graphElement)
         {
+            m_Owner = graphElement;
+            m_Owner.AddNode(this);
+
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(Path.Combine(GraphEditorSettings.Instance.PluginPath, LOCAL_PATH, UXML));
             Add(asset.Instantiate());
             m_Node = this.Q("Node");

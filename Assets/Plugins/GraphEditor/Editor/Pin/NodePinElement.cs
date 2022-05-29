@@ -76,6 +76,8 @@ namespace ViJ.GraphEditor
             m_Pin = this.Q(className: PIN_CLASSNAME);
             m_PinContainer = this.Q(className: PIN_CONTAINER_CLASS);
 
+            generateVisualContent += (c) => PinPositionChangeEvent?.Invoke();
+
             //Connect input
             m_DragInputModule = new DragInputModule(this);
             m_DragInputModule.NodeDragStartEvent += (position) => PinDragStartEvent?.Invoke(this, position);
