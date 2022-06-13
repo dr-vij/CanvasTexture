@@ -108,6 +108,10 @@ namespace ViJ.GraphEditor
             node.NodeDragStartEvent += OnNodeDragStart;
             node.NodeDragEvent += OnNodeDrag;
             node.NodeDragEndEvent += OnNodeDragEnd;
+
+            node.PinDragStartEvent += OnPinDragStart;
+            node.PinDragEvent += OnPinDrag;
+            node.PinDragEndEvent += OnPinDragEnd;
         }
 
         public void RemoveNode(int id)
@@ -123,6 +127,10 @@ namespace ViJ.GraphEditor
             node.NodeDragStartEvent -= OnNodeDragStart;
             node.NodeDragEvent -= OnNodeDrag;
             node.NodeDragEndEvent -= OnNodeDragEnd;
+
+            node.PinDragStartEvent -= OnPinDragStart;
+            node.PinDragEvent -= OnPinDrag;
+            node.PinDragEndEvent -= OnPinDragEnd;
         }
 
         private HashSet<int> GetOverlappedNodes(Rect rect, HashSet<int> outNodes = null)
@@ -189,19 +197,35 @@ namespace ViJ.GraphEditor
 
         #region Pin manipulations
 
+        private ConnectionElement m_ConnectionPreview;
+        private PinType m_PreviewPinType;
+
         private void OnPinDragStart(NodePinElement pin, Vector2 position)
         {
+            m_ConnectionPreview = new ConnectionElement(this);
+            m_BlackboardRoot.Add(m_ConnectionPreview);
 
+            m_PreviewPinType = pin.PinType;
+            m_ConnectionPreview.NoPinWorldPosition0 = pin.PinWorldPosition;
+            m_ConnectionPreview.NoPinWorldPosition1 = pin.PinWorldPosition;
         }
 
         private void OnPinDrag(NodePinElement pin, Vector2 position)
         {
-
+            switch (m_PreviewPinType)
+            {
+                case PinType.Input:
+                    m_ConnectionPreview.NoPinWorldPosition0 = position;
+                    break;
+                case PinType.Output:
+                    m_ConnectionPreview.NoPinWorldPosition1 = position;
+                    break;
+            }
         }
 
         private void OnPinDragEnd(NodePinElement pin, Vector2 position)
         {
-
+            m_ConnectionPreview.RemoveFromHierarchy();
         }
 
         #endregion
