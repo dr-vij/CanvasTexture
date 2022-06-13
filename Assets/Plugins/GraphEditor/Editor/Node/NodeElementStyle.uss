@@ -10,7 +10,7 @@
 }
 
 .titleContainer {
-    background-color: rgba(60, 47, 47, 0.28);
+    background-color: rgba(58, 58, 58, 0.28);
     padding-left: 3px;
     padding-right: 3px;
     padding-top: 3px;
@@ -29,14 +29,14 @@
 .mainContainer {
     flex-direction: row;
     justify-content: space-between;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-left: 0;
+    padding-right: 0;
     padding-top: 5px;
     padding-bottom: 5px;
 }
 
 .node {
-    background-color: rgb(197, 193, 193);
+    background-color: rgba(94, 94, 94, 0.86);
     min-width: 50px;
     min-height: 30px;
     max-width: 300px;
@@ -58,8 +58,8 @@
 }
 
 .nodeUnselected {
-    border-left-color: rgba(36, 36, 36, 255);
-    border-right-color: rgba(36, 36, 36, 255);
-    border-top-color: rgba(36, 36, 36, 255);
-    border-bottom-color: rgba(36, 36, 36, 255);
+    border-left-color: rgb(36, 36, 36);
+    border-right-color: rgb(36, 36, 36);
+    border-top-color: rgb(36, 36, 36);
+    border-bottom-color: rgb(36, 36, 36);
 }
