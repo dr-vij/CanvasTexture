@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
 
 namespace ViJ.GraphEditor
@@ -199,6 +200,7 @@ namespace ViJ.GraphEditor
 
         private ConnectionElement m_ConnectionPreview;
         private PinType m_PreviewPinType;
+        private List<VisualElement> m_PickedElements = new List<VisualElement>();
 
         private void OnPinDragStart(NodePinElement pin, Vector2 position)
         {
@@ -221,11 +223,14 @@ namespace ViJ.GraphEditor
                     m_ConnectionPreview.NoPinWorldPosition1 = position;
                     break;
             }
+
+            var topElement = m_Root.panel.PickAll(position, m_PickedElements);
         }
 
         private void OnPinDragEnd(NodePinElement pin, Vector2 position)
         {
             m_ConnectionPreview.RemoveFromHierarchy();
+            var topElement = m_Root.panel.PickAll(position, m_PickedElements);
         }
 
         #endregion
