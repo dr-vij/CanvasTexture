@@ -10,6 +10,15 @@ namespace ViJApps
         ulong ID { get; }
     }
 
+    public struct ExecutionFlow { }
+
+    public class ExecutionFlowPin : DataPin<ExecutionFlow>
+    {
+        public ExecutionFlowPin(NodeBase owner) : base(owner)
+        {
+        }
+    }
+
     public class DataPin<T> : PinBase
     {
         protected T m_Data;
