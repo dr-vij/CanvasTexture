@@ -5,16 +5,24 @@ using System.IO;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Rendering;
 
 namespace ViJApps
 {
+    public class MeshPool : ObjectPool<Mesh>
+    {
+        public MeshPool() : base((c) => new Mesh(), (c) => c.Clear(), true) { }
+    }
+
     public partial class TextureData : IDisposable
     {
         protected CommandBuffer m_Cmd;
         protected RenderTexture m_RTex;
-        protected Mesh m_BufferMesh;
+        protected static MeshPool m_MeshPool = new MeshPool();
         protected RenderTextureDescriptor m_Desc;
+
+        protected float m_Aspect = 1f;
 
         public RenderTexture RTex => m_RTex;
 
@@ -31,7 +39,6 @@ namespace ViJApps
         public void Init(int width, int height)
         {
             InitCMD();
-
             if (m_RTex == null || m_RTex.width != width || m_RTex.height != height)
                 ReinitTexture(width, height);
         }
@@ -51,8 +58,13 @@ namespace ViJApps
 
         public void DrawLine(float2 from, float2 to, float width, Color color)
         {
-            m_BufferMesh = MeshTools.CreateLine(from, to, width, m_BufferMesh);
-            m_Cmd.DrawMesh(m_BufferMesh, Matrix4x4.identity, new Material(Shader.Find("Standard")));
+            var scaleMat = new float2x2(new float2(1, 0), new float2(0, 8));
+
+            var mesh = MeshTools.CreateLine(from, to, scaleMat, width, m_MeshPool.Get());
+            var mat = new Material(Shader.Find("Unlit/Color"));
+            mat.color = color;
+            var mtrx = Matrix4x4.identity * Matrix4x4.Scale(new Vector3(1, 8f, 1));
+            m_Cmd.DrawMesh(mesh, mtrx, mat);
         }
 
         public Texture2D ToTexture2D(Texture2D texture = null)
@@ -93,6 +105,7 @@ namespace ViJApps
         private void ReinitTexture(int width, int height)
         {
             m_Desc = new RenderTextureDescriptor(width, height);
+            m_Aspect = (float)width / height;
             if (m_RTex != null)
                 UnityEngine.Object.Destroy(m_RTex);
             m_RTex = new RenderTexture(m_Desc);

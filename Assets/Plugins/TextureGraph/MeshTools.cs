@@ -14,6 +14,8 @@ namespace ViJApps.MathematicsExtensions
         public static float2 RotateVectorCCWHalfPi(this float2 vector) => new float2(-vector.y, vector.x);
 
         public static float3 ToFloat3(this float2 val, float z = 0) => new float3(val.x, val.y, z);
+
+        public static float2 ToPercentCoord(float2 position) => math.lerp(new float2(-1, -1), new float2(1, 1), position);
     }
 }
 
@@ -21,7 +23,7 @@ namespace ViJApps
 {
     public static class MeshTools
     {
-        public static Mesh CreateLine(float2 from, float2 to, float width, Mesh mesh = null)
+        public static Mesh CreateLine(float2 from, float2 to, float2x2 mtrx, float width, Mesh mesh = null)
         {
             if (mesh == null)
                 mesh = new Mesh();

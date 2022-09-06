@@ -12,10 +12,10 @@ public class TextureDataExample : MonoBehaviour
     {
         var data = new TextureData();
 
-        data.Init(1024);
+        data.Init(2048, 256);
         data.ClearWithColor(Color.blue);
-        data.DrawLine(new float2(-1, -1), new float2(1, 1), 0.1f, Color.white);
-        data.DrawLine(new float2(-1, 1), new float2(1, -1), 0.1f, Color.white);
+        data.DrawLine(new float2(-0.5f, -0.5f), new float2(0.5f, 0.5f), 0.2f, Color.grey);
+        data.DrawLine(new float2(-0.5f, 0.5f), new float2(0.5f, -0.5f), 0.2f, Color.yellow);
         data.Flush();
 
         m_Renderer.material.mainTexture = data.ToTexture2D();
