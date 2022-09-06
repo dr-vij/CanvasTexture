@@ -2,11 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using ViJApps;
+using Unity.Mathematics;
 
 public class TextureDataExample : MonoBehaviour
 {
-    [SerializeField] private Renderer m_Renderer1 = default;
-    [SerializeField] private Renderer m_Renderer2 = default;
+    [SerializeField] private Renderer m_Renderer = default;
 
     private void Start()
     {
@@ -14,16 +14,10 @@ public class TextureDataExample : MonoBehaviour
 
         data.Init(1024);
         data.ClearWithColor(Color.blue);
-        data.DrawLineV1(Vector2.zero, Vector2.zero, 1f, Color.white);
+        data.DrawLine(new float2(-1, -1), new float2(1, 1), 0.1f, Color.white);
+        data.DrawLine(new float2(-1, 1), new float2(1, -1), 0.1f, Color.white);
         data.Flush();
-        m_Renderer1.material.mainTexture = data.ToTexture2d();
 
-        data = new TextureData();
-
-        data.Init(1024);
-        data.ClearWithColor(Color.blue);
-        data.DrawLineV2(Vector2.zero, Vector2.zero, 1f, Color.white);
-        data.Flush();
-        m_Renderer2.material.mainTexture = data.ToTexture2d();
+        m_Renderer.material.mainTexture = data.ToTexture2D();
     }
 }

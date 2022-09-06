@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -12,6 +13,7 @@ namespace ViJApps
     {
         protected CommandBuffer m_Cmd;
         protected RenderTexture m_RTex;
+        protected Mesh m_BufferMesh;
         protected RenderTextureDescriptor m_Desc;
 
         public RenderTexture RTex => m_RTex;
@@ -47,43 +49,37 @@ namespace ViJApps
             m_Cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
 
-        public void DrawLineV1(Vector2 from, Vector2 to, float width, Color color)
+        public void DrawLine(float2 from, float2 to, float width, Color color)
         {
-            var mesh = new Mesh();
-            mesh.SetVertices(new Vector3[] { Vector3.one * 0, Vector3.up * 0.5f, Vector3.one * 0.5f, Vector3.right * 0.5f });
-            mesh.SetIndices(new int[] { 0, 1, 2, 0, 2, 3 }, MeshTopology.Triangles, 0);
-
-            var matrix = GL.GetGPUProjectionMatrix(Matrix4x4.identity, true);
-            m_Cmd.DrawMesh(mesh, matrix, new Material(Shader.Find("Standard")));
+            m_BufferMesh = MeshTools.CreateLine(from, to, width, m_BufferMesh);
+            m_Cmd.DrawMesh(m_BufferMesh, Matrix4x4.identity, new Material(Shader.Find("Standard")));
         }
 
-        public void DrawLineV2(Vector2 from, Vector2 to, float width, Color color)
+        public Texture2D ToTexture2D(Texture2D texture = null)
         {
-            var mesh = new Mesh();
-            mesh.SetVertices(new Vector3[] { Vector3.one * 0, Vector3.up * 0.5f, Vector3.one * 0.5f, Vector3.right * 0.5f });
-            mesh.SetIndices(new int[] { 0, 1, 2, 0, 2, 3 }, MeshTopology.Triangles, 0);
+            if (texture == null)
+                texture = new Texture2D(m_RTex.width, m_RTex.height);
+            else
+                texture.Reinitialize(m_RTex.width, m_RTex.height);
 
-            var matrix = Matrix4x4.identity;
-            m_Cmd.DrawMesh(mesh, matrix, new Material(Shader.Find("Standard")));
-        }
-
-        public Texture2D ToTexture2d()
-        {
-            var texture2d = new Texture2D(m_RTex.width, m_RTex.height);
             var buffer = RenderTexture.active;
             RenderTexture.active = RTex;
-            texture2d.ReadPixels(new Rect(0, 0, m_RTex.width, m_RTex.height), 0, 0);
-            texture2d.Apply();
+            texture.ReadPixels(new Rect(0, 0, m_RTex.width, m_RTex.height), 0, 0);
+            texture.Apply();
             RenderTexture.active = buffer;
-            return texture2d;
+            return texture;
         }
 
         public void SaveToAssets(string assetName)
         {
-            var texture2d = ToTexture2d();
+#if UNITY_EDITOR
+            var texture2d = ToTexture2D();
             var bytes = texture2d.EncodeToPNG();
             System.IO.File.WriteAllBytes($"Assets/" + assetName + ".png", bytes);
             AssetDatabase.Refresh();
+#else
+            Debug.LogWarning("You can save to assets only from Editor");
+#endif
         }
 
         private void InitCMD()
