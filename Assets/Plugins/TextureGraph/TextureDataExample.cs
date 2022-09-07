@@ -12,10 +12,17 @@ public class TextureDataExample : MonoBehaviour
     {
         var data = new TextureData();
 
-        data.Init(2048, 256);
+        var w = 512;
+        var h = 128;
+        var offset = 32f;
+        var thickness = 16f;
+
+        data.Init(w, h);
+        data.Aspect = (float)w / h;
         data.ClearWithColor(Color.blue);
-        data.DrawLine(new float2(-0.5f, -0.5f), new float2(0.5f, 0.5f), 0.2f, Color.grey);
-        data.DrawLine(new float2(-0.5f, 0.5f), new float2(0.5f, -0.5f), 0.2f, Color.yellow);
+
+        data.DrawLinePixels(new float2(0 + offset, 0 + offset), new float2(w - offset, h - offset), thickness, Color.grey);
+        data.DrawLinePixels(new float2(0 + offset, h - offset), new float2(w - offset, 0 + offset), thickness, Color.yellow);
         data.Flush();
 
         m_Renderer.material.mainTexture = data.ToTexture2D();
