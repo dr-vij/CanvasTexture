@@ -7,7 +7,7 @@ using ViJApps.MathematicsExtensions;
 
 namespace ViJApps.MathematicsExtensions
 {
-    public static class Utils
+    public static class MathUtils2d
     {
         public static readonly float2 Floa2One = new float2(1, 1);
 
@@ -25,21 +25,49 @@ namespace ViJApps.MathematicsExtensions
 
         #region transformations2d
 
+        /// <summary>
+        /// Transforms point from local 2d space to world 2d space
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="matrix"></param>
+        /// <returns></returns>
         public static float2 TransformPoint(this float2 point, float3x3 matrix) => math.mul(matrix, point.ToFloat3(1)).xy;
 
+        /// <summary>
+        /// Transforms vector from local 2d space to world 2d space
+        /// </summary>
+        /// <param name="direction"></param>
+        /// <param name="matrix"></param>
+        /// <returns></returns>
         public static float2 TransformDirection(this float2 direction, float3x3 matrix) => math.mul(matrix, direction.ToFloat3(0)).xy;
 
+        /// <summary>
+        /// Transforms point from world 2d space to local 2d space
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="matrix"></param>
+        /// <returns></returns>
         public static float2 InverseTransformPoint(this float2 point, float3x3 matrix) => math.mul(math.inverse(matrix), point.ToFloat3(1)).xy;
 
+        /// <summary>
+        /// Transforms vector from world 2d space to local 2d space
+        /// </summary>
+        /// <param name="direction"></param>
+        /// <param name="matrix"></param>
+        /// <returns></returns>
         public static float2 InverseTransformDirection(this float2 direction, float3x3 matrix) => math.mul(math.inverse(matrix), direction.ToFloat3(0)).xy;
 
         #endregion
+
+        #region 2d matrices
 
         public static float3x3 CreateScaleMatrix2d(float2 scale) => new float3x3(new float3(scale.x, 0, 0), new float3(0, scale.y, 0), new float3(0, 0, 1));
 
         public static float3x3 CreateTranslationMatrix2d(float2 translation) => new float3x3(new float3(1, 0, 0), new float3(0, 1, 0), new float3(translation.x, translation.y, 1));
 
         public static float3x3 CreateTranslationScaleMatrix(float2 translation, float2 scale) => new float3x3(new float3(scale.x, 0, 0), new float3(0, scale.y, 0), new float3(translation.x, translation.y, 1));
+
+        #endregion
     }
 }
 

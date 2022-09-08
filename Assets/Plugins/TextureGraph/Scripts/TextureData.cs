@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -7,18 +8,20 @@ using ViJApps.MathematicsExtensions;
 
 namespace ViJApps
 {
-    public class MeshPool : ObjectPool<Mesh>
+    public enum ShaderType
     {
-        public MeshPool() : base((c) => c = new Mesh(), (c) => c.Clear(), true) { }
+        None = 0,
+        SimpleUnlit = 1,
     }
 
     public partial class TextureData : IDisposable
     {
-        protected static MeshPool m_MeshPool = new MeshPool();
-
         protected CommandBuffer m_Cmd;
         protected RenderTexture m_RTex;
         protected RenderTextureDescriptor m_Desc;
+
+        protected List<Mesh> m_AllocatedMeshes = new List<Mesh>();
+        protected List<Material> m_AllocatedMaterials = new List<Material>();
 
         private float2 m_TextureSize = float2.zero;
 
@@ -28,7 +31,7 @@ namespace ViJApps
 
         public void Init(RenderTexture rtex)
         {
-            InitCMD();
+            ReinitCMD();
 
             m_Desc = rtex.descriptor;
             m_RTex = rtex;
@@ -38,7 +41,7 @@ namespace ViJApps
 
         public void Init(int width, int height)
         {
-            InitCMD();
+            ReinitCMD();
             if (m_RTex == null || m_RTex.width != width || m_RTex.height != height)
                 ReinitTexture(width, height);
         }
@@ -58,15 +61,15 @@ namespace ViJApps
 
         public void DrawLinePixels(float2 pixelFrom, float2 pixelTo, float pixelThickness, Color color)
         {
-            //We convert from 0..1 to -1..1 here
-            var scaleMatrix = Utils.CreateTranslationScaleMatrix(m_TextureSize/2, m_TextureSize/2);
+            //We convert from 0..textureSize to -1..1 here
+            var scaleMatrix = MathUtils2d.CreateTranslationScaleMatrix(m_TextureSize / 2, m_TextureSize / 2);
 
-            var mesh = MeshTools.CreateLine(pixelFrom, pixelTo, scaleMatrix, pixelThickness, m_MeshPool.Get());
+            var mesh = MeshTools.CreateLine(pixelFrom, pixelTo, scaleMatrix, pixelThickness, Pooler.Instance.GetMesh());
 
-            var m_Mat = new Material(Shader.Find("Unlit/Color"));
-            m_Mat.color = color;
-
-            m_Cmd.DrawMesh(mesh, Matrix4x4.identity, m_Mat);
+            var m_Mat = MaterialProvider.Instance.GetMaterial(ShaderType.SimpleUnlit);
+            var propertyBlock = Pooler.Instance.GetPropertyBlock();
+            propertyBlock.SetColor(MaterialProvider.Instance.ColorPropertyID, color);
+            m_Cmd.DrawMesh(mesh, Matrix4x4.identity, m_Mat, 0, -1, propertyBlock);
         }
 
         public Texture2D ToTexture2D(Texture2D texture = null)
@@ -96,7 +99,11 @@ namespace ViJApps
 #endif
         }
 
-        private void InitCMD()
+        private void ClearPools()
+        {
+        }
+
+        private void ReinitCMD()
         {
             if (m_Cmd == null)
                 m_Cmd = new CommandBuffer();
