@@ -67,6 +67,12 @@ namespace ViJApps.MathematicsExtensions
 
         public static float3x3 CreateTranslationScaleMatrix(float2 translation, float2 scale) => new float3x3(new float3(scale.x, 0, 0), new float3(0, scale.y, 0), new float3(translation.x, translation.y, 1));
 
+        public static float3x3 CreateRotationMatrix(float rotation) =>
+            new float3x3(
+                new float3(math.cos(rotation), math.sin(rotation), 0),
+                new float3(math.sin(rotation), math.cos(rotation), 0),
+                new float3(0, 0, 1));
+
         #endregion
     }
 }
@@ -75,7 +81,7 @@ namespace ViJApps
 {
     public static class MeshTools
     {
-        public static Mesh CreateLine(float2 from, float2 to, float3x3 transform2d, float width, Mesh mesh = null)
+        public static Mesh CreateLine(float2 from, float2 to, float3x3 transform2d, float width, bool extendStartEnd = false, Mesh mesh = null)
         {
             if (mesh == null)
                 mesh = new Mesh();
@@ -85,6 +91,11 @@ namespace ViJApps
             var direction = math.normalizesafe(to - from, math.right().xy);
             var halfWidth = width * 0.5f;
             var sideDir = (direction.RotateVectorCWHalfPi() * halfWidth);
+
+            //Offset for round lines
+            var startEndOffset = extendStartEnd ? direction * halfWidth : float2.zero;
+            from -= startEndOffset;
+            to += startEndOffset;
 
             //4 vertices from BL CW
             var p0 = (from - sideDir).InverseTransformPoint(transform2d);

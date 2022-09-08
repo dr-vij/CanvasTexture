@@ -6,14 +6,23 @@ namespace ViJApps
 {
     public class MaterialProvider
     {
+        //Shader Names
+        public const string SIMPLE_UNLIT_SHADER = "ViJApps.SimpleUnlit";
+        public const string SIMPLE_LINE_UNLIT_SHADER = "ViJApps.SimpleLineUnlit";
+
+        //ShadersIDs
+        public readonly int SimpleUnlitShaderID;
+        public readonly int SimpleLineUnlitShaderID;
+
+        //PropertyIDs
         public readonly int ColorPropertyID;
         public readonly int ThicknessPropertyID;
+        public readonly int FromToCoordID;
 
         private static MaterialProvider m_Instance;
 
-        private Dictionary<ShaderType, Shader> m_Shaders = new Dictionary<ShaderType, Shader>();
-
-        private Dictionary<ShaderType, Material> m_Materials = new Dictionary<ShaderType, Material>();
+        private Dictionary<int, Shader> m_Shaders = new Dictionary<int, Shader>();
+        private Dictionary<int, Material> m_Materials = new Dictionary<int, Material>();
 
         public static MaterialProvider Instance
         {
@@ -27,16 +36,28 @@ namespace ViJApps
 
         private MaterialProvider()
         {
-            var shader = Shader.Find("ViJApps.SimpleUnlit");
-            m_Shaders.Add(ShaderType.SimpleUnlit, Shader.Find("ViJApps.SimpleUnlit"));
-            m_Materials.Add(ShaderType.SimpleUnlit, new Material(shader));
+            Shader shader;
 
+            //Simple Unlit Shader
+            SimpleUnlitShaderID = Shader.PropertyToID(SIMPLE_UNLIT_SHADER);
+            shader = Shader.Find(SIMPLE_UNLIT_SHADER);
+            m_Shaders.Add(SimpleUnlitShaderID, shader);
+            m_Materials.Add(SimpleUnlitShaderID, new Material(shader));
+
+            //Simple Line Unlit Shader
+            SimpleLineUnlitShaderID = Shader.PropertyToID(SIMPLE_LINE_UNLIT_SHADER);
+            shader = Shader.Find(SIMPLE_LINE_UNLIT_SHADER);
+            m_Shaders.Add(SimpleLineUnlitShaderID, shader);
+            m_Materials.Add(SimpleLineUnlitShaderID, new Material(shader));
+
+            //Properties
             ColorPropertyID = Shader.PropertyToID("_Color");
             ThicknessPropertyID = Shader.PropertyToID("_Thickness");
+            FromToCoordID = Shader.PropertyToID("_FromToCoord");
         }
 
-        public Shader GetShader(ShaderType shader) => m_Shaders[shader];
+        public Shader GetShader(int shader) => m_Shaders[shader];
 
-        public Material GetMaterial(ShaderType shader) => m_Materials[shader];
+        public Material GetMaterial(int shader) => m_Materials[shader];
     }
 }

@@ -8,7 +8,7 @@ public class TextureDataExample : MonoBehaviour
 {
     [SerializeField] private Renderer m_Renderer = default;
 
-    private void Start()
+    private void Update()
     {
         var data = new TextureData();
 
@@ -22,7 +22,7 @@ public class TextureDataExample : MonoBehaviour
         data.ClearWithColor(Color.blue);
 
         data.DrawLinePixels(new float2(0 + offset, 0 + offset), new float2(w - offset, h - offset), thickness, Color.grey);
-        data.DrawLinePixels(new float2(0 + offset, h - offset), new float2(w - offset, 0 + offset), thickness, Color.yellow);
+        data.DrawLinePixels(new float2(0 + offset, h - offset), new float2(w - offset, 0 + offset), thickness, Color.yellow, SimpleLineEndingStyle.Round);
         data.Flush();
 
         m_Renderer.material.mainTexture = data.ToTexture2D();
