@@ -70,7 +70,7 @@ namespace ViJApps
             Mesh lineMesh;
             Material lineMaterial;
             MaterialPropertyBlock propertyBlock = Pooler.Instance.GetPropertyBlock();
-            propertyBlock.SetColor(MaterialProvider.Instance.ColorPropertyID, color);
+            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
 
             switch (endingStyle)
             {
@@ -81,7 +81,13 @@ namespace ViJApps
                 case SimpleLineEndingStyle.Round:
                     lineMesh = MeshTools.CreateLine(pixelFromCoord, pixelToCoord, toTextureMatrix, pixelThickness, true, Pooler.Instance.GetMesh());
                     lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleLineUnlitShaderID);
-                    propertyBlock.SetVector(MaterialProvider.Instance.FromToCoordID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
+
+                    //propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
+                    //propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
+                    //propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
+
+                    propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
+                    propertyBlock.SetFloat(MaterialProvider.Instance.Thickness_PropertyID, 0.05f);
                     break;
                 default:
                     throw new Exception("Unknown line ending style");

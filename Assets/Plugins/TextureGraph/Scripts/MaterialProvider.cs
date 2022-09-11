@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Numerics;
 using UnityEngine;
 
 namespace ViJApps
@@ -15,9 +16,13 @@ namespace ViJApps
         public readonly int SimpleLineUnlitShaderID;
 
         //PropertyIDs
-        public readonly int ColorPropertyID;
-        public readonly int ThicknessPropertyID;
-        public readonly int FromToCoordID;
+        public readonly int Color_PropertyID = Shader.PropertyToID("_Color");
+        public readonly int Thickness_PropertyID = Shader.PropertyToID("_Thickness");
+        public readonly int FromToCoord_PropertyID = Shader.PropertyToID("_FromToCoord");
+
+        public readonly int Trs2dCol0_PropertyID = Shader.PropertyToID("_Trs2dCol0");
+        public readonly int Trs2dCol1_PropertyID = Shader.PropertyToID("_Trs2dCol1");
+        public readonly int Trs2dCol2_PropertyID = Shader.PropertyToID("_Trs2dCol2");
 
         private static MaterialProvider m_Instance;
 
@@ -49,11 +54,6 @@ namespace ViJApps
             shader = Shader.Find(SIMPLE_LINE_UNLIT_SHADER);
             m_Shaders.Add(SimpleLineUnlitShaderID, shader);
             m_Materials.Add(SimpleLineUnlitShaderID, new Material(shader));
-
-            //Properties
-            ColorPropertyID = Shader.PropertyToID("_Color");
-            ThicknessPropertyID = Shader.PropertyToID("_Thickness");
-            FromToCoordID = Shader.PropertyToID("_FromToCoord");
         }
 
         public Shader GetShader(int shader) => m_Shaders[shader];
