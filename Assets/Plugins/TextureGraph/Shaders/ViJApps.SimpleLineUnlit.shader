@@ -5,17 +5,12 @@ Shader "ViJApps.SimpleLineUnlit"
         _Color ("_Color", Color) = (0, 0, 0, 1)
         _Thickness("_Thickness", Float) = 0
         _FromToCoord("_FromToCoord", Vector) = (0, 0, 0, 0)
-
-        //TODO: Optimaze to matrices;
-        _Trs2dCol0("_Trs2dCol0", Vector) = (1, 0, 0, 0)
-        _Trs2dCol1("_Trs2dCol0", Vector) = (0, 1, 0, 0)
-        _Trs2dCol2("_Trs2dCol0", Vector) = (0, 0, 1, 0)
+        _Ascpect("_Ascpect", Float) = 1
      }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-     //   Tags { "RenderType"="Transparent" }
-    //   Tags { "Queue" = "Transparent" }
+        Tags { "RenderType"="Transparent" }
+        Tags { "Queue" = "Transparent" }
 
         Blend SrcAlpha OneMinusSrcAlpha
         ZTest Always
@@ -34,17 +29,34 @@ Shader "ViJApps.SimpleLineUnlit"
 
             uniform half4 _Color;
             uniform half _Thickness;
+            uniform half _Aspect;
             uniform half4 _FromToCoord;
             
-            uniform float3 _Trs2dCol0;
-            uniform float3 _Trs2dCol1;
-            uniform float3 _Trs2dCol2;
-            uniform half3x3 _TransformationMatrix;
+            uniform half3x3 _InverseAspectMatrix;
 
-            //TAKES 3 colum vectors and returns float3x3 mtrx
             float3x3 ColumnsToMatrices(in float3 c1, in float3 c2, in float3 c3)
             {
                 return float3x3(c1, c2, c3);
+            }
+
+            float3x3 ScaleMatrixFromAspect(in float aspect)
+            {
+                return float3x3(float3(aspect, 0, 0),float3(0, 1, 0), float3(0, 0, 1));
+            }
+
+            float3x3 InverseScaleMatrixFromAspect(in float aspect)
+            {
+                return float3x3(float3(1.0 / aspect, 0, 0),float3(0, 1, 0), float3(0, 0, 1));
+            } 
+
+            float2 TransformPoint(in float3x3 m, in float2 point2d)
+            {
+                return mul(m, float3(point2d.x, point2d.y, 1)).xy;
+            }
+
+            float2 TransformDirection(in float3x3 m, in float2 point2d)
+            {
+                return mul(m, float3(point2d.x, point2d.y, 0)).xy;
             }
 
             //SDF LINE
@@ -77,9 +89,14 @@ Shader "ViJApps.SimpleLineUnlit"
 
             half4 frag (v2f i) : SV_Target
             {
-                _TransformationMatrix = ColumnsToMatrices(_Trs2dCol0, _Trs2dCol1, _Trs2dCol2);
-                float distance = line_segment(i.localPos.xy, _FromToCoord.xy, _FromToCoord.zw);
-                float isLine = step(distance, _Thickness);
+                _InverseAspectMatrix = InverseScaleMatrixFromAspect(_Aspect);
+
+                float2 p = TransformPoint(_InverseAspectMatrix, i.localPos.xy);
+                float2 from = TransformPoint(_InverseAspectMatrix, _FromToCoord.xy);
+                float2 to = TransformPoint(_InverseAspectMatrix, _FromToCoord.zw);
+
+                float distance = line_segment(p, from, to);
+                float isLine = step(distance, _Thickness / 2);
                 return lerp(float4(0,0,0,0), _Color, isLine);
             }
 

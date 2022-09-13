@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ViJApps.Utils
 {
-    public static class Math
+    public static class MathUtils
     {
         public static readonly float2 Floa2One = new float2(1, 1);
 
@@ -59,14 +59,42 @@ namespace ViJApps.Utils
 
         #region 2d matrices
 
-        public static float3x3 CreateMatrix2d_RemapSpace(float2 minInitial, float2 maxInitial, float2 minTarget, float2 maxTarget)
+        /// <summary>
+        /// Creates remap matrix, that will remap from min..max space to -1..1 space
+        /// </summary>
+        /// <param name="initialMin">initial min</param>
+        /// <param name="initialMax"></param>
+        /// <returns></returns>
+        public static float3x3 CreateMatrix3d_RemapToOneMinusOne(float2 initialMin, float2 initialMax) =>
+            CreateMatrix2d_RemapSpace(initialMin, initialMax, new float2(-1, -1), new float2(1, 1));
+
+        /// <summary>
+        /// Creates remap matrix, that will remap from minA..maxA space to minB..maxB space
+        /// </summary>
+        /// <param name="minA"></param>
+        /// <param name="maxA"></param>
+        /// <param name="minB"></param>
+        /// <param name="maxB"></param>
+        /// <returns></returns>
+        public static float3x3 CreateMatrix2d_RemapSpace(float2 minA, float2 maxA, float2 minB, float2 maxB)
         {
-            var scaleFactor = (maxInitial - minInitial) / (maxTarget - minTarget);
+            var sizeA = maxA - minA;
+            var scaleA = new float2(1, 1) / sizeA;
 
-            return new float3x3();
+            var sizeB = maxB - minB;
+            var scaleB = new float2(1, 1) / sizeB;
+
+            var fromAto01 = math.mul(CreateMatrix2d_S(scaleA), CreateMatrix2d_T(-minA));
+            var fromBto01 = math.mul(CreateMatrix2d_S(scaleB), CreateMatrix2d_T(-minB));
+            var from01toB = math.inverse(fromBto01);
+            return math.mul(from01toB, fromAto01);
         }
-
-        //Creates translation matrix for 2d
+          
+        /// <summary>
+        /// Creates translation matrix for 2d
+        /// </summary>
+        /// <param name="translation">translation vector</param>
+        /// <returns></returns>
         public static float3x3 CreateMatrix2d_T(float2 translation) =>
             new float3x3(
                 new float3(1, 0, 0),
@@ -76,7 +104,7 @@ namespace ViJApps.Utils
         /// <summary>
         /// Creates rotation matrix for 2d
         /// </summary>
-        /// <param name="rotation"></param>
+        /// <param name="rotation">Rotation in radians</param>
         /// <returns></returns>
         public static float3x3 CreateMatrix2d_R(float rotation) =>
             new float3x3(

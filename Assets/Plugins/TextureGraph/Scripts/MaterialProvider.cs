@@ -14,6 +14,7 @@ namespace ViJApps
         public const string COLOR_PROPERTY = "_Color";
         public const string THICKNESS_PROPERTY = "_Thickness";
         public const string FROM_TO_COORD_PROPERTY = "_FromToCoord";
+        public const string ASPECT_PROPERTY = "_Aspect";
 
         //ShadersIDs
         public readonly int SimpleUnlit_ShaderID;
@@ -23,6 +24,7 @@ namespace ViJApps
         public readonly int Color_PropertyID = Shader.PropertyToID(COLOR_PROPERTY);
         public readonly int Thickness_PropertyID = Shader.PropertyToID(THICKNESS_PROPERTY);
         public readonly int FromToCoord_PropertyID = Shader.PropertyToID(FROM_TO_COORD_PROPERTY);
+        public readonly int Aspect_PropertyID = Shader.PropertyToID(ASPECT_PROPERTY);
 
         public readonly int Trs2dCol0_PropertyID = Shader.PropertyToID("_Trs2dCol0");
         public readonly int Trs2dCol1_PropertyID = Shader.PropertyToID("_Trs2dCol1");

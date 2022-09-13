@@ -9,27 +9,26 @@ namespace ViJApps
 {
     public static class MeshTools
     {
-        public static Mesh CreateLine(float2 from, float2 to, float3x3 transform2d, float width, bool extendStartEnd = false, Mesh mesh = null)
+        public static Mesh CreateLine(float2 fromCoord, float2 toCoord, float3x3 aspectMatrix, float width, bool extendStartEnd = false, Mesh mesh = null)
         {
             if (mesh == null)
                 mesh = new Mesh();
             else
                 mesh.Clear();
 
-            var direction = math.normalizesafe(to - from, math.right().xy);
-            var halfWidth = width * 0.5f;
-            var sideDir = (direction.RotateVectorCWHalfPi() * halfWidth);
+            var direction = toCoord - fromCoord;
 
-            //Offset for round lines
-            var startEndOffset = extendStartEnd ? direction * halfWidth : float2.zero;
-            from -= startEndOffset;
-            to += startEndOffset;
+            var aspectDir = math.normalize(direction.InverseTransformDirection(aspectMatrix)) * width * 0.5f;
+            var dir = aspectDir.RotateVectorCWHalfPi().TransformDirection(aspectMatrix);
 
-            //4 vertices from BL CW
-            var p0 = (from - sideDir).InverseTransformPoint(transform2d);
-            var p1 = (to - sideDir).InverseTransformPoint(transform2d);
-            var p2 = (to + sideDir).InverseTransformPoint(transform2d);
-            var p3 = (from + sideDir).InverseTransformPoint(transform2d);
+            var extend = extendStartEnd ? aspectDir.TransformDirection(aspectMatrix) : float2.zero;
+            var texSpaceFrom = (fromCoord - extend);
+            var texSpaceTo = (toCoord + extend);
+
+            var p0 = texSpaceFrom - dir;
+            var p1 = texSpaceTo - dir;
+            var p2 = texSpaceTo + dir;
+            var p3 = texSpaceFrom + dir;
 
             //Create mesh for rect
             var meshDataArr = Mesh.AllocateWritableMeshData(1);

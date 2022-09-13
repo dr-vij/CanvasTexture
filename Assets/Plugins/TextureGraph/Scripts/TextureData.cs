@@ -27,7 +27,7 @@ namespace ViJApps
         private PropertyBlockPool m_PropertyBlockPool = new PropertyBlockPool();
         private List<MaterialPropertyBlock> m_AllocatedPropertyBlocks = new List<MaterialPropertyBlock>();
 
-        private float2 m_RexSize = float2.zero;
+        private float2 m_TexSize = float2.zero;
 
         public RenderTexture RTex => m_RTex;
 
@@ -72,12 +72,12 @@ namespace ViJApps
 
         public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
-            //We convert from 0..textureSize to -1..1 here
-            var toTextureMatrix = Utils.Math.CreateMatrix2d_TS(m_RexSize / 2, m_RexSize / 2);
-            var inverseScaleMatrix = math.inverse(toTextureMatrix);
+            var pixelSpaceToTexureSpaceMtrx = Utils.MathUtils.CreateMatrix3d_RemapToOneMinusOne(float2.zero, m_TexSize);
+            var aspectScaleMatrix = Utils.MathUtils.CreateMatrix2d_S(new float2(Aspect, 1));
 
-            var texFromCoord = Utils.Math.TransformPoint(pixelFromCoord, inverseScaleMatrix);
-            var texToCoord = Utils.Math.TransformPoint(pixelToCoord, inverseScaleMatrix);
+            var texFromCoord = Utils.MathUtils.TransformPoint(pixelFromCoord, pixelSpaceToTexureSpaceMtrx);
+            var texToCoord = Utils.MathUtils.TransformPoint(pixelToCoord, pixelSpaceToTexureSpaceMtrx);
+            var thickness = pixelThickness / m_TexSize.y;
 
             Material lineMaterial;
 
@@ -92,19 +92,15 @@ namespace ViJApps
             switch (endingStyle)
             {
                 case SimpleLineEndingStyle.None:
-                    lineMesh = MeshTools.CreateLine(pixelFromCoord, pixelToCoord, toTextureMatrix, pixelThickness, false, lineMesh);
+                    lineMesh = MeshTools.CreateLine(texFromCoord, texToCoord, aspectScaleMatrix, thickness, false, lineMesh);
                     lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
                     break;
                 case SimpleLineEndingStyle.Round:
-                    lineMesh = MeshTools.CreateLine(pixelFromCoord, pixelToCoord, toTextureMatrix, pixelThickness, true, lineMesh);
+                    lineMesh = MeshTools.CreateLine(texFromCoord, texToCoord, aspectScaleMatrix, thickness, true, lineMesh);
                     lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleLineUnlit_ShaderID);
-
-                    //propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
-                    //propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
-                    //propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
-
+                    propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, Aspect);
+                    propertyBlock.SetFloat(MaterialProvider.Instance.Thickness_PropertyID, thickness);
                     propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID, new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
-                    propertyBlock.SetFloat(MaterialProvider.Instance.Thickness_PropertyID, 0.05f);
                     break;
                 default:
                     throw new Exception("Unknown line ending style");
@@ -152,7 +148,7 @@ namespace ViJApps
         private void ReinitTexture(int width, int height)
         {
             m_TexDesc = new RenderTextureDescriptor(width, height);
-            m_RexSize = new float2(width, height);
+            m_TexSize = new float2(width, height);
             if (m_RTex != null)
                 UnityEngine.Object.Destroy(m_RTex);
             m_RTex = new RenderTexture(m_TexDesc);
