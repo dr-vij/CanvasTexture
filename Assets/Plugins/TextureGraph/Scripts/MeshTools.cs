@@ -37,19 +37,19 @@ namespace ViJApps
             meshData.SetIndexBufferParams(6, IndexFormat.UInt16);
 
             var vertices = meshData.GetVertexData<float3>();
-            var indicies = meshData.GetIndexData<ushort>();
+            var indices = meshData.GetIndexData<ushort>();
             vertices[0] = p0.ToFloat3();
             vertices[1] = p1.ToFloat3();
             vertices[2] = p2.ToFloat3();
             vertices[3] = p3.ToFloat3();
 
-            indicies[0] = 0;
-            indicies[1] = 1;
-            indicies[2] = 2;
+            indices[0] = 0;
+            indices[1] = 1;
+            indices[2] = 2;
 
-            indicies[3] = 0;
-            indicies[4] = 2;
-            indicies[5] = 3;
+            indices[3] = 0;
+            indices[4] = 2;
+            indices[5] = 3;
 
             var submesh = new SubMeshDescriptor()
             {

@@ -18,7 +18,6 @@ namespace ViJApps
     {
         //Data
         private CommandBuffer m_Cmd;
-        private RenderTexture m_RTex;
         private RenderTextureDescriptor m_TexDesc;
 
         //Pool parts
@@ -29,17 +28,17 @@ namespace ViJApps
 
         private float2 m_TexSize = float2.zero;
 
-        public RenderTexture RTex => m_RTex;
+        public RenderTexture RenderTexture { get; private set; }
 
         public float Aspect { get; set; } = 1f;
 
-        public void Init(RenderTexture rtex)
+        public void Init(RenderTexture renderTexture)
         {
             ResetCMD();
             ReleaseToPools();
 
-            m_TexDesc = rtex.descriptor;
-            m_RTex = rtex;
+            m_TexDesc = renderTexture.descriptor;
+            RenderTexture = renderTexture;
         }
 
         public void Init(int size) => Init(size, size);
@@ -49,7 +48,7 @@ namespace ViJApps
             ResetCMD();
             ReleaseToPools();
 
-            if (m_RTex == null || m_RTex.width != width || m_RTex.height != height)
+            if (RenderTexture == null || RenderTexture.width != width || RenderTexture.height != height)
                 ReinitTexture(width, height);
         }
 
@@ -66,17 +65,17 @@ namespace ViJApps
             ResetCMD();
             ReleaseToPools();
 
-            m_Cmd.SetRenderTarget(m_RTex);
+            m_Cmd.SetRenderTarget(RenderTexture);
             m_Cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
 
         public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
-            var pixelSpaceToTexureSpaceMtrx = Utils.MathUtils.CreateMatrix3d_RemapToOneMinusOne(float2.zero, m_TexSize);
+            var pixelSpaceToTextureSpaceMatrix = Utils.MathUtils.CreateMatrix3d_RemapToOneMinusOne(float2.zero, m_TexSize);
             var aspectScaleMatrix = Utils.MathUtils.CreateMatrix2d_S(new float2(Aspect, 1));
 
-            var texFromCoord = Utils.MathUtils.TransformPoint(pixelFromCoord, pixelSpaceToTexureSpaceMtrx);
-            var texToCoord = Utils.MathUtils.TransformPoint(pixelToCoord, pixelSpaceToTexureSpaceMtrx);
+            var texFromCoord = pixelFromCoord.TransformPoint(pixelSpaceToTextureSpaceMatrix);
+            var texToCoord = pixelToCoord.TransformPoint(pixelSpaceToTextureSpaceMatrix);
             var thickness = pixelThickness / m_TexSize.y;
 
             Material lineMaterial;
@@ -112,13 +111,13 @@ namespace ViJApps
         public Texture2D ToTexture2D(Texture2D texture = null)
         {
             if (texture == null)
-                texture = new Texture2D(m_RTex.width, m_RTex.height);
+                texture = new Texture2D(RenderTexture.width, RenderTexture.height);
             else
-                texture.Reinitialize(m_RTex.width, m_RTex.height);
+                texture.Reinitialize(RenderTexture.width, RenderTexture.height);
 
             var buffer = RenderTexture.active;
-            RenderTexture.active = RTex;
-            texture.ReadPixels(new Rect(0, 0, m_RTex.width, m_RTex.height), 0, 0);
+            RenderTexture.active = RenderTexture;
+            texture.ReadPixels(new Rect(0, 0, RenderTexture.width, RenderTexture.height), 0, 0);
             texture.Apply();
             RenderTexture.active = buffer;
             return texture;
@@ -149,9 +148,9 @@ namespace ViJApps
         {
             m_TexDesc = new RenderTextureDescriptor(width, height);
             m_TexSize = new float2(width, height);
-            if (m_RTex != null)
-                UnityEngine.Object.Destroy(m_RTex);
-            m_RTex = new RenderTexture(m_TexDesc);
+            if (RenderTexture != null)
+                UnityEngine.Object.Destroy(RenderTexture);
+            RenderTexture = new RenderTexture(m_TexDesc);
         }
 
         private void ReleaseToPools()
@@ -177,10 +176,10 @@ namespace ViJApps
                 m_Cmd = null;
             }
 
-            if (m_RTex != null)
+            if (RenderTexture != null)
             {
-                UnityEngine.Object.Destroy(m_RTex);
-                m_RTex = null;
+                UnityEngine.Object.Destroy(RenderTexture);
+                RenderTexture = null;
             }
         }
     }
