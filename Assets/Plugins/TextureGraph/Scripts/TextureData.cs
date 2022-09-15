@@ -21,10 +21,10 @@ namespace ViJApps
         private RenderTextureDescriptor m_TexDesc;
 
         //Pool parts
-        private MeshPool m_MeshPool = new MeshPool();
-        private List<Mesh> m_AllocatedMeshes = new List<Mesh>();
-        private PropertyBlockPool m_PropertyBlockPool = new PropertyBlockPool();
-        private List<MaterialPropertyBlock> m_AllocatedPropertyBlocks = new List<MaterialPropertyBlock>();
+        private readonly MeshPool m_MeshPool = new MeshPool();
+        private readonly List<Mesh> m_AllocatedMeshes = new List<Mesh>();
+        private readonly PropertyBlockPool m_PropertyBlockPool = new PropertyBlockPool();
+        private readonly List<MaterialPropertyBlock> m_AllocatedPropertyBlocks = new List<MaterialPropertyBlock>();
 
         private float2 m_TexSize = float2.zero;
 
@@ -34,7 +34,7 @@ namespace ViJApps
 
         public void Init(RenderTexture renderTexture)
         {
-            ResetCMD();
+            ResetCmd();
             ReleaseToPools();
 
             m_TexDesc = renderTexture.descriptor;
@@ -45,7 +45,7 @@ namespace ViJApps
 
         public void Init(int width, int height)
         {
-            ResetCMD();
+            ResetCmd();
             ReleaseToPools();
 
             if (RenderTexture == null || RenderTexture.width != width || RenderTexture.height != height)
@@ -56,13 +56,13 @@ namespace ViJApps
         {
             Graphics.ExecuteCommandBuffer(m_Cmd);
 
-            ResetCMD();
+            ResetCmd();
             ReleaseToPools();
         }
 
         public void ClearWithColor(Color color)
         {
-            ResetCMD();
+            ResetCmd();
             ReleaseToPools();
 
             m_Cmd.SetRenderTarget(RenderTexture);
@@ -135,7 +135,7 @@ namespace ViJApps
 #endif
         }
 
-        private void ResetCMD()
+        private void ResetCmd()
         {
             if (m_Cmd == null)
                 m_Cmd = new CommandBuffer();
