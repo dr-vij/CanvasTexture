@@ -6,8 +6,11 @@ namespace ViJApps.TextureGraph.TestSpace
 {
     public class TextureDataExample : MonoBehaviour
     {
-        [FormerlySerializedAs("mTestTexture")] [SerializeField] private Texture2D m_mTestTexture;
-        [FormerlySerializedAs("mTestRenderer")] [SerializeField] private Renderer m_mTestRenderer;
+        [FormerlySerializedAs("mTestTexture")] [SerializeField]
+        private Texture2D m_mTestTexture;
+
+        [FormerlySerializedAs("mTestRenderer")] [SerializeField]
+        private Renderer m_mTestRenderer;
 
         private TextureData m_textureData;
 
@@ -29,8 +32,10 @@ namespace ViJApps.TextureGraph.TestSpace
             m_textureData.Aspect = m_aspect;
             m_textureData.ClearWithColor(Color.blue);
 
-            m_textureData.DrawLinePixels(new float2(0 + offset, h - offset), new float2(w - offset, 0 + offset), m_lineThickness, Color.yellow, SimpleLineEndingStyle.Round);
-            m_textureData.DrawLinePixels(new float2(0 + offset, 0 + offset), new float2(w - offset, h - offset), m_lineThickness, Color.grey);
+            m_textureData.DrawLinePixels(new float2(0 + offset, h - offset), new float2(w - offset, 0 + offset),
+                m_lineThickness, Color.yellow, SimpleLineEndingStyle.Round);
+            m_textureData.DrawLinePixels(new float2(0 + offset, 0 + offset), new float2(w - offset, h - offset),
+                m_lineThickness, Color.grey);
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();
 

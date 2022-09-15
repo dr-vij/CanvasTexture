@@ -6,7 +6,8 @@ namespace ViJApps.TextureGraph.Utils
 {
     public static class MeshTools
     {
-        public static Mesh CreateLine(float2 fromCoord, float2 toCoord, float3x3 aspectMatrix, float width, bool extendStartEnd = false, Mesh mesh = null)
+        public static Mesh CreateLine(float2 fromCoord, float2 toCoord, float3x3 aspectMatrix, float width,
+            bool extendStartEnd = false, Mesh mesh = null)
         {
             if (mesh == null)
                 mesh = new Mesh();
@@ -30,7 +31,8 @@ namespace ViJApps.TextureGraph.Utils
             //Create mesh for rect
             var meshDataArr = Mesh.AllocateWritableMeshData(1);
             var meshData = meshDataArr[0];
-            meshData.SetVertexBufferParams(4, new VertexAttributeDescriptor(VertexAttribute.Position, dimension: 3, stream: 0));
+            meshData.SetVertexBufferParams(4,
+                new VertexAttributeDescriptor(VertexAttribute.Position, dimension: 3, stream: 0));
             meshData.SetIndexBufferParams(6, IndexFormat.UInt16);
 
             var vertices = meshData.GetVertexData<float3>();
