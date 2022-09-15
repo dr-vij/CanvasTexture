@@ -68,12 +68,11 @@ namespace ViJApps.TextureGraph
             m_cmd.SetRenderTarget(RenderTexture);
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
-
         public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
             SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
             var pixelSpaceToTextureSpaceMatrix =
-                Utils.MathUtils.CreateMatrix3d_RemapToOneMinusOne(float2.zero, m_texSize);
+                Utils.MathUtils.CreateRemapMatrix2d_SpaceToZeroOne(float2.zero, m_texSize);
             var aspectScaleMatrix = Utils.MathUtils.CreateMatrix2d_S(new float2(Aspect, 1));
 
             var texFromCoord = pixelFromCoord.TransformPoint(pixelSpaceToTextureSpaceMatrix);
@@ -148,7 +147,7 @@ namespace ViJApps.TextureGraph
                 m_cmd = new CommandBuffer();
             else
                 m_cmd.Clear();
-            m_cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+            m_cmd.SetViewProjectionMatrices(Utils.MathUtils.Mtr3dZeroOneToMinusOnePlusOne, Matrix4x4.identity);
         }
 
         private void ReinitTexture(int width, int height)
