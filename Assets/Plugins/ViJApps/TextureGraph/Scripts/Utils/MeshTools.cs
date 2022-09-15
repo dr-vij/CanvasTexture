@@ -1,11 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
-using ViJApps.Utils;
 
-namespace ViJApps
+namespace ViJApps.TextureGraph.Utils
 {
     public static class MeshTools
     {
@@ -19,7 +16,7 @@ namespace ViJApps
             var direction = toCoord - fromCoord;
 
             var aspectDir = math.normalize(direction.InverseTransformDirection(aspectMatrix)) * width * 0.5f;
-            var dir = aspectDir.RotateVectorCWHalfPi().TransformDirection(aspectMatrix);
+            var dir = aspectDir.RotateVectorCwHalfPi().TransformDirection(aspectMatrix);
 
             var extend = extendStartEnd ? aspectDir.TransformDirection(aspectMatrix) : float2.zero;
             var texSpaceFrom = (fromCoord - extend);
@@ -33,7 +30,7 @@ namespace ViJApps
             //Create mesh for rect
             var meshDataArr = Mesh.AllocateWritableMeshData(1);
             var meshData = meshDataArr[0];
-            meshData.SetVertexBufferParams(4, new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, dimension: 3, stream: 0));
+            meshData.SetVertexBufferParams(4, new VertexAttributeDescriptor(VertexAttribute.Position, dimension: 3, stream: 0));
             meshData.SetIndexBufferParams(6, IndexFormat.UInt16);
 
             var vertices = meshData.GetVertexData<float3>();
@@ -51,15 +48,15 @@ namespace ViJApps
             indices[4] = 2;
             indices[5] = 3;
 
-            var submesh = new SubMeshDescriptor()
+            var subMesh = new SubMeshDescriptor()
             {
                 vertexCount = 4,
                 indexCount = 6,
                 topology = MeshTopology.Triangles,
             };
             meshData.subMeshCount = 1;
-            meshData.SetSubMesh(0, submesh, MeshUpdateFlags.Default);
-            Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh, MeshUpdateFlags.Default);
+            meshData.SetSubMesh(0, subMesh);
+            Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh);
 
             return mesh;
         }

@@ -1,25 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Mathematics;
-using UnityEngine;
 
-namespace ViJApps.Utils
+namespace ViJApps.TextureGraph.Utils
 {
     public static class MathUtils
     {
-        public static readonly float2 Floa2One = new float2(1, 1);
+        public static readonly float2 Float2One = new float2(1, 1);
 
         public static readonly float2 Float2MinusOne = new float2(-1, -1);
 
-        public static float2 RotateVectorCWHalfPi(this float2 vector) => new float2(vector.y, -vector.x);
+        public static float2 RotateVectorCwHalfPi(this float2 vector) => new float2(vector.y, -vector.x);
 
-        public static float2 RotateVectorCCWHalfPi(this float2 vector) => new float2(-vector.y, vector.x);
+        public static float2 RotateVectorCcwHalfPi(this float2 vector) => new float2(-vector.y, vector.x);
 
         public static float3 ToFloat3(this float2 val, float z = 0) => new float3(val.x, val.y, z);
 
-        public static float2 RemapFromPercentToTexture(this float2 percentPosition) => math.remap(float2.zero, Floa2One, Float2MinusOne, Floa2One, percentPosition);
+        public static float2 RemapFromPercentToTexture(this float2 percentPosition) => math.remap(float2.zero, Float2One, Float2MinusOne, Float2One, percentPosition);
 
-        public static float2 RemapFromPixelsToTexture(this float2 pixelPosition, float2 textureSize) => math.remap(float2.zero, textureSize, Float2MinusOne, Floa2One, pixelPosition);
+        public static float2 RemapFromPixelsToTexture(this float2 pixelPosition, float2 textureSize) => math.remap(float2.zero, textureSize, Float2MinusOne, Float2One, pixelPosition);
 
         #region transformations2d
 
@@ -37,7 +34,7 @@ namespace ViJApps.Utils
         /// <param name="direction"></param>
         /// <param name="matrix"></param>
         /// <returns></returns>
-        public static float2 TransformDirection(this float2 direction, float3x3 matrix) => math.mul(matrix, direction.ToFloat3(0)).xy;
+        public static float2 TransformDirection(this float2 direction, float3x3 matrix) => math.mul(matrix, direction.ToFloat3()).xy;
 
         /// <summary>
         /// Transforms point from world 2d space to local 2d space
@@ -53,7 +50,7 @@ namespace ViJApps.Utils
         /// <param name="direction"></param>
         /// <param name="matrix"></param>
         /// <returns></returns>
-        public static float2 InverseTransformDirection(this float2 direction, float3x3 matrix) => math.mul(math.inverse(matrix), direction.ToFloat3(0)).xy;
+        public static float2 InverseTransformDirection(this float2 direction, float3x3 matrix) => math.mul(math.inverse(matrix), direction.ToFloat3()).xy;
 
         #endregion
 
@@ -85,9 +82,9 @@ namespace ViJApps.Utils
             var scaleB = new float2(1, 1) / sizeB;
 
             var fromAto01 = math.mul(CreateMatrix2d_S(scaleA), CreateMatrix2d_T(-minA));
-            var fromBto01 = math.mul(CreateMatrix2d_S(scaleB), CreateMatrix2d_T(-minB));
-            var from01toB = math.inverse(fromBto01);
-            return math.mul(from01toB, fromAto01);
+            var fromBTo01 = math.mul(CreateMatrix2d_S(scaleB), CreateMatrix2d_T(-minB));
+            var from01ToB = math.inverse(fromBTo01);
+            return math.mul(from01ToB, fromAto01);
         }
           
         /// <summary>

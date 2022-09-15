@@ -1,9 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Numerics;
 using UnityEngine;
 
-namespace ViJApps
+namespace ViJApps.TextureGraph
 {
     public class MaterialProvider
     {
@@ -26,44 +24,30 @@ namespace ViJApps
         public readonly int FromToCoord_PropertyID = Shader.PropertyToID(FROM_TO_COORD_PROPERTY);
         public readonly int Aspect_PropertyID = Shader.PropertyToID(ASPECT_PROPERTY);
 
-        public readonly int Trs2dCol0_PropertyID = Shader.PropertyToID("_Trs2dCol0");
-        public readonly int Trs2dCol1_PropertyID = Shader.PropertyToID("_Trs2dCol1");
-        public readonly int Trs2dCol2_PropertyID = Shader.PropertyToID("_Trs2dCol2");
+        private static MaterialProvider s_instance;
 
-        private static MaterialProvider m_Instance;
+        private readonly Dictionary<int, Shader> m_shaders = new();
+        private readonly Dictionary<int, Material> m_materials = new();
 
-        private Dictionary<int, Shader> m_Shaders = new Dictionary<int, Shader>();
-        private Dictionary<int, Material> m_Materials = new Dictionary<int, Material>();
-
-        public static MaterialProvider Instance
-        {
-            get
-            {
-                if (m_Instance == null)
-                    m_Instance = new MaterialProvider();
-                return m_Instance;
-            }
-        }
+        public static MaterialProvider Instance => s_instance ??= new MaterialProvider();
 
         private MaterialProvider()
         {
-            Shader shader;
-
             //Simple Unlit Shader
             SimpleUnlit_ShaderID = Shader.PropertyToID(SIMPLE_UNLIT_SHADER);
-            shader = Shader.Find(SIMPLE_UNLIT_SHADER);
-            m_Shaders.Add(SimpleUnlit_ShaderID, shader);
-            m_Materials.Add(SimpleUnlit_ShaderID, new Material(shader));
+            var shader = Shader.Find(SIMPLE_UNLIT_SHADER);
+            m_shaders.Add(SimpleUnlit_ShaderID, shader);
+            m_materials.Add(SimpleUnlit_ShaderID, new Material(shader));
 
             //Simple Line Unlit Shader
             SimpleLineUnlit_ShaderID = Shader.PropertyToID(SIMPLE_LINE_UNLIT_SHADER);
             shader = Shader.Find(SIMPLE_LINE_UNLIT_SHADER);
-            m_Shaders.Add(SimpleLineUnlit_ShaderID, shader);
-            m_Materials.Add(SimpleLineUnlit_ShaderID, new Material(shader));
+            m_shaders.Add(SimpleLineUnlit_ShaderID, shader);
+            m_materials.Add(SimpleLineUnlit_ShaderID, new Material(shader));
         }
 
-        public Shader GetShader(int shader) => m_Shaders[shader];
+        public Shader GetShader(int shader) => m_shaders[shader];
 
-        public Material GetMaterial(int shader) => m_Materials[shader];
+        public Material GetMaterial(int shader) => m_materials[shader];
     }
 }
