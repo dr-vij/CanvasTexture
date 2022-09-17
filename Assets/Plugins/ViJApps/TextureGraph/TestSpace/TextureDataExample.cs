@@ -17,8 +17,9 @@ namespace ViJApps.TextureGraph.TestSpace
         [SerializeField] private float m_lineThickness = 64;
         [SerializeField] private float m_aspect = 1f;
 
-        // [SerializeField] private float2 m_point0;
-        // [SerializeField] private float2 m_point1;
+        [SerializeField] private float2 m_point0 = new float2(0f, 0.5f);
+        [SerializeField] private float2 m_point1 = new float2(1f, 0.5f);
+        [SerializeField] private float m_thickness = 0.1f;
 
         private void Update()
         {
@@ -36,6 +37,9 @@ namespace ViJApps.TextureGraph.TestSpace
                 m_lineThickness, Color.yellow, SimpleLineEndingStyle.Round);
             m_textureData.DrawLinePixels(new float2(0 + offset, 0 + offset), new float2(w - offset, h - offset),
                 m_lineThickness, Color.grey);
+
+            m_textureData.DrawLinePercent(m_point0, m_point1, m_thickness, Color.black, SimpleLineEndingStyle.Round);
+
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();
 
