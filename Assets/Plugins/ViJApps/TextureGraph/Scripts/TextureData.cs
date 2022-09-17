@@ -18,7 +18,7 @@ namespace ViJApps.TextureGraph
     {
         //Data
         private CommandBuffer m_cmd;
-        private RenderTextureDescriptor m_texDesc;
+        private RenderTextureDescriptor m_textureDescriptor;
 
         //Pool parts
         private readonly MeshPool m_meshPool = new();
@@ -26,18 +26,34 @@ namespace ViJApps.TextureGraph
         private readonly PropertyBlockPool m_propertyBlockPool = new();
         private readonly List<MaterialPropertyBlock> m_allocatedPropertyBlocks = new();
 
-        private float2 m_texSize = float2.zero;
+        private LinearCoordSystem m_textureCoordSystem;
 
         public RenderTexture RenderTexture { get; private set; }
 
-        public float Aspect { get; set; } = 1f;
+        private float3x3 m_aspectMatrix = float3x3.identity;
+        private float3x3 m_inverseAspectMatrix = float3x3.identity;
+        private float m_aspect = 1f;
+
+        /// <summary>
+        /// Aspect interpretation
+        /// </summary>
+        public float Aspect
+        {
+            get => m_aspect;
+            set
+            {
+                m_aspect = value;
+                m_aspectMatrix = Utils.MathUtils.CreateMatrix2d_S(new float2(m_aspect, 1));
+                m_inverseAspectMatrix = math.inverse(m_aspectMatrix);
+            }
+        }
 
         public void Init(RenderTexture renderTexture)
         {
             ResetCmd();
             ReleaseToPools();
 
-            m_texDesc = renderTexture.descriptor;
+            m_textureDescriptor = renderTexture.descriptor;
             RenderTexture = renderTexture;
         }
 
@@ -68,19 +84,11 @@ namespace ViJApps.TextureGraph
             m_cmd.SetRenderTarget(RenderTexture);
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
-        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
-            SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
+
+        public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
+            Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
-            var pixelSpaceToTextureSpaceMatrix =
-                Utils.MathUtils.CreateRemapMatrix2d_SpaceToZeroOne(float2.zero, m_texSize);
-            var aspectScaleMatrix = Utils.MathUtils.CreateMatrix2d_S(new float2(Aspect, 1));
-
-            var texFromCoord = pixelFromCoord.TransformPoint(pixelSpaceToTextureSpaceMatrix);
-            var texToCoord = pixelToCoord.TransformPoint(pixelSpaceToTextureSpaceMatrix);
-            var thickness = pixelThickness / m_texSize.y;
-
             Material lineMaterial;
-
             var lineMesh = m_meshPool.Get();
             m_allocatedMeshes.Add(lineMesh);
 
@@ -92,26 +100,38 @@ namespace ViJApps.TextureGraph
             switch (endingStyle)
             {
                 case SimpleLineEndingStyle.None:
-                    lineMesh = MeshTools.CreateLine(texFromCoord, texToCoord, aspectScaleMatrix, thickness, false,
+                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix,
+                        percentHeightThickness, false,
                         lineMesh);
                     lineMaterial =
                         MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
                     break;
                 case SimpleLineEndingStyle.Round:
-                    lineMesh = MeshTools.CreateLine(texFromCoord, texToCoord, aspectScaleMatrix, thickness, true,
+                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix,
+                        percentHeightThickness, true,
                         lineMesh);
                     lineMaterial =
                         MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleLineUnlit_ShaderID);
                     propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, Aspect);
-                    propertyBlock.SetFloat(MaterialProvider.Instance.Thickness_PropertyID, thickness);
+                    propertyBlock.SetFloat(MaterialProvider.Instance.Thickness_PropertyID, percentHeightThickness);
                     propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID,
-                        new Vector4(texFromCoord.x, texFromCoord.y, texToCoord.x, texToCoord.y));
+                        new Vector4(percentFromCoord.x, percentFromCoord.y, percentToCoord.x, percentToCoord.y));
                     break;
                 default:
                     throw new Exception("Unknown line ending style");
             }
 
             m_cmd.DrawMesh(lineMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
+        }
+
+        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
+            SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
+        {
+            var texFromCoord = pixelFromCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
+            var texToCoord = pixelToCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
+            var thickness = pixelThickness / m_textureCoordSystem.Height;
+
+            DrawLinePercent(texFromCoord, texToCoord, thickness, color, endingStyle);
         }
 
         public Texture2D ToTexture2D(Texture2D texture = null)
@@ -152,11 +172,11 @@ namespace ViJApps.TextureGraph
 
         private void ReinitTexture(int width, int height)
         {
-            m_texDesc = new RenderTextureDescriptor(width, height);
-            m_texSize = new float2(width, height);
+            m_textureDescriptor = new RenderTextureDescriptor(width, height);
             if (RenderTexture != null)
                 UnityEngine.Object.Destroy(RenderTexture);
-            RenderTexture = new RenderTexture(m_texDesc);
+            m_textureCoordSystem = new LinearCoordSystem(new float2(width, height));
+            RenderTexture = new RenderTexture(m_textureDescriptor);
         }
 
         private void ReleaseToPools()

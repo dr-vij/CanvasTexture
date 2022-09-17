@@ -129,6 +129,15 @@ namespace ViJApps.TextureGraph.Utils
             CreateRemapMatrix2d_SpaceToSpace(initialMin, initialMax, new float2(-1, -1), new float2(1, 1));
 
         /// <summary>
+        /// Creates remap matrix, that will remap from -1..1 space to finalMin..finalMax space
+        /// </summary>
+        /// <param name="finalMin"></param>
+        /// <param name="finalMax"></param>
+        /// <returns></returns>
+        public static float3x3 CreateRemapMatrix2d_MinusOnePlusOneToSpace(float2 finalMin, float2 finalMax) =>
+            CreateRemapMatrix2d_SpaceToSpace(new float2(-1, -1), new float2(1, 1), finalMin, finalMax);
+
+        /// <summary>
         /// Creates remap matrix, that will remap from -1..1 to 0..1 space
         /// </summary>
         /// <returns></returns>
@@ -155,6 +164,15 @@ namespace ViJApps.TextureGraph.Utils
             var fromAto01 = math.mul(CreateMatrix2d_S(scaleA), CreateMatrix2d_T(-minA));
             return fromAto01;
         }
+
+        /// <summary>
+        /// Creates remap matrix, that will remap from 0..1 to minA..maxA space
+        /// </summary>
+        /// <param name="minA"></param>
+        /// <param name="maxA"></param>
+        /// <returns></returns>
+        public static float3x3 CreateRemapMatrix2d_ZeroOneToSpace(float2 minA, float2 maxA)
+            => math.inverse(CreateRemapMatrix2d_SpaceToZeroOne(minA, maxA));
 
         /// <summary>
         /// Creates remap matrix, that will remap from minA..maxA space to minB..maxB space
@@ -266,6 +284,15 @@ namespace ViJApps.TextureGraph.Utils
             return fromAto01;
         }
 
+        public static float4x4 CreateRemapMatrix3d_SpaceToMinusOnePlusOne(float3 minA, float3 maxA)
+            => CreateRemapMatrix3d_RemapSpaceToSpace(minA, maxA, new float3(-1, -1, -1), new float3(1, 1, 1));
+        
+        public  static float4x4 CreateRemapMatrix3d_MinusOnePlusOneToSpace(float3 minA, float3 maxA)
+            => math.inverse(CreateRemapMatrix3d_SpaceToMinusOnePlusOne(minA, maxA));
+
+        public static float4x4 CreateRemapMatrix3d_ZeroOneToSpace(float3 minA, float3 maxA)
+            => math.inverse(CreateRemapMatrix3d_SpaceToZeroOne(minA, maxA));
+
         public static float4x4 CreateMatrix3d_S(float3 scale) =>
             new float4x4(
                 new float4(scale.x, 0, 0, 0),
@@ -286,6 +313,22 @@ namespace ViJApps.TextureGraph.Utils
                 new float4(0, scale.y, 0, 0),
                 new float4(0, 0, scale.z, 0),
                 new float4(translation.x, translation.y, translation.z, 1));
+
+        #endregion
+
+        #region 3d matrices operations
+
+        public static float3 TransformPoint(this float3 point, float4x4 matrix) =>
+            math.mul(matrix, new float4(point, 1)).xyz;
+
+        public static float3 TransformDirection(this float3 direction, float4x4 matrix) =>
+            math.mul(matrix, new float4(direction, 0)).xyz;
+
+        public static float3 InverseTransformPoint(this float3 point, float4x4 matrix) =>
+            math.mul(math.inverse(matrix), new float4(point, 1)).xyz;
+
+        public static float3 InverseTransformDirection(this float3 direction, float4x4 matrix) =>
+            math.mul(math.inverse(matrix), new float4(direction, 0)).xyz;
 
         #endregion
     }
