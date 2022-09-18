@@ -85,6 +85,36 @@ namespace ViJApps.TextureGraph
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
 
+        private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndBlock()
+        {
+            var mesh = m_meshPool.Get();
+            m_allocatedMeshes.Add(mesh);
+
+            var propertyBlock = m_propertyBlockPool.Get();
+            m_allocatedPropertyBlocks.Add(propertyBlock);
+            return (mesh, propertyBlock);
+        }
+
+        public void DrawRectPixels(float2 pixelsCenter, float2 pixelsSize, Color color)
+        {
+            var center = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
+            var size = pixelsSize.TransformDirection(m_textureCoordSystem.WorldToZeroOne2d);
+            
+            DrawRectPercent(center, size, color);
+        }
+
+        public void DrawRectPercent(float2 center, float2 size, Color color)
+        {
+            (var mesh, var propertyBlock) = AllocateMeshAndBlock();
+            
+            //TODO: Think if we need aspect here or not
+            var rectMesh = MeshTools.CreateRect(center, size, float3x3.identity, mesh);
+            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
+
+            var lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
+            m_cmd.DrawMesh(rectMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
+        }
+
         public void DrawCirclePixels(float2 pixelsCenter, float pixelsRadius, Color color)
         {
             var texCenter = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
@@ -126,7 +156,6 @@ namespace ViJApps.TextureGraph
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
             Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
-            Material lineMaterial;
             var lineMesh = m_meshPool.Get();
             m_allocatedMeshes.Add(lineMesh);
 
@@ -134,7 +163,7 @@ namespace ViJApps.TextureGraph
             m_allocatedPropertyBlocks.Add(propertyBlock);
 
             propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
-
+            Material lineMaterial;
             switch (endingStyle)
             {
                 case SimpleLineEndingStyle.None:
