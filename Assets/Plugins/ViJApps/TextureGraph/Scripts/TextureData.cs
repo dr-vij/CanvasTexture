@@ -101,9 +101,14 @@ namespace ViJApps.TextureGraph
             var propertyBlock = m_propertyBlockPool.Get();
             m_allocatedPropertyBlocks.Add(propertyBlock);
 
+            propertyBlock.SetVector(MaterialProvider.Instance.Center_PropertyID, new Vector2(center.x, center.y));
+            propertyBlock.SetFloat(MaterialProvider.Instance.Radius_PropertyID, radius);
             propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
+            
+            propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, Aspect);
+            
             var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), m_aspectMatrix, mesh);
-            var lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
+            var lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleCircleUnlit_ShaderID);
 
             m_cmd.DrawMesh(circleMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }

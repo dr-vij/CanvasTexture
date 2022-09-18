@@ -43,7 +43,7 @@ namespace ViJApps.TextureGraph.TestSpace
 
             m_textureData.DrawLinePercent(m_point0, m_point1, m_thickness, Color.black, SimpleLineEndingStyle.Round);
             
-            m_textureData.DrawCirclePercent(m_circlePosition, m_circleRadius, Color.black);
+            m_textureData.DrawCirclePercent(m_circlePosition, m_circleRadius, Color.cyan);
 
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();

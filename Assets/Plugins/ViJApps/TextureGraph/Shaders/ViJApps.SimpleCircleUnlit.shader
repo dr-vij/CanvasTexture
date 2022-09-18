@@ -1,9 +1,9 @@
-Shader "ViJApps.SimpleLineUnlit"
+Shader "ViJApps.SimpleCircleUnlit"
 {
     Properties
     {
-        _FromToCoord("_FromToCoord", Vector) = (0, 0, 0, 0)
-        _Thickness("_Thickness", Float) = 0
+        _Center("_Center", Vector) = (0, 0, 0, 0)
+        _Radius("_Radius", Float) = 0
         _Color ("_Color", Color) = (0, 0, 0, 1)
 
         _Aspect("_Aspect", Float) = 1
@@ -32,12 +32,12 @@ Shader "ViJApps.SimpleLineUnlit"
             #pragma fragment frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "math.hlsl"
+            #include "Math.hlsl"
 
             //Figure data
             uniform half4 _Color;
-            uniform half _Thickness;
-            uniform half4 _FromToCoord;
+            uniform half _Radius;
+            uniform half4 _Center;
 
             //Aspect data
             uniform half _Aspect;
@@ -65,14 +65,12 @@ Shader "ViJApps.SimpleLineUnlit"
             half4 frag(v2f i) : SV_Target
             {
                 _InverseAspectMatrix = InverseScaleMatrixFromAspect(_Aspect);
-
                 float2 p = TransformPoint(_InverseAspectMatrix, i.localPos.xy);
-                float2 from = TransformPoint(_InverseAspectMatrix, _FromToCoord.xy);
-                float2 to = TransformPoint(_InverseAspectMatrix, _FromToCoord.zw);
+                float2 c = TransformPoint(_InverseAspectMatrix, _Center.xy);
 
-                float distance = line_segment(p, from, to);
-                float isLine = step(distance, _Thickness / 2);
-                return lerp(float4(0, 0, 0, 0), _Color, isLine);
+                float distance = circle(p, c);
+                float isCircle = step(distance, _Radius/2);
+                return lerp(float4(0, 0, 0, 0), _Color, isCircle);
             }
             ENDHLSL
         }

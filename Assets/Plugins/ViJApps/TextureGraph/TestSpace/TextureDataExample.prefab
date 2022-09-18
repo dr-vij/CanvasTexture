@@ -132,7 +132,7 @@ Transform:
   m_GameObject: {fileID: 8214471078456380682}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1867779233}
@@ -151,5 +151,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6869c2552f2aa490094282dcf220c42d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mTestTexture: {fileID: 0}
-  mTestRenderer: {fileID: 1867779231}
+  m_mTestTexture: {fileID: 0}
+  m_mTestRenderer: {fileID: 1867779231}
+  m_lineThickness: 64
+  m_aspect: 1
+  m_point0:
+    x: 0
+    y: 0.5
+  m_point1:
+    x: 1
+    y: 0.5
+  m_thickness: 0.1
+  m_circlePosition:
+    x: 0.5
+    y: 0.5
+  m_circleRadius: 0.2
