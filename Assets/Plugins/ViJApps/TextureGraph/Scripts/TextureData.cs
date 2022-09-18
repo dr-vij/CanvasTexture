@@ -85,6 +85,39 @@ namespace ViJApps.TextureGraph
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
 
+        public void DrawCirclePixels(float2 pixelsCenter, float pixelsRadius, Color color)
+        {
+            var texCenter = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
+            var texRadius = pixelsRadius * m_textureCoordSystem.Height;
+
+            DrawCirclePercent(texCenter, texRadius, color);
+        }
+
+        public void DrawCirclePercent(float2 center, float radius, Color color)
+        {
+            var mesh = m_meshPool.Get();
+            m_allocatedMeshes.Add(mesh);
+
+            var propertyBlock = m_propertyBlockPool.Get();
+            m_allocatedPropertyBlocks.Add(propertyBlock);
+
+            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
+            var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), m_aspectMatrix, mesh);
+            var lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
+
+            m_cmd.DrawMesh(circleMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
+        }
+
+        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
+            SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
+        {
+            var texFromCoord = pixelFromCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
+            var texToCoord = pixelToCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
+            var thickness = pixelThickness / m_textureCoordSystem.Height;
+
+            DrawLinePercent(texFromCoord, texToCoord, thickness, color, endingStyle);
+        }
+
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
             Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
@@ -122,16 +155,6 @@ namespace ViJApps.TextureGraph
             }
 
             m_cmd.DrawMesh(lineMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
-        }
-
-        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
-            SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
-        {
-            var texFromCoord = pixelFromCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
-            var texToCoord = pixelToCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
-            var thickness = pixelThickness / m_textureCoordSystem.Height;
-
-            DrawLinePercent(texFromCoord, texToCoord, thickness, color, endingStyle);
         }
 
         public Texture2D ToTexture2D(Texture2D texture = null)

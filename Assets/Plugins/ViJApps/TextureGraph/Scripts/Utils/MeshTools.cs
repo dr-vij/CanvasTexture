@@ -6,6 +6,25 @@ namespace ViJApps.TextureGraph.Utils
 {
     public static class MeshTools
     {
+        public static Mesh CreateRect(float2 centerCoord, float2 size, float3x3 aspectMatrix, Mesh mesh = null)
+        {
+            if (mesh == null)
+                mesh = new Mesh();
+            else
+                mesh.Clear();
+
+            var aspectSize = size.TransformDirection(aspectMatrix);
+            
+            var halfSize = aspectSize / 2;
+            var p0 = centerCoord + new float2(-halfSize.x, -halfSize.y);
+            var p1 = centerCoord + new float2(-halfSize.x, +halfSize.y);
+            var p2 = centerCoord + new float2(+halfSize.x, +halfSize.y);
+            var p3 = centerCoord + new float2(+halfSize.x, -halfSize.y);
+            
+            mesh = CreateMeshFromFourPoints(p0, p1, p2, p3, mesh);
+            return mesh;
+        }
+
         public static Mesh CreateLine(float2 fromCoord, float2 toCoord, float3x3 aspectMatrix, float width,
             bool extendStartEnd = false, Mesh mesh = null)
         {
@@ -27,6 +46,17 @@ namespace ViJApps.TextureGraph.Utils
             var p1 = texSpaceTo - dir;
             var p2 = texSpaceTo + dir;
             var p3 = texSpaceFrom + dir;
+
+            mesh = CreateMeshFromFourPoints(p0, p1, p2, p3, mesh);
+            return mesh;
+        }
+
+        public static Mesh CreateMeshFromFourPoints(float2 p0, float2 p1, float2 p2, float2 p3, Mesh mesh = null)
+        {
+            if (mesh == null)
+                mesh = new Mesh();
+            else
+                mesh.Clear();
 
             //Create mesh for rect
             var meshDataArr = Mesh.AllocateWritableMeshData(1);

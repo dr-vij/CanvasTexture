@@ -21,6 +21,9 @@ namespace ViJApps.TextureGraph.TestSpace
         [SerializeField] private float2 m_point1 = new float2(1f, 0.5f);
         [SerializeField] private float m_thickness = 0.1f;
 
+        [SerializeField] private float2 m_circlePosition;
+        [SerializeField] private float m_circleRadius = 0.1f;
+
         private void Update()
         {
             m_textureData = m_textureData ?? new TextureData();
@@ -39,6 +42,8 @@ namespace ViJApps.TextureGraph.TestSpace
                 m_lineThickness, Color.grey);
 
             m_textureData.DrawLinePercent(m_point0, m_point1, m_thickness, Color.black, SimpleLineEndingStyle.Round);
+            
+            m_textureData.DrawCirclePercent(m_circlePosition, m_circleRadius, Color.black);
 
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();
