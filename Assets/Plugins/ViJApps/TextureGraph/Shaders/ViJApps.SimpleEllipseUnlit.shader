@@ -1,9 +1,9 @@
-Shader "ViJApps.SimpleCircleUnlit"
+Shader "ViJApps.SimpleEllipseUnlit"
 {
     Properties
     {
         _Center("_Center", Vector) = (0, 0, 0, 0)
-        _Radius("_Radius", Float) = 0
+        _AB("_AB", Vector) = (1, 1, 0, 0)
         _Color ("_Color", Color) = (0, 0, 0, 1)
 
         _Aspect("_Aspect", Float) = 1
@@ -35,9 +35,9 @@ Shader "ViJApps.SimpleCircleUnlit"
             #include "Math.hlsl"
 
             //Figure data
-            uniform half4 _Color;
-            uniform half _Radius;
             uniform half4 _Center;
+            uniform half2 _AB;
+            uniform half4 _Color;
 
             //Aspect data
             uniform half _Aspect;
@@ -67,9 +67,9 @@ Shader "ViJApps.SimpleCircleUnlit"
                 _InverseAspectMatrix = InverseScaleMatrixFromAspect(_Aspect);
                 float2 p = TransformPoint(_InverseAspectMatrix, i.localPos.xy);
                 float2 c = TransformPoint(_InverseAspectMatrix, _Center.xy);
-
-                float distance = sdCircle(p, c);
-                float isCircle = step(distance, _Radius/2);
+                float2 pc = p - c;
+                float distance = sdEllipse(pc, _AB);
+                float isCircle = step(distance, 0);
                 return lerp(float4(0, 0, 0, 0), _Color, isCircle);
             }
             ENDHLSL

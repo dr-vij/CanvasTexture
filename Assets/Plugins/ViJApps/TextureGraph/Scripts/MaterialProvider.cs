@@ -10,11 +10,13 @@ namespace ViJApps.TextureGraph
         public const string SIMPLE_UNLIT_SHADER = "ViJApps.SimpleUnlit";
         public const string SIMPLE_LINE_UNLIT_SHADER = "ViJApps.SimpleLineUnlit";
         public const string SIMPLE_CIRCLE_UNLIT_SHADER = "ViJApps.SimpleCircleUnlit";
+        public const string SIMPLE_ELLIPSE_UNLIT_SHADER = "ViJApps.SimpleEllipseUnlit";
 
         //ShadersIDs
         public readonly int SimpleUnlit_ShaderID;
         public readonly int SimpleLineUnlit_ShaderID;
         public readonly int SimpleCircleUnlit_ShaderID;
+        public readonly int SimpleEllipseUnlit_ShaderID;
 
         //Property 
         public const string COLOR_PROPERTY = "_Color";
@@ -23,6 +25,7 @@ namespace ViJApps.TextureGraph
         public const string ASPECT_PROPERTY = "_Aspect";
         public const string RADIUS_PROPERTY = "_Radius";
         public const string CENTER_PROPERTY = "_Center";
+        public const string AB_PROPERTY = "_AB";
 
         //PropertyIDs
         public readonly int Color_PropertyID = Shader.PropertyToID(COLOR_PROPERTY);
@@ -31,7 +34,7 @@ namespace ViJApps.TextureGraph
         public readonly int Aspect_PropertyID = Shader.PropertyToID(ASPECT_PROPERTY);
         public readonly int Radius_PropertyID = Shader.PropertyToID(RADIUS_PROPERTY);
         public readonly int Center_PropertyID = Shader.PropertyToID(CENTER_PROPERTY);
-
+        public readonly int AB_PropertyID = Shader.PropertyToID(AB_PROPERTY);
         private static MaterialProvider s_instance;
 
         private readonly Dictionary<int, Shader> m_shaders = new();
@@ -58,6 +61,12 @@ namespace ViJApps.TextureGraph
             shader = Shader.Find(SIMPLE_CIRCLE_UNLIT_SHADER);
             m_shaders.Add(SimpleCircleUnlit_ShaderID, shader);
             m_materials.Add(SimpleCircleUnlit_ShaderID, new Material(shader));
+            
+            //SimpleEllipseUnlit_ShaderID
+            SimpleEllipseUnlit_ShaderID = Shader.PropertyToID(SIMPLE_ELLIPSE_UNLIT_SHADER);
+            shader = Shader.Find(SIMPLE_ELLIPSE_UNLIT_SHADER);
+            m_shaders.Add(SimpleEllipseUnlit_ShaderID, shader);
+            m_materials.Add(SimpleEllipseUnlit_ShaderID, new Material(shader));
         }
 
         public Shader GetShader(int shader) => m_shaders[shader];

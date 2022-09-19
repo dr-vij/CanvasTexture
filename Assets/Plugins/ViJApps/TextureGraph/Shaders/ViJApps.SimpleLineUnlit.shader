@@ -70,7 +70,7 @@ Shader "ViJApps.SimpleLineUnlit"
                 float2 from = TransformPoint(_InverseAspectMatrix, _FromToCoord.xy);
                 float2 to = TransformPoint(_InverseAspectMatrix, _FromToCoord.zw);
 
-                float distance = line_segment(p, from, to);
+                float distance = sdLineSegment(p, from, to);
                 float isLine = step(distance, _Thickness / 2);
                 return lerp(float4(0, 0, 0, 0), _Color, isLine);
             }
