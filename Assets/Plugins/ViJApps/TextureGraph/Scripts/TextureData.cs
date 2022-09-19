@@ -85,36 +85,58 @@ namespace ViJApps.TextureGraph
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
 
-        private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndBlock()
+        //Draw ellipse
+        public void DrawEllipsePixels(float2 pixelsCenter, float2 abPixels, Color color)
         {
-            var mesh = m_meshPool.Get();
-            m_allocatedMeshes.Add(mesh);
+            //Convert to texture coordinates
+            var center = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
+            var ab = pixelsCenter.TransformDirection(m_textureCoordSystem.WorldToZeroOne2d);
 
-            var propertyBlock = m_propertyBlockPool.Get();
-            m_allocatedPropertyBlocks.Add(propertyBlock);
-            return (mesh, propertyBlock);
+            //Draw in texture coordinates
+            DrawEllipsePercent(center, ab, color);
         }
 
+        public void DrawEllipsePercent(float2 center, float2 ab, Color color)
+        {
+            (var mesh, var propertyBlock) = AllocateMeshAndBlock();
+
+            //Prepare ellipse mesh. its a rectangle with 4 vertices / 2 triangles 
+            mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix, mesh);
+
+            //Prepare property block parameters for ellipse
+            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
+            propertyBlock.SetVector(MaterialProvider.Instance.AB_PropertyID, new Vector4(ab.x, ab.y, 0, 0));
+            propertyBlock.SetVector(MaterialProvider.Instance.Center_PropertyID, new Vector4(center.x, center.y, 0, 0));
+            propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, m_aspect);
+
+            //Ellipse material
+            var material = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleEllipseUnlit_ShaderID);
+
+            //Draw
+            m_cmd.DrawMesh(mesh, Matrix4x4.identity, material, 0, -1, propertyBlock);
+        }
+
+        //Draw rect
         public void DrawRectPixels(float2 pixelsCenter, float2 pixelsSize, Color color)
         {
             var center = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
             var size = pixelsSize.TransformDirection(m_textureCoordSystem.WorldToZeroOne2d);
-            
+
             DrawRectPercent(center, size, color);
         }
 
         public void DrawRectPercent(float2 center, float2 size, Color color)
         {
             (var mesh, var propertyBlock) = AllocateMeshAndBlock();
-            
-            //TODO: Think if we need aspect here or not
-            var rectMesh = MeshTools.CreateRect(center, size, float3x3.identity, mesh);
+
+            var rectMesh = MeshTools.CreateRect(center, size, m_aspectMatrix, mesh);
             propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
 
             var lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
             m_cmd.DrawMesh(rectMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
 
+        //Draw circle
         public void DrawCirclePixels(float2 pixelsCenter, float pixelsRadius, Color color)
         {
             var texCenter = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
@@ -125,24 +147,22 @@ namespace ViJApps.TextureGraph
 
         public void DrawCirclePercent(float2 center, float radius, Color color)
         {
-            var mesh = m_meshPool.Get();
-            m_allocatedMeshes.Add(mesh);
-
-            var propertyBlock = m_propertyBlockPool.Get();
-            m_allocatedPropertyBlocks.Add(propertyBlock);
+            (var mesh, var propertyBlock) = AllocateMeshAndBlock();
 
             propertyBlock.SetVector(MaterialProvider.Instance.Center_PropertyID, new Vector2(center.x, center.y));
             propertyBlock.SetFloat(MaterialProvider.Instance.Radius_PropertyID, radius);
             propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
-            
+
             propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, Aspect);
-            
+
             var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), m_aspectMatrix, mesh);
-            var lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleCircleUnlit_ShaderID);
+            var lineMaterial =
+                MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleCircleUnlit_ShaderID);
 
             m_cmd.DrawMesh(circleMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
 
+        //Draw line
         public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
             SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
@@ -156,11 +176,7 @@ namespace ViJApps.TextureGraph
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
             Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
-            var lineMesh = m_meshPool.Get();
-            m_allocatedMeshes.Add(lineMesh);
-
-            var propertyBlock = m_propertyBlockPool.Get();
-            m_allocatedPropertyBlocks.Add(propertyBlock);
+            (var lineMesh, var propertyBlock) = AllocateMeshAndBlock();
 
             propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
             Material lineMaterial;
@@ -216,6 +232,16 @@ namespace ViJApps.TextureGraph
 #else
             Debug.LogWarning("You can save to assets only from Editor");
 #endif
+        }
+
+        private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndBlock()
+        {
+            var mesh = m_meshPool.Get();
+            m_allocatedMeshes.Add(mesh);
+
+            var propertyBlock = m_propertyBlockPool.Get();
+            m_allocatedPropertyBlocks.Add(propertyBlock);
+            return (mesh, propertyBlock);
         }
 
         private void ResetCmd()
