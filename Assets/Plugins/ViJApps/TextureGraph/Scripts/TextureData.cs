@@ -103,13 +103,13 @@ namespace ViJApps.TextureGraph
             mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix, mesh);
 
             //Prepare property block parameters for ellipse
-            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
-            propertyBlock.SetVector(MaterialProvider.Instance.AB_PropertyID, new Vector4(ab.x, ab.y, 0, 0));
-            propertyBlock.SetVector(MaterialProvider.Instance.Center_PropertyID, new Vector4(center.x, center.y, 0, 0));
-            propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, m_aspect);
+            propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
+            propertyBlock.SetVector(MaterialProvider.AbPropertyId, new Vector4(ab.x, ab.y, 0, 0));
+            propertyBlock.SetVector(MaterialProvider.CenterPropertyId, new Vector4(center.x, center.y, 0, 0));
+            propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, m_aspect);
 
             //Ellipse material
-            var material = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleEllipseUnlit_ShaderID);
+            var material = MaterialProvider.GetMaterial(MaterialProvider.SimpleEllipseUnlitShaderId);
 
             //Draw
             m_cmd.DrawMesh(mesh, Matrix4x4.identity, material, 0, -1, propertyBlock);
@@ -129,9 +129,9 @@ namespace ViJApps.TextureGraph
             (var mesh, var propertyBlock) = AllocateMeshAndBlock();
 
             var rectMesh = MeshTools.CreateRect(center, size, m_aspectMatrix, mesh);
-            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
+            propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
 
-            var lineMaterial = MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
+            var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
             m_cmd.DrawMesh(rectMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
 
@@ -148,15 +148,15 @@ namespace ViJApps.TextureGraph
         {
             (var mesh, var propertyBlock) = AllocateMeshAndBlock();
 
-            propertyBlock.SetVector(MaterialProvider.Instance.Center_PropertyID, new Vector2(center.x, center.y));
-            propertyBlock.SetFloat(MaterialProvider.Instance.Radius_PropertyID, radius);
-            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
+            propertyBlock.SetVector(MaterialProvider.CenterPropertyId, new Vector2(center.x, center.y));
+            propertyBlock.SetFloat(MaterialProvider.RadiusPropertyId, radius);
+            propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
 
-            propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, Aspect);
+            propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, Aspect);
 
             var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), m_aspectMatrix, mesh);
             var lineMaterial =
-                MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleCircleUnlit_ShaderID);
+                MaterialProvider.GetMaterial(MaterialProvider.SimpleCircleUnlitShaderId);
 
             m_cmd.DrawMesh(circleMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
@@ -175,9 +175,9 @@ namespace ViJApps.TextureGraph
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
             Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
-            (var lineMesh, var propertyBlock) = AllocateMeshAndBlock();
+            var (lineMesh, propertyBlock) = AllocateMeshAndBlock();
 
-            propertyBlock.SetColor(MaterialProvider.Instance.Color_PropertyID, color);
+            propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
             Material lineMaterial;
             switch (endingStyle)
             {
@@ -186,17 +186,17 @@ namespace ViJApps.TextureGraph
                         percentHeightThickness, false,
                         lineMesh);
                     lineMaterial =
-                        MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleUnlit_ShaderID);
+                        MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
                     break;
                 case SimpleLineEndingStyle.Round:
                     lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix,
                         percentHeightThickness, true,
                         lineMesh);
                     lineMaterial =
-                        MaterialProvider.Instance.GetMaterial(MaterialProvider.Instance.SimpleLineUnlit_ShaderID);
-                    propertyBlock.SetFloat(MaterialProvider.Instance.Aspect_PropertyID, Aspect);
-                    propertyBlock.SetFloat(MaterialProvider.Instance.Thickness_PropertyID, percentHeightThickness);
-                    propertyBlock.SetVector(MaterialProvider.Instance.FromToCoord_PropertyID,
+                        MaterialProvider.GetMaterial(MaterialProvider.SimpleLineUnlitShaderId);
+                    propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, Aspect);
+                    propertyBlock.SetFloat(MaterialProvider.ThicknessPropertyId, percentHeightThickness);
+                    propertyBlock.SetVector(MaterialProvider.FromToCoordPropertyId,
                         new Vector4(percentFromCoord.x, percentFromCoord.y, percentToCoord.x, percentToCoord.y));
                     break;
                 default:
