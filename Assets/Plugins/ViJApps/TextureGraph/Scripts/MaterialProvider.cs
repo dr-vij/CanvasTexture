@@ -15,7 +15,7 @@ namespace ViJApps.TextureGraph
 
     //TODO: Find the way how to optimize this.
     [ShaderPropertiesProvider]
-    public class MaterialProvider
+    public partial class MaterialProvider
     {
         //Shader Names
         [Shader]
