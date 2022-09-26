@@ -3,13 +3,28 @@ using UnityEngine;
 
 namespace ViJApps.TextureGraph
 {
+    [System.AttributeUsage(System.AttributeTargets.Class)]
+    public class ShaderPropertiesProviderAttribute: PropertyAttribute
+    {
+    }
+
+    [System.AttributeUsage(System.AttributeTargets.Field)]
+    public class ShaderAttribute : PropertyAttribute
+    {
+    }
+
     //TODO: Find the way how to optimize this.
+    [ShaderPropertiesProvider]
     public class MaterialProvider
     {
         //Shader Names
+        [Shader]
         public const string SIMPLE_UNLIT_SHADER = "ViJApps.SimpleUnlit";
+        [Shader]
         public const string SIMPLE_LINE_UNLIT_SHADER = "ViJApps.SimpleLineUnlit";
+        [Shader]
         public const string SIMPLE_CIRCLE_UNLIT_SHADER = "ViJApps.SimpleCircleUnlit";
+        [Shader]
         public const string SIMPLE_ELLIPSE_UNLIT_SHADER = "ViJApps.SimpleEllipseUnlit";
 
         //ShadersIDs

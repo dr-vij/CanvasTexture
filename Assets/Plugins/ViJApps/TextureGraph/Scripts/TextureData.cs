@@ -99,7 +99,6 @@ namespace ViJApps.TextureGraph
         public void DrawEllipsePercent(float2 center, float2 ab, Color color)
         {
             (var mesh, var propertyBlock) = AllocateMeshAndBlock();
-
             //Prepare ellipse mesh. its a rectangle with 4 vertices / 2 triangles 
             mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix, mesh);
 

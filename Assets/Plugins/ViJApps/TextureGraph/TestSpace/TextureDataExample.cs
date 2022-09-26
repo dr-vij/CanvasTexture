@@ -26,6 +26,8 @@ namespace ViJApps.TextureGraph.TestSpace
 
         private void Update()
         {
+            var res = CodeGenTest.CodeGenResultTest.Result;
+            
             m_textureData = m_textureData ?? new TextureData();
 
             var w = 1024;
