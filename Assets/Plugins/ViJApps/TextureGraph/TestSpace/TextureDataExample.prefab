@@ -137,7 +137,7 @@ Transform:
   m_Children:
   - {fileID: 1867779233}
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7117692151607917187
 MonoBehaviour:
@@ -151,8 +151,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6869c2552f2aa490094282dcf220c42d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_mTestTexture: {fileID: 0}
-  m_mTestRenderer: {fileID: 1867779231}
+  m_testTexture: {fileID: 0}
+  m_testRenderer: {fileID: 1867779231}
   m_lineThickness: 64
   m_aspect: 1
   m_point0:

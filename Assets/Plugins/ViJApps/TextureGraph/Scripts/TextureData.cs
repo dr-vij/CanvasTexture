@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace ViJApps.TextureGraph
         private readonly List<Mesh> m_allocatedMeshes = new();
         private readonly PropertyBlockPool m_propertyBlockPool = new();
         private readonly List<MaterialPropertyBlock> m_allocatedPropertyBlocks = new();
+        private readonly TextComponentsPool m_textComponentsPool = new();
+        private readonly List<TextComponent> m_allocatedTextComponents = new();
 
         private LinearCoordSystem m_textureCoordSystem;
 
@@ -172,6 +175,18 @@ namespace ViJApps.TextureGraph
             DrawLinePercent(texFromCoord, texToCoord, thickness, color, endingStyle);
         }
 
+        //Line height is Ascender - Descender + line gap.
+        public void DrawText(string text)
+        {
+            var textComponent = m_textComponentsPool.Get();
+            m_allocatedTextComponents.Add(textComponent);
+            textComponent.Text.text = text;
+            //textComponent.Text.alignment = TextAlignmentOptions.Midline;
+            //textComponent.Text.fontSize = 1;
+            textComponent.Text.ForceMeshUpdate();
+            m_cmd.DrawRenderer(textComponent.Text.renderer, textComponent.Text.renderer.material);
+        }
+
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
             Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
@@ -270,6 +285,10 @@ namespace ViJApps.TextureGraph
             foreach (var block in m_allocatedPropertyBlocks)
                 m_propertyBlockPool.Release(block);
             m_allocatedPropertyBlocks.Clear();
+
+            foreach (var text in m_allocatedTextComponents)
+                m_textComponentsPool.Release(text);
+            m_allocatedTextComponents.Clear();
         }
 
         public void Dispose()
