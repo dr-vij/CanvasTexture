@@ -180,11 +180,11 @@ namespace ViJApps.TextureGraph
         {
             var textComponent = m_textComponentsPool.Get();
             m_allocatedTextComponents.Add(textComponent);
-            textComponent.Text.text = text;
-            //textComponent.Text.alignment = TextAlignmentOptions.Midline;
-            //textComponent.Text.fontSize = 1;
-            textComponent.Text.ForceMeshUpdate();
-            m_cmd.DrawRenderer(textComponent.Text.renderer, textComponent.Text.renderer.material);
+            textComponent.TMP.text = text;
+            textComponent.TMP.alignment = TextAlignmentOptions.Midline;
+            textComponent.TMP.fontSize = textComponent.TMP.font.GetFontSizeToFitWorldSize(1f);
+            textComponent.TMP.ForceMeshUpdate();
+            m_cmd.DrawRenderer(textComponent.TMP.renderer, textComponent.TMP.renderer.material);
         }
 
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
