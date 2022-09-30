@@ -203,7 +203,7 @@ Transform:
   m_Children:
   - {fileID: 5028892740591928374}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1479982225782640907
 MonoBehaviour:
@@ -217,4 +217,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5adc95369492b46af8954a3f88dd0067, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_textComponent: {fileID: 591950732481382730}
+  m_tmpComponent: {fileID: 591950732481382730}

@@ -175,16 +175,15 @@ namespace ViJApps.TextureGraph
             DrawLinePercent(texFromCoord, texToCoord, thickness, color, endingStyle);
         }
 
-        //Line height is Ascender - Descender + line gap.
-        public void DrawText(string text)
+        public void DrawText(string text, TextSettings textSettings)
         {
             var textComponent = m_textComponentsPool.Get();
             m_allocatedTextComponents.Add(textComponent);
-            textComponent.TMP.text = text;
-            textComponent.TMP.alignment = TextAlignmentOptions.Midline;
-            textComponent.TMP.fontSize = textComponent.TMP.font.GetFontSizeToFitWorldSize(1f);
-            textComponent.TMP.ForceMeshUpdate();
-            m_cmd.DrawRenderer(textComponent.TMP.renderer, textComponent.TMP.renderer.material);
+            textComponent.Text = text;
+            
+            textComponent.SetSettings(textSettings);
+            textComponent.UpdateText();
+            m_cmd.DrawRenderer(textComponent.Renderer, textComponent.Material);
         }
 
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,

@@ -47,13 +47,27 @@ namespace ViJApps.TextureGraph
     {
         [SerializeField] private TextMeshPro m_tmpComponent;
 
-        public TextMeshPro TMP => m_tmpComponent;
+        public string Text
+        {
+            get => m_tmpComponent.text;
+            set => m_tmpComponent.text = value;
+        }
 
+        public void UpdateText() => m_tmpComponent.ForceMeshUpdate();
+
+        public Material Material => m_tmpComponent.renderer.material;
+        
+        public Renderer Renderer => m_tmpComponent.renderer;
+        
         public void Clear()
         {
             m_tmpComponent.text = string.Empty;
             var settings = TextSettings.Default;
-            
+            SetSettings(settings);
+        }
+
+        public void SetSettings(TextSettings settings)
+        {
             m_tmpComponent.fontSize = settings.FontSize;
             m_tmpComponent.fontWeight = settings.FontWeight;
             m_tmpComponent.fontStyle = settings.FontStyle;
