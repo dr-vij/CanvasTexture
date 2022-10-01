@@ -12,7 +12,14 @@ namespace ViJApps.TextureGraph
 
         private float m_rotation = 0f;
         private float2 m_position = float2.zero;
+        private float m_aspect = 1f;
 
+        public float Aspect
+        {
+            get => m_aspect;
+            set => transform.localScale = new Vector3(value, 1f, 1f);
+        }
+        
         public float Rotation
         {
             get => m_rotation;

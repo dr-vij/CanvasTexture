@@ -44,7 +44,7 @@ namespace ViJApps.TextureGraph
             get => m_aspect;
             set
             {
-                m_aspect = value;
+                m_aspect = math.max(value, 0.0001f);
                 m_aspectMatrix = Utils.MathUtils.CreateMatrix2d_S(new float2(m_aspect, 1));
                 m_inverseAspectMatrix = math.inverse(m_aspectMatrix);
             }
@@ -190,6 +190,7 @@ namespace ViJApps.TextureGraph
             textComponent.Position = position;
             textComponent.SizeDelta = sizeDelta;
             textComponent.Rotation = rotation;
+            textComponent.Aspect = Aspect;
 
             textComponent.SetSettings(textSettings);
             textComponent.UpdateText();
