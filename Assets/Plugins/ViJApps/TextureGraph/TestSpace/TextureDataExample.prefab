@@ -167,7 +167,7 @@ MonoBehaviour:
     y: 0.5
   m_circleRadius: 0.2
   m_textSettings:
-    FontSize: 1
+    FontSize: 0.1
     FontColor: {r: 1, g: 1, b: 0, a: 1}
     FontStyle: 0
     FontWeight: 0

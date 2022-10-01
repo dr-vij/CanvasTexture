@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using TMPro;
 using Unity.Mathematics;
+using ViJApps.TextureGraph.Utils;
 
 namespace ViJApps.TextureGraph
 {
@@ -95,7 +96,7 @@ namespace ViJApps.TextureGraph
 
         public void SetSettings(TextSettings settings)
         {
-            m_tmpComponent.fontSize = settings.FontSize;
+            m_tmpComponent.fontSize = m_tmpComponent.font.GetFontSizeToFitWorldSize(settings.FontSize);
             m_tmpComponent.fontWeight = settings.FontWeight;
             m_tmpComponent.fontStyle = settings.FontStyle;
             m_tmpComponent.color = settings.FontColor;

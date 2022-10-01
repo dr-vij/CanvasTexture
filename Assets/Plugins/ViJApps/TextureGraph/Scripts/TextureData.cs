@@ -100,7 +100,7 @@ namespace ViJApps.TextureGraph
 
         public void DrawEllipsePercent(float2 center, float2 ab, Color color)
         {
-            var (mesh, propertyBlock) = AllocateMeshAndBlock();
+            var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
             //Prepare ellipse mesh. its a rectangle with 4 vertices / 2 triangles 
             mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix, mesh);
 
@@ -128,7 +128,7 @@ namespace ViJApps.TextureGraph
 
         public void DrawRectPercent(float2 center, float2 size, Color color)
         {
-            var (mesh, propertyBlock) = AllocateMeshAndBlock();
+            var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
 
             var rectMesh = MeshTools.CreateRect(center, size, m_aspectMatrix, mesh);
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
@@ -148,7 +148,7 @@ namespace ViJApps.TextureGraph
 
         public void DrawCirclePercent(float2 center, float radius, Color color)
         {
-            var (mesh, propertyBlock) = AllocateMeshAndBlock();
+            var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
 
             propertyBlock.SetVector(MaterialProvider.CenterPropertyId, new Vector2(center.x, center.y));
             propertyBlock.SetFloat(MaterialProvider.RadiusPropertyId, radius);
@@ -182,16 +182,19 @@ namespace ViJApps.TextureGraph
 
         public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation, float2 pivot)
         {
+            //Prepare text mesh
             var textComponent = m_textComponentsPool.Get();
             m_allocatedTextComponents.Add(textComponent);
             textComponent.Text = text;
-
+            
+            //Position and size
             textComponent.Pivot = pivot;
             textComponent.Position = position;
             textComponent.SizeDelta = sizeDelta;
             textComponent.Rotation = rotation;
             textComponent.Aspect = Aspect;
-
+             
+            //Set settings, update mesh and add to render
             textComponent.SetSettings(textSettings);
             textComponent.UpdateText();
             m_cmd.DrawRenderer(textComponent.Renderer, textComponent.Material);
@@ -200,7 +203,7 @@ namespace ViJApps.TextureGraph
         public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
             Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
-            var (lineMesh, propertyBlock) = AllocateMeshAndBlock();
+            var (lineMesh, propertyBlock) = AllocateMeshAndPropertyBlock();
 
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
             Material lineMaterial;
@@ -258,7 +261,7 @@ namespace ViJApps.TextureGraph
 #endif
         }
 
-        private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndBlock()
+        private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndPropertyBlock()
         {
             var mesh = m_meshPool.Get();
             m_allocatedMeshes.Add(mesh);
