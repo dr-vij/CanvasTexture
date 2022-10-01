@@ -86,6 +86,17 @@ namespace ViJApps.TextureGraph
             m_cmd.SetRenderTarget(RenderTexture);
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
+        
+        //Draw polygon
+        public void DrawPolygon(List<List<float2>> contours, Color color)
+        {
+            var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
+            mesh = MeshTools.CreateMeshFromContourPolygons(contours, mesh);
+
+            var material = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
+            propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
+            m_cmd.DrawMesh(mesh, Matrix4x4.identity, material, 0, 0, propertyBlock);
+        }
 
         //Draw ellipse
         public void DrawEllipsePixels(float2 pixelsCenter, float2 abPixels, Color color)
@@ -260,7 +271,7 @@ namespace ViJApps.TextureGraph
             Debug.LogWarning("You can save to assets only from Editor");
 #endif
         }
-
+                    
         private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndPropertyBlock()
         {
             var mesh = m_meshPool.Get();

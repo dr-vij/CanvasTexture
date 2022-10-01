@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Unity.Mathematics;
@@ -30,7 +31,8 @@ namespace ViJApps.TextureGraph.TestSpace
         [SerializeField] private float2 m_size;
         [SerializeField] private float m_rotation;
         
-
+        [SerializeField] private List<float2> m_points = new List<float2>();
+        
         private void Update()
         {
             m_textureData = m_textureData ?? new TextureData();
@@ -54,6 +56,10 @@ namespace ViJApps.TextureGraph.TestSpace
             
             m_textureData.DrawEllipsePercent(m_circlePosition, new float2(m_circleRadius, m_circleRadius), Color.cyan);
             m_textureData.DrawText("Test Text", m_textSettings, m_position, m_size, m_rotation);
+
+            var list = new List<List<float2>> { m_points };
+            m_textureData.DrawPolygon(list, Color.white);
+            
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();
 

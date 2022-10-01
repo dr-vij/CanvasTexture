@@ -1,18 +1,57 @@
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using LibTessDotNet;
+using Unity.Collections;
+using ViJApps.TextureGraph.ThirdParty;
+using Mesh = UnityEngine.Mesh;
 
 namespace ViJApps.TextureGraph.Utils
 {
     public static class MeshTools
     {
+        private static readonly Tess Tess = new Tess(new DefaultPool());
+        public static Mesh CreateMeshFromContourPolygons(List<List<float2>> contours, Mesh mesh = null, WindingRule windingRule = WindingRule.EvenOdd)
+        {
+            foreach (var contour in contours)
+                Tess.AddContour(contour.ToContourVertices());
+            Tess.Tessellate(windingRule, ElementType.Polygons, polySize: 3, combineCallback: null, normal: new Vec3(0, 0, -1));
+            mesh = Tess.TessToUnityMesh(mesh);
+            return mesh;
+        }
+
+        public static Mesh TessToUnityMesh(this Tess tess, Mesh mesh)
+        {
+            var (positions, indices) = tess.ToPositionsAndUshortIndicesNativeArrays();
+            mesh = CreateMeshFromNativeArrays(positions, indices, mesh);
+            return mesh;
+        }
+
+        public static Mesh CreateMeshFromNativeArrays(NativeArray<float3> positions, NativeArray<ushort> indices, Mesh mesh)
+        {
+            mesh = CreateMeshOrClear(ref mesh);
+
+            var meshDataArr = Mesh.AllocateWritableMeshData(1);
+            var meshData = meshDataArr[0];
+            meshData.SetVertexBufferParams(positions.Length, new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3));
+            meshData.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
+
+            meshData.GetVertexData<float3>().CopyFrom(positions);
+            meshData.GetIndexData<ushort>().CopyFrom(indices);
+
+            meshData.subMeshCount = 1;
+            meshData.SetSubMesh(0, new SubMeshDescriptor(0, indices.Length));
+            Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh, MeshUpdateFlags.Default);
+            mesh.RecalculateBounds();
+            mesh.RecalculateTangents();
+            mesh.RecalculateNormals();
+            return mesh;
+        }
+        
         public static Mesh CreateRect(float2 centerCoord, float2 size, float3x3 aspectMatrix, Mesh mesh = null)
         {
-            if (mesh == null)
-                mesh = new Mesh();
-            else
-                mesh.Clear();
-
+            mesh = CreateMeshOrClear(ref mesh);
             var aspectSize = size.TransformDirection(aspectMatrix);
             
             var halfSize = aspectSize / 2;
@@ -28,11 +67,7 @@ namespace ViJApps.TextureGraph.Utils
         public static Mesh CreateLine(float2 fromCoord, float2 toCoord, float3x3 aspectMatrix, float width,
             bool extendStartEnd = false, Mesh mesh = null)
         {
-            if (mesh == null)
-                mesh = new Mesh();
-            else
-                mesh.Clear();
-
+            mesh = CreateMeshOrClear(ref mesh);
             var direction = toCoord - fromCoord;
 
             var aspectDir = math.normalize(direction.InverseTransformDirection(aspectMatrix)) * width * 0.5f;
@@ -53,12 +88,7 @@ namespace ViJApps.TextureGraph.Utils
 
         public static Mesh CreateMeshFromFourPoints(float2 p0, float2 p1, float2 p2, float2 p3, Mesh mesh = null)
         {
-            if (mesh == null)
-                mesh = new Mesh();
-            else
-                mesh.Clear();
-
-            //Create mesh for rect
+            CreateMeshOrClear(ref mesh);
             var meshDataArr = Mesh.AllocateWritableMeshData(1);
             var meshData = meshDataArr[0];
             meshData.SetVertexBufferParams(4,
@@ -90,6 +120,15 @@ namespace ViJApps.TextureGraph.Utils
             meshData.SetSubMesh(0, subMesh);
             Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh);
 
+            return mesh;
+        }
+        
+        public static Mesh CreateMeshOrClear(ref Mesh mesh)
+        {
+            if (mesh == null)
+                mesh = new Mesh();
+            else
+                mesh.Clear();
             return mesh;
         }
     }

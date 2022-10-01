@@ -15,11 +15,11 @@ namespace ViJApps.TextureGraph
     { 
         public TextComponentsPool() : base(CreateFromAddressable, Activate, Deactivate, (c) => Object.Destroy(c.gameObject))
         {
-            
         }
 
         private static void Deactivate(TextComponent textComponent)
         {   
+            textComponent.Clear();
             textComponent.gameObject.SetActive(false);
         }
         
