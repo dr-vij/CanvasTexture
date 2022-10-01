@@ -167,11 +167,11 @@ MonoBehaviour:
     y: 0.5
   m_circleRadius: 0.2
   m_textSettings:
-    FontSize: 0
-    FontColor: {r: 0, g: 0, b: 0, a: 0}
+    FontSize: 1
+    FontColor: {r: 1, g: 1, b: 0, a: 1}
     FontStyle: 0
     FontWeight: 0
-    TextAlignment: 0
+    TextAlignment: 514
     SpacingOptions:
       Word: 0
       Character: 0
@@ -180,8 +180,9 @@ MonoBehaviour:
     Wrapping: 0
     OverflowMode: 0
   m_position:
-    x: 0
-    y: 0
+    x: 0.5
+    y: 0.5
   m_size:
-    x: 0
-    y: 0
+    x: 1
+    y: 1
+  m_rotation: 0

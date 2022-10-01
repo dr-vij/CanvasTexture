@@ -28,12 +28,11 @@ namespace ViJApps.TextureGraph.TestSpace
 
         [SerializeField] private float2 m_position;
         [SerializeField] private float2 m_size;
+        [SerializeField] private float m_rotation;
         
 
         private void Update()
         {
-            var res = CodeGenTest.CodeGenResultTest.Result;
-            
             m_textureData = m_textureData ?? new TextureData();
 
             var w = 1024;
@@ -54,7 +53,7 @@ namespace ViJApps.TextureGraph.TestSpace
             //m_textureData.DrawCirclePercent(m_circlePosition, m_circleRadius, Color.cyan);
             
             m_textureData.DrawEllipsePercent(m_circlePosition, new float2(m_circleRadius, m_circleRadius), Color.cyan);
-            m_textureData.DrawText("Test Text", m_textSettings, m_position, m_size);
+            m_textureData.DrawText("Test Text", m_textSettings, m_position, m_size, m_rotation);
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();
 

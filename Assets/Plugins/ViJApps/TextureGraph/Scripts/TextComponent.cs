@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using TMPro;
+using Unity.Mathematics;
 
 namespace ViJApps.TextureGraph
 {
@@ -8,6 +9,20 @@ namespace ViJApps.TextureGraph
     {
         [SerializeField] private TextMeshPro m_tmpComponent;
         [SerializeField] private RectTransform m_rectTransform;
+
+        private float m_rotation = 0f;
+        private float2 m_position = float2.zero;
+
+        public float Rotation
+        {
+            get => m_rotation;
+            set
+            {
+                m_rotation = value;
+                m_rectTransform.localRotation = Quaternion.Euler(0f, 0f, m_rotation);
+                m_rectTransform.localPosition = Vector3.zero;
+            }
+        }
 
         public string Text
         {
@@ -17,8 +32,13 @@ namespace ViJApps.TextureGraph
 
         public Vector2 Position
         {
-            get => m_rectTransform.position;
-            set => m_rectTransform.position = value;
+            get => m_position;
+            set
+            {
+                m_position = value;
+                m_rectTransform.localPosition = Vector3.zero;
+                transform.position = new Vector3(m_position.x, m_position.y, 0f);
+            }
         }
 
         public Vector2 SizeDelta
@@ -44,7 +64,12 @@ namespace ViJApps.TextureGraph
             set => m_rectTransform.anchorMax = value;
         }
 
-        public void UpdateText() => m_tmpComponent.ForceMeshUpdate();
+        public void UpdateText()
+        {
+            m_tmpComponent.SetVerticesDirty();
+            m_tmpComponent.SetLayoutDirty();
+            m_tmpComponent.ForceMeshUpdate();
+        }
 
         public Material Material => m_tmpComponent.renderer.material;
         

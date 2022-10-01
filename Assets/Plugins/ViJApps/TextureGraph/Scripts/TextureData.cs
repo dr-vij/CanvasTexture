@@ -173,11 +173,14 @@ namespace ViJApps.TextureGraph
 
             DrawLinePercent(texFromCoord, texToCoord, thickness, color, endingStyle);
         }
-        
-        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta)
-            =>DrawText(text, textSettings, position, sizeDelta, new float2(0.5f,0.5f));
 
-        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float2 pivot)
+        public void DrawText(string text, TextSettings textSettings, float2 position, float rotation = 0)
+            => DrawText(text, textSettings, position, sizeDelta: new float2(1, 1), rotation: rotation);
+        
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation = 0)
+            => DrawText(text, textSettings, position, sizeDelta, rotation, pivot: new float2(0.5f, 0.5f));
+
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation, float2 pivot)
         {
             var textComponent = m_textComponentsPool.Get();
             m_allocatedTextComponents.Add(textComponent);
@@ -186,7 +189,8 @@ namespace ViJApps.TextureGraph
             textComponent.Pivot = pivot;
             textComponent.Position = position;
             textComponent.SizeDelta = sizeDelta;
-            
+            textComponent.Rotation = rotation;
+
             textComponent.SetSettings(textSettings);
             textComponent.UpdateText();
             m_cmd.DrawRenderer(textComponent.Renderer, textComponent.Material);
@@ -281,7 +285,7 @@ namespace ViJApps.TextureGraph
             else if (RenderTexture.width != width || RenderTexture.height != height)
             {
                 UnityEngine.Object.Destroy(RenderTexture);
-                CreateRenderTexture(width,height);
+                CreateRenderTexture(width, height);
             }
         }
 
