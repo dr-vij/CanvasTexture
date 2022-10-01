@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -15,7 +14,7 @@ namespace ViJApps.TextureGraph
         Round = 1,
     }
 
-    public class TextureData : IDisposable
+    public partial class TextureData : IDisposable
     {
         //Data
         private CommandBuffer m_cmd;
@@ -101,7 +100,7 @@ namespace ViJApps.TextureGraph
 
         public void DrawEllipsePercent(float2 center, float2 ab, Color color)
         {
-            (var mesh, var propertyBlock) = AllocateMeshAndBlock();
+            var (mesh, propertyBlock) = AllocateMeshAndBlock();
             //Prepare ellipse mesh. its a rectangle with 4 vertices / 2 triangles 
             mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix, mesh);
 
@@ -129,7 +128,7 @@ namespace ViJApps.TextureGraph
 
         public void DrawRectPercent(float2 center, float2 size, Color color)
         {
-            (var mesh, var propertyBlock) = AllocateMeshAndBlock();
+            var (mesh, propertyBlock) = AllocateMeshAndBlock();
 
             var rectMesh = MeshTools.CreateRect(center, size, m_aspectMatrix, mesh);
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
@@ -149,7 +148,7 @@ namespace ViJApps.TextureGraph
 
         public void DrawCirclePercent(float2 center, float radius, Color color)
         {
-            (var mesh, var propertyBlock) = AllocateMeshAndBlock();
+            var (mesh, propertyBlock) = AllocateMeshAndBlock();
 
             propertyBlock.SetVector(MaterialProvider.CenterPropertyId, new Vector2(center.x, center.y));
             propertyBlock.SetFloat(MaterialProvider.RadiusPropertyId, radius);
@@ -180,7 +179,7 @@ namespace ViJApps.TextureGraph
             var textComponent = m_textComponentsPool.Get();
             m_allocatedTextComponents.Add(textComponent);
             textComponent.Text = text;
-            
+
             textComponent.SetSettings(textSettings);
             textComponent.UpdateText();
             m_cmd.DrawRenderer(textComponent.Renderer, textComponent.Material);
@@ -268,11 +267,22 @@ namespace ViJApps.TextureGraph
 
         private void ReinitTexture(int width, int height)
         {
-            m_textureDescriptor = new RenderTextureDescriptor(width, height);
-            if (RenderTexture != null)
+            if (RenderTexture == null)
+            {
+                CreateRenderTexture(width, height);
+            }
+            else if (RenderTexture.width != width || RenderTexture.height != height)
+            {
                 UnityEngine.Object.Destroy(RenderTexture);
-            m_textureCoordSystem = new LinearCoordSystem(new float2(width, height));
+                CreateRenderTexture(width,height);
+            }
+        }
+
+        private void CreateRenderTexture(int width, int height)
+        {
+            m_textureDescriptor = new RenderTextureDescriptor(width, height);
             RenderTexture = new RenderTexture(m_textureDescriptor);
+            m_textureCoordSystem = new LinearCoordSystem(new float2(width, height));
         }
 
         private void ReleaseToPools()
