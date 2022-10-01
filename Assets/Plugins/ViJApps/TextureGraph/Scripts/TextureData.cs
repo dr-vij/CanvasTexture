@@ -173,13 +173,20 @@ namespace ViJApps.TextureGraph
 
             DrawLinePercent(texFromCoord, texToCoord, thickness, color, endingStyle);
         }
+        
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta)
+            =>DrawText(text, textSettings, position, sizeDelta, new float2(0.5f,0.5f));
 
-        public void DrawText(string text, TextSettings textSettings)
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float2 pivot)
         {
             var textComponent = m_textComponentsPool.Get();
             m_allocatedTextComponents.Add(textComponent);
             textComponent.Text = text;
 
+            textComponent.Pivot = pivot;
+            textComponent.Position = position;
+            textComponent.SizeDelta = sizeDelta;
+            
             textComponent.SetSettings(textSettings);
             textComponent.UpdateText();
             m_cmd.DrawRenderer(textComponent.Renderer, textComponent.Material);

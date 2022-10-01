@@ -218,3 +218,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_tmpComponent: {fileID: 591950732481382730}
+  m_rectTransform: {fileID: 5028892740591928374}
