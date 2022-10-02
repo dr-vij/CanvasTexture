@@ -12,6 +12,16 @@ namespace ViJApps.TextureGraph.Utils
     public static class MeshTools
     {
         private static readonly Tess Tess = new Tess(new DefaultPool());
+
+        public static Mesh CreatePolyLine(List<float2> contour, bool isClosed = true, Mesh mesh = null)
+        {
+            mesh = CreateMeshOrClear(ref mesh);
+            
+            
+
+            return mesh;
+        }
+        
         public static Mesh CreateMeshFromContourPolygons(List<List<float2>> contours, Mesh mesh = null, WindingRule windingRule = WindingRule.EvenOdd)
         {
             foreach (var contour in contours)
@@ -86,6 +96,15 @@ namespace ViJApps.TextureGraph.Utils
             return mesh;
         }
 
+        /// <summary>
+        /// Creates convex mesh polygon from 3 points, 0 1 2 and 0 2 3
+        /// </summary>
+        /// <param name="p0"></param>
+        /// <param name="p1"></param>
+        /// <param name="p2"></param>
+        /// <param name="p3"></param>
+        /// <param name="mesh"></param>
+        /// <returns></returns>
         public static Mesh CreateMeshFromFourPoints(float2 p0, float2 p1, float2 p2, float2 p3, Mesh mesh = null)
         {
             CreateMeshOrClear(ref mesh);
