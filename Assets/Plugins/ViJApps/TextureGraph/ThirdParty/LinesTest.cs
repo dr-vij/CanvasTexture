@@ -14,6 +14,8 @@ namespace ViJApps.TextureGraph.ThirdParty
         [SerializeField] private List<Transform> mPoints;
 
         [SerializeField] private MeshFilter mMeshFilter;
+        [Range(0, 1)] [SerializeField] private double mPercent = 0.5f;
+        [SerializeField] private JoinType m_joinType;
 
         private void Start()
         {
@@ -31,18 +33,24 @@ namespace ViJApps.TextureGraph.ThirdParty
             Clipper64 clipper = new Clipper64();
             clipper.AddSubject(p);
             clipper.Execute(ClipType.Union, FillRule.EvenOdd, pp);
-
-            var result = new Paths64();
-            foreach (var path in pp)
-            {
-                ClipperOffset co = new ClipperOffset();
-                co.AddPath(path, JoinType.Square, EndType.Polygon);
-                result.AddRange(co.Execute(-100));
-            }
+            
+            //Inset
+            double width = 200;
+            
+            var innerResult = new Paths64();
+            ClipperOffset co = new ClipperOffset();
+            co.AddPaths(pp, m_joinType, EndType.Polygon);
+            innerResult.AddRange(co.Execute(-width*mPercent));
+            
+            //Outset
+            var outerResult = new Paths64();
+            co = new ClipperOffset();
+            co.AddPaths(pp, m_joinType, EndType.Polygon);
+            outerResult.AddRange(co.Execute(width*(1-mPercent)));
 
             clipper.Clear();
-            clipper.AddSubject(pp);
-            clipper.AddClip(result);
+            clipper.AddSubject(outerResult);
+            clipper.AddClip(innerResult);
             Paths64 final = new Paths64();
             clipper.Execute(ClipType.Difference, FillRule.EvenOdd, final);
 
