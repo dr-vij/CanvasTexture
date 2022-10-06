@@ -31,6 +31,16 @@ namespace ViJApps.TextureGraph.Utils
         private static readonly Clipper64 Clipper = new();
         private static readonly ClipperOffset ClipperOffset = new();
 
+        /// <summary>
+        /// Creates polyline that can be opened or closed
+        /// </summary>
+        /// <param name="polyline">points of the polyline</param>
+        /// <param name="lineThickness">line thickness</param>
+        /// <param name="lineEndType">line ending type: round, butt, square, joined (closed spline)</param>
+        /// <param name="joinType">connection type between segments: round, butt, square, miter</param>
+        /// <param name="miterLimit">the ratio between line thickness and </param>
+        /// <param name="mesh"></param>
+        /// <returns></returns>
         public static Mesh CreatePolyLine(
             List<float2> polyline, 
             float lineThickness,  
@@ -57,11 +67,82 @@ namespace ViJApps.TextureGraph.Utils
             Clipper.Execute(ClipType.Union, FillRule.EvenOdd, result);
 
             mesh = CreateMeshFromClipper(result, mesh);
-            
             return mesh;
         }
+        
+        public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
+            List<List<float2>> solidPolygons,
+            List<List<float2>> holePolygons,
+            float lineThickness,
+            float lineOffset = 0.5f,
+            LineJoinType joinType = LineJoinType.Miter,
+            float miterLimit = 0f,
+            Mesh polygonMesh = null,
+            Mesh lineMesh = null)
+        {
+            miterLimit = math.max(0f, miterLimit);
+            lineThickness = math.max(0f, lineThickness);
+            lineOffset = math.clamp(lineOffset, 0f, 1f);
+            
+            var solidResult = MergeContoursUnion(solidPolygons);
+            var holeResult = MergeContoursUnion(holePolygons);
 
-        public static Mesh CreateMeshFromClipper(Paths64 contours, Mesh mesh)
+            //Now subtract them. Result is a polygon with holes
+            var initialPoly = Subtract(solidResult, holeResult);
+            
+            //Now we create offsets to render lines
+            var positiveResult = OffsetPoly(initialPoly, (JoinType)joinType, lineThickness, lineOffset, miterLimit);
+            var negativeResult = OffsetPoly(initialPoly, (JoinType)joinType, lineThickness, 1f - lineOffset, miterLimit);
+            
+            var linePoly = Subtract(positiveResult, negativeResult);
+
+            polygonMesh = CreateMeshFromClipper(negativeResult, polygonMesh);
+            lineMesh = CreateMeshFromClipper(linePoly, lineMesh);
+
+            return (polygonMesh, lineMesh);
+        }
+
+        private static Paths64 Subtract(Paths64 operandA, Paths64 operandB)
+        {
+            var result = new Paths64();
+            Clipper.Clear();
+            Clipper.AddSubject(operandA);
+            Clipper.AddClip(operandB);
+            Clipper.Execute(ClipType.Difference, FillRule.EvenOdd, result);
+            return result;
+        }
+        
+        private static Paths64 MergeContoursUnion(List<List<float2>> contours)
+        {
+            Clipper.Clear();
+            foreach(var polygon in contours)
+            {
+                var initialPath = Converters.Float2ToPath64(polygon);
+                Clipper.AddSubject(initialPath);
+            }
+            var result = new Paths64();
+            Clipper.Execute(ClipType.Union, FillRule.EvenOdd, result);
+            return result;
+        }
+
+        private static Paths64 OffsetPoly(Paths64 polygons, JoinType joinType, float lineThickness, float lineOffset, float miterLimit)
+        {
+            ClipperOffset.Clear();
+            Paths64 offsetResult;
+            if (lineOffset != 0)
+            {
+                ClipperOffset.AddPaths(polygons, (JoinType)joinType, EndType.Polygon);
+                ClipperOffset.MiterLimit = miterLimit;
+                offsetResult = ClipperOffset.Execute(Converters.DoubleToClipper(lineThickness * (lineOffset - 0.5f)));
+            }
+            else
+            {
+                offsetResult = polygons;
+            }
+            return offsetResult;
+        }
+        
+        private static Mesh CreateMeshFromClipper(Paths64 contours, Mesh mesh = null)
         {
             foreach (var contour in contours)
                 Tess.AddContour(Converters.Path64ToContourVertexArr(contour));

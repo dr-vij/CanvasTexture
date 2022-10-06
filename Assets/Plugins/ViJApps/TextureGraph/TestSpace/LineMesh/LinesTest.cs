@@ -3,29 +3,54 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ViJApps.TextureGraph.Utils;
 using Mesh = UnityEngine.Mesh;
 
 namespace ViJApps.TextureGraph.ThirdParty
 {
     public class LinesTest : MonoBehaviour
-    {
-        [SerializeField] private List<Transform> mPoints;
+    {    
+        private List<Transform> m_PositivePoints;
+        private List<Transform> m_negativePoints;
 
-        [SerializeField] private MeshFilter mMeshFilter;
+        [SerializeField] private Transform m_PositivePrefab;
+        [SerializeField] private Transform m_negativePrefab;
+        
+        [SerializeField] private MeshFilter m_meshFilter;
+        [SerializeField] private MeshFilter m_meshFilter2;
         [SerializeField] private LineJoinType m_joinType;
         [SerializeField] private LineEndingType m_endType;
-        [SerializeField] private float mThickness = 1f;
+        [SerializeField] private float m_thickness = 1f;
+        [SerializeField] private float m_miter = 1f;
+
+        [Range(0f,1f)]
+        [SerializeField] private float m_lineOffset = 1f;
 
         private void Start()
         {
-            mMeshFilter.mesh = new Mesh();
+            m_meshFilter.mesh = new Mesh();
         }
 
         void Update()
         {
-            var points = mPoints.Select(c => new float2(c.position.x, c.position.y) );
-            mMeshFilter.mesh = MeshTools.CreatePolyLine(points.ToList(), mThickness, m_endType, m_joinType , mesh: mMeshFilter.mesh);
+            m_PositivePoints = m_PositivePrefab.GetComponentsInChildren<Transform>().ToList();
+            m_negativePoints = m_negativePrefab.GetComponentsInChildren<Transform>().ToList();
+            
+            var positivePoints = m_PositivePoints.Where(t => t!=m_PositivePrefab).Select(c =>
+            {
+                Vector3 position;
+                return new float2((position = c.position).x, position.y);
+            }). ToList();
+            
+            var negativePoints = m_negativePoints.Where(t=> t!=m_negativePrefab).Select(c=> 
+            {
+                Vector3 position;
+                return new float2((position = c.position).x, position.y);
+            }).ToList();
+            
+            // m_meshFilter.mesh = MeshTools.CreatePolyLine(points.ToList(), m_thickness, m_endType, m_joinType, m_miter, mesh: m_meshFilter.mesh);
+            (m_meshFilter.mesh, m_meshFilter2.mesh) = MeshTools.CreatePolygon(new List<List<float2>>(){ positivePoints}, new List<List<float2>>(){negativePoints}, m_thickness, m_lineOffset, m_joinType, m_miter, m_meshFilter.mesh, m_meshFilter2.mesh);
         }
     }
 }
