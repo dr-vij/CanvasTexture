@@ -91,8 +91,8 @@ namespace ViJApps.TextureGraph.Utils
             var initialPoly = Subtract(solidResult, holeResult);
             
             //Now we create offsets to render lines
-            var positiveResult = OffsetPoly(initialPoly, (JoinType)joinType, lineThickness, lineOffset, miterLimit);
-            var negativeResult = OffsetPoly(initialPoly, (JoinType)joinType, lineThickness, 1f - lineOffset, miterLimit);
+            var positiveResult = OffsetPoly(initialPoly, (JoinType)joinType, lineThickness * lineOffset, miterLimit);
+            var negativeResult = OffsetPoly(initialPoly, (JoinType)joinType, -lineThickness * (1f - lineOffset) , miterLimit);
             
             var linePoly = Subtract(positiveResult, negativeResult);
 
@@ -125,20 +125,13 @@ namespace ViJApps.TextureGraph.Utils
             return result;
         }
 
-        private static Paths64 OffsetPoly(Paths64 polygons, JoinType joinType, float lineThickness, float lineOffset, float miterLimit)
+        private static Paths64 OffsetPoly(Paths64 polygons, JoinType joinType, float offset, float miterLimit)
         {
+            //TODO: think about allocations of paths64
             ClipperOffset.Clear();
-            Paths64 offsetResult;
-            if (lineOffset != 0)
-            {
-                ClipperOffset.AddPaths(polygons, (JoinType)joinType, EndType.Polygon);
-                ClipperOffset.MiterLimit = miterLimit;
-                offsetResult = ClipperOffset.Execute(Converters.DoubleToClipper(lineThickness * (lineOffset - 0.5f)));
-            }
-            else
-            {
-                offsetResult = polygons;
-            }
+            ClipperOffset.AddPaths(polygons, (JoinType)joinType, EndType.Polygon);
+            ClipperOffset.MiterLimit = miterLimit;
+            var offsetResult = new Paths64(ClipperOffset.Execute(Converters.DoubleToClipper(offset))) ;
             return offsetResult;
         }
         

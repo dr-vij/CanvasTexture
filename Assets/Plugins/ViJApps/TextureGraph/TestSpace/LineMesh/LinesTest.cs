@@ -9,6 +9,7 @@ using Mesh = UnityEngine.Mesh;
 
 namespace ViJApps.TextureGraph.ThirdParty
 {
+    [ExecuteInEditMode]
     public class LinesTest : MonoBehaviour
     {    
         private List<Transform> m_PositivePoints;
@@ -26,11 +27,6 @@ namespace ViJApps.TextureGraph.ThirdParty
 
         [Range(0f,1f)]
         [SerializeField] private float m_lineOffset = 1f;
-
-        private void Start()
-        {
-            m_meshFilter.mesh = new Mesh();
-        }
 
         void Update()
         {
@@ -50,7 +46,7 @@ namespace ViJApps.TextureGraph.ThirdParty
             }).ToList();
             
             // m_meshFilter.mesh = MeshTools.CreatePolyLine(points.ToList(), m_thickness, m_endType, m_joinType, m_miter, mesh: m_meshFilter.mesh);
-            (m_meshFilter.mesh, m_meshFilter2.mesh) = MeshTools.CreatePolygon(new List<List<float2>>(){ positivePoints}, new List<List<float2>>(){negativePoints}, m_thickness, m_lineOffset, m_joinType, m_miter, m_meshFilter.mesh, m_meshFilter2.mesh);
+            (m_meshFilter.sharedMesh, m_meshFilter2.sharedMesh) = MeshTools.CreatePolygon(new List<List<float2>>(){ positivePoints}, new List<List<float2>>(){negativePoints}, m_thickness, m_lineOffset, m_joinType, m_miter, m_meshFilter.mesh, m_meshFilter2.mesh);
         }
     }
 }
