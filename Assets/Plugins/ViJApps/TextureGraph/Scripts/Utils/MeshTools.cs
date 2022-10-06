@@ -6,19 +6,67 @@ using LibTessDotNet;
 using Unity.Collections;
 using ViJApps.TextureGraph.ThirdParty;
 using Mesh = UnityEngine.Mesh;
+using Clipper2Lib;
 
 namespace ViJApps.TextureGraph.Utils
 {
+    public enum LineEndingType
+    {
+        Joined,
+        Butt,
+        Square,
+        Round
+    }
+        
+    public enum LineJoinType
+    {
+        Square,
+        Round,
+        Miter
+    };
+    
     public static class MeshTools
     {
         private static readonly Tess Tess = new Tess(new DefaultPool());
+        private static readonly Clipper64 Clipper = new();
+        private static readonly ClipperOffset ClipperOffset = new();
 
-        public static Mesh CreatePolyLine(List<float2> contour, bool isClosed = true, Mesh mesh = null)
+        public static Mesh CreatePolyLine(
+            List<float2> polyline, 
+            float lineThickness,  
+            LineEndingType lineEndType = LineEndingType.Butt, 
+            LineJoinType joinType = LineJoinType.Miter, 
+            float miterLimit = 0f, 
+            Mesh mesh = null)
         {
             mesh = CreateMeshOrClear(ref mesh);
+            miterLimit = math.max(0, miterLimit);
             
+            //CLIPPER CANNOT CREATE SIGNED OFFSETS FOR OPEN LINES, TODO: IMPLEMENT IT
+            ClipperOffset.Clear();
+            var initialPath = Converters.Float2ToPath64(polyline);
+            var offsetPath =  new Paths64();
+            ClipperOffset.AddPath(initialPath, (JoinType)joinType, lineEndType.GetLineEndType());
+            ClipperOffset.MiterLimit = miterLimit;
+            offsetPath.AddRange(ClipperOffset.Execute(Converters.DoubleToClipper(lineThickness)));
             
+            //now lets make all inside filled
+            Clipper.Clear();
+            Clipper.AddSubject(offsetPath);
+            var result = new Paths64();
+            Clipper.Execute(ClipType.Union, FillRule.EvenOdd, result);
 
+            mesh = CreateMeshFromClipper(result, mesh);
+            
+            return mesh;
+        }
+
+        public static Mesh CreateMeshFromClipper(Paths64 contours, Mesh mesh)
+        {
+            foreach (var contour in contours)
+                Tess.AddContour(Converters.Path64ToContourVertexArr(contour));
+            Tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, combineCallback: null, normal: new Vec3(0,0,-1));
+            mesh = Tess.TessToUnityMesh(mesh);
             return mesh;
         }
         
