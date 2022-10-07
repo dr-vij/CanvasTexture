@@ -69,6 +69,16 @@ namespace ViJApps.TextureGraph.Utils
             mesh = CreateMeshFromClipper(result, mesh);
             return mesh;
         }
+
+        public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
+            List<List<float2>> solidPolygons,
+            float lineThickness,
+            float lineOffset = 0.5f,
+            LineJoinType joinType = LineJoinType.Miter,
+            float miterLimit = 0f,
+            Mesh polygonMesh = null,
+            Mesh lineMesh = null) => 
+        CreatePolygon(solidPolygons, null, lineThickness, lineOffset, joinType, miterLimit, polygonMesh, lineMesh);
         
         public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
             List<List<float2>> solidPolygons,
@@ -113,7 +123,10 @@ namespace ViJApps.TextureGraph.Utils
         }
         
         private static Paths64 MergeContoursUnion(List<List<float2>> contours)
-        {
+        { 
+            if (contours == null || contours.Count == 0)
+                return new Paths64();
+
             Clipper.Clear();
             foreach(var polygon in contours)
             {

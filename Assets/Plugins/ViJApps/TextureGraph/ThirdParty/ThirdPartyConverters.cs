@@ -48,6 +48,9 @@ namespace ViJApps.TextureGraph.ThirdParty
         /// <returns></returns>
         public static (NativeArray<float3> positions, NativeArray<ushort> indices) ToPositionsAndUshortIndicesNativeArrays(this Tess tess)
         {
+            if (tess.Vertices == null || tess.Elements == null) 
+                return new (new NativeArray<float3>(0, Allocator.Persistent), new NativeArray<ushort>(0, Allocator.Persistent));
+        
             var positions = new NativeArray<float3>(tess.Vertices.Length, Allocator.Persistent);
             var indices = new NativeArray<ushort>(tess.Elements.Length, Allocator.Persistent);
             for (int i = 0; i < tess.Vertices.Length; i++)

@@ -86,9 +86,40 @@ namespace ViJApps.TextureGraph
             m_cmd.SetRenderTarget(RenderTexture);
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
-        
+
         //Draw polygon
-        public void DrawPolygon(List<List<float2>> contours, Color color)
+        public void DrawComplexPolygon(
+            List<List<float2>> solidPolygons,
+            float lineThickness,
+            Color fillColor,
+            Color lineColor,
+            float lineOffset = 0.5f,
+            LineJoinType joinType = LineJoinType.Miter,
+            float miterLimit = 0f)
+        {
+            var (fillMesh, fillBlock) = AllocateMeshAndPropertyBlock();
+            var (lineMesh, lineBlock) = AllocateMeshAndPropertyBlock();
+
+            MeshTools.CreatePolygon(
+                solidPolygons,
+                lineThickness,
+                lineOffset,
+                joinType,
+                miterLimit,
+                fillMesh,
+                lineMesh);
+
+            var fillMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
+            var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
+            
+            fillBlock.SetColor(MaterialProvider.ColorPropertyId, fillColor);
+            lineBlock.SetColor(MaterialProvider.ColorPropertyId, lineColor);
+
+            m_cmd.DrawMesh(fillMesh, Matrix4x4.identity, fillMaterial, 0, 0, fillBlock);
+            m_cmd.DrawMesh(lineMesh, Matrix4x4.identity, lineMaterial, 0, 0, lineBlock);
+        }
+
+        public void DrawSimplePolygon(List<List<float2>> contours, Color color)
         {
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
             mesh = MeshTools.CreateMeshFromContourPolygons(contours, mesh);
@@ -187,24 +218,26 @@ namespace ViJApps.TextureGraph
 
         public void DrawText(string text, TextSettings textSettings, float2 position, float rotation = 0)
             => DrawText(text, textSettings, position, sizeDelta: new float2(1, 1), rotation: rotation);
-        
-        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation = 0)
+
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta,
+            float rotation = 0)
             => DrawText(text, textSettings, position, sizeDelta, rotation, pivot: new float2(0.5f, 0.5f));
 
-        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation, float2 pivot)
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation,
+            float2 pivot)
         {
             //Prepare text mesh
             var textComponent = m_textComponentsPool.Get();
             m_allocatedTextComponents.Add(textComponent);
             textComponent.Text = text;
-            
+
             //Position and size
             textComponent.Pivot = pivot;
             textComponent.Position = position;
             textComponent.SizeDelta = sizeDelta;
             textComponent.Rotation = rotation;
             textComponent.Aspect = Aspect;
-             
+
             //Set settings, update mesh and add to render
             textComponent.SetSettings(textSettings);
             textComponent.UpdateText();
@@ -271,7 +304,7 @@ namespace ViJApps.TextureGraph
             Debug.LogWarning("You can save to assets only from Editor");
 #endif
         }
-                    
+
         private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndPropertyBlock()
         {
             var mesh = m_meshPool.Get();

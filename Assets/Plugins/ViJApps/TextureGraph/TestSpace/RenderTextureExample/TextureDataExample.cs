@@ -30,13 +30,24 @@ namespace ViJApps.TextureGraph.TestSpace
         [SerializeField] private float2 m_position;
         [SerializeField] private float2 m_size;
         [SerializeField] private float m_rotation;
+
+        [SerializeField] private float m_polyLineWidth = 0.05f;
+        [SerializeField] private Color m_polyLineColor = Color.white;
+        [SerializeField] private Color m_fillColor = Color.red;
+        [SerializeField] private Transform m_PointsRoot; 
         
-        [SerializeField] private List<float2> m_points = new List<float2>();
+        private List<float2> m_points = new List<float2>();
         
         private void Update()
         {
             m_textureData = m_textureData ?? new TextureData();
 
+            m_points.Clear();
+            m_PointsRoot.GetComponentsInChildren<Transform>().Where(c=>c != m_PointsRoot).ToList().ForEach(c =>
+            {
+                m_points.Add(new float2(c.position.x, c.position.y));
+            });
+            
             var w = 1024;
             var h = 512;
             var offset = 64f;
@@ -58,7 +69,8 @@ namespace ViJApps.TextureGraph.TestSpace
             m_textureData.DrawText("Test Text", m_textSettings, m_position, m_size, m_rotation);
 
             var list = new List<List<float2>> { m_points };
-            m_textureData.DrawPolygon(list, Color.white);
+            //m_textureData.DrawSimplePolygon(list, Color.white);
+            m_textureData.DrawComplexPolygon(list, m_polyLineWidth, m_fillColor, m_polyLineColor);
             
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();

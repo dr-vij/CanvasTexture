@@ -25,6 +25,8 @@ namespace ViJApps.TextureGraph
         [Shader]
         public const string SIMPLE_UNLIT = "ViJApps.SimpleUnlit";
         [Shader]
+        public const string SIMPLE_UNLIT_TRANSPARENT = "ViJApps.SimpleUnlitTransparent";
+        [Shader]
         public const string SIMPLE_LINE_UNLIT = "ViJApps.SimpleLineUnlit";
         [Shader]
         public const string SIMPLE_CIRCLE_UNLIT = "ViJApps.SimpleCircleUnlit";
