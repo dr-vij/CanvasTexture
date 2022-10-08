@@ -31,6 +31,8 @@ namespace ViJApps.TextureGraph.Utils
         private static readonly Clipper64 Clipper = new();
         private static readonly ClipperOffset ClipperOffset = new();
 
+        #region  Lines, polygons
+
         /// <summary>
         /// Creates polyline that can be opened or closed
         /// </summary>
@@ -94,15 +96,15 @@ namespace ViJApps.TextureGraph.Utils
             lineThickness = math.max(0f, lineThickness);
             lineOffset = math.clamp(lineOffset, 0f, 1f);
             
-            var solidResult = MergeContoursUnion(solidPolygons);
-            var holeResult = MergeContoursUnion(holePolygons);
+            var solidResult = UnionContoursToPaths64(solidPolygons);
+            var holeResult = UnionContoursToPaths64(holePolygons);
 
             //Now subtract them. Result is a polygon with holes
             var initialPoly = Subtract(solidResult, holeResult);
             
             //Now we create offsets to render lines
-            var positiveResult = OffsetPoly(initialPoly, (JoinType)joinType, lineThickness * lineOffset, miterLimit);
-            var negativeResult = OffsetPoly(initialPoly, (JoinType)joinType, -lineThickness * (1f - lineOffset) , miterLimit);
+            var positiveResult = OffsetPolygons(initialPoly, (JoinType)joinType, lineThickness * lineOffset, miterLimit);
+            var negativeResult = OffsetPolygons(initialPoly, (JoinType)joinType, -lineThickness * (1f - lineOffset) , miterLimit);
             
             var linePoly = Subtract(positiveResult, negativeResult);
 
@@ -110,51 +112,6 @@ namespace ViJApps.TextureGraph.Utils
             lineMesh = CreateMeshFromClipper(linePoly, lineMesh);
 
             return (polygonMesh, lineMesh);
-        }
-
-        private static Paths64 Subtract(Paths64 operandA, Paths64 operandB)
-        {
-            var result = new Paths64();
-            Clipper.Clear();
-            Clipper.AddSubject(operandA);
-            Clipper.AddClip(operandB);
-            Clipper.Execute(ClipType.Difference, FillRule.EvenOdd, result);
-            return result;
-        }
-        
-        private static Paths64 MergeContoursUnion(List<List<float2>> contours)
-        { 
-            if (contours == null || contours.Count == 0)
-                return new Paths64();
-
-            Clipper.Clear();
-            foreach(var polygon in contours)
-            {
-                var initialPath = Converters.Float2ToPath64(polygon);
-                Clipper.AddSubject(initialPath);
-            }
-            var result = new Paths64();
-            Clipper.Execute(ClipType.Union, FillRule.EvenOdd, result);
-            return result;
-        }
-
-        private static Paths64 OffsetPoly(Paths64 polygons, JoinType joinType, float offset, float miterLimit)
-        {
-            //TODO: think about allocations of paths64
-            ClipperOffset.Clear();
-            ClipperOffset.AddPaths(polygons, (JoinType)joinType, EndType.Polygon);
-            ClipperOffset.MiterLimit = miterLimit;
-            var offsetResult = new Paths64(ClipperOffset.Execute(Converters.DoubleToClipper(offset))) ;
-            return offsetResult;
-        }
-        
-        private static Mesh CreateMeshFromClipper(Paths64 contours, Mesh mesh = null)
-        {
-            foreach (var contour in contours)
-                Tess.AddContour(Converters.Path64ToContourVertexArr(contour));
-            Tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, combineCallback: null, normal: new Vec3(0,0,-1));
-            mesh = Tess.TessToUnityMesh(mesh);
-            return mesh;
         }
         
         public static Mesh CreateMeshFromContourPolygons(List<List<float2>> contours, Mesh mesh = null, WindingRule windingRule = WindingRule.EvenOdd)
@@ -165,50 +122,17 @@ namespace ViJApps.TextureGraph.Utils
             mesh = Tess.TessToUnityMesh(mesh);
             return mesh;
         }
-
-        public static Mesh TessToUnityMesh(this Tess tess, Mesh mesh)
-        {
-            var (positions, indices) = tess.ToPositionsAndUshortIndicesNativeArrays();
-            mesh = CreateMeshFromNativeArrays(positions, indices, mesh);
-            return mesh;
-        }
-
-        public static Mesh CreateMeshFromNativeArrays(NativeArray<float3> positions, NativeArray<ushort> indices, Mesh mesh)
-        {
-            mesh = CreateMeshOrClear(ref mesh);
-
-            var meshDataArr = Mesh.AllocateWritableMeshData(1);
-            var meshData = meshDataArr[0];
-            meshData.SetVertexBufferParams(positions.Length, new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3));
-            meshData.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
-
-            meshData.GetVertexData<float3>().CopyFrom(positions);
-            meshData.GetIndexData<ushort>().CopyFrom(indices);
-
-            meshData.subMeshCount = 1;
-            meshData.SetSubMesh(0, new SubMeshDescriptor(0, indices.Length));
-            Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh, MeshUpdateFlags.Default);
-            mesh.RecalculateBounds();
-            mesh.RecalculateTangents();
-            mesh.RecalculateNormals();
-            return mesh;
-        }
         
-        public static Mesh CreateRect(float2 centerCoord, float2 size, float3x3 aspectMatrix, Mesh mesh = null)
-        {
-            mesh = CreateMeshOrClear(ref mesh);
-            var aspectSize = size.TransformDirection(aspectMatrix);
-            
-            var halfSize = aspectSize / 2;
-            var p0 = centerCoord + new float2(-halfSize.x, -halfSize.y);
-            var p1 = centerCoord + new float2(-halfSize.x, +halfSize.y);
-            var p2 = centerCoord + new float2(+halfSize.x, +halfSize.y);
-            var p3 = centerCoord + new float2(+halfSize.x, -halfSize.y);
-            
-            mesh = CreateMeshFromFourPoints(p0, p1, p2, p3, mesh);
-            return mesh;
-        }
-
+        /// <summary>
+        /// Creates mesh for simple line
+        /// </summary>
+        /// <param name="fromCoord"></param>
+        /// <param name="toCoord"></param>
+        /// <param name="aspectMatrix"></param>
+        /// <param name="width"></param>
+        /// <param name="extendStartEnd"></param>
+        /// <param name="mesh"></param>
+        /// <returns></returns>
         public static Mesh CreateLine(float2 fromCoord, float2 toCoord, float3x3 aspectMatrix, float width,
             bool extendStartEnd = false, Mesh mesh = null)
         {
@@ -229,6 +153,68 @@ namespace ViJApps.TextureGraph.Utils
 
             mesh = CreateMeshFromFourPoints(p0, p1, p2, p3, mesh);
             return mesh;
+        }
+
+        #endregion
+
+        #region Converters
+
+        private static Mesh TessToUnityMesh(this Tess tess, Mesh mesh)
+        {
+            var (positions, indices) = tess.ToPositionsAndUshortIndicesNativeArrays();
+            mesh = CreateMeshFromNativeArrays(positions, indices, mesh);
+            return mesh;
+        }
+
+        private static Mesh CreateMeshFromNativeArrays(NativeArray<float3> positions, NativeArray<ushort> indices, Mesh mesh = null)
+        {
+            mesh = CreateMeshOrClear(ref mesh);
+
+            var meshDataArr = Mesh.AllocateWritableMeshData(1);
+            var meshData = meshDataArr[0];
+            meshData.SetVertexBufferParams(positions.Length, new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3));
+            meshData.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
+
+            meshData.GetVertexData<float3>().CopyFrom(positions);
+            meshData.GetIndexData<ushort>().CopyFrom(indices);
+
+            meshData.subMeshCount = 1;
+            meshData.SetSubMesh(0, new SubMeshDescriptor(0, indices.Length));
+            Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh, MeshUpdateFlags.Default);
+            mesh.RecalculateBounds();
+            mesh.RecalculateTangents();
+            mesh.RecalculateNormals();
+            return mesh;
+        }
+
+        #endregion
+        
+        public static Mesh CreateRect(float2 centerCoord, float2 size, float3x3 aspectMatrix, Mesh mesh = null)
+        {
+            mesh = CreateMeshOrClear(ref mesh);
+            var aspectSize = size.TransformDirection(aspectMatrix);
+            
+            var halfSize = aspectSize / 2;
+            var p0 = centerCoord + new float2(-halfSize.x, -halfSize.y);
+            var p1 = centerCoord + new float2(-halfSize.x, +halfSize.y);
+            var p2 = centerCoord + new float2(+halfSize.x, +halfSize.y);
+            var p3 = centerCoord + new float2(+halfSize.x, -halfSize.y);
+            
+            mesh = CreateMeshFromFourPoints(p0, p1, p2, p3, mesh);
+            return mesh;
+        }
+        
+        public static List<List<float2>> TransformPoints(this List<List<float2>> points, float3x3 matrix)
+        {
+            var result = new List<List<float2>>();
+            foreach (var point in points)
+            {
+                var transformed = new List<float2>();
+                foreach (var p in point)
+                    transformed.Add(p.TransformPoint(matrix));
+                result.Add(transformed);
+            }
+            return result;
         }
 
         /// <summary>
@@ -277,7 +263,7 @@ namespace ViJApps.TextureGraph.Utils
             return mesh;
         }
         
-        public static Mesh CreateMeshOrClear(ref Mesh mesh)
+        private static Mesh CreateMeshOrClear(ref Mesh mesh)
         {
             if (mesh == null)
                 mesh = new Mesh();
@@ -285,5 +271,79 @@ namespace ViJApps.TextureGraph.Utils
                 mesh.Clear();
             return mesh;
         }
+
+        #region  Clipper operations for mesh
+
+        /// <summary>
+        /// Boolean 2d operation, takes operandsA and subtracts operandsB from it
+        /// </summary>
+        /// <param name="operandA"></param>
+        /// <param name="operandB"></param>
+        /// <returns></returns>
+        private static Paths64 Subtract(Paths64 operandA, Paths64 operandB)
+        {
+            var result = new Paths64();
+            Clipper.Clear();
+            Clipper.AddSubject(operandA);
+            Clipper.AddClip(operandB);
+            Clipper.Execute(ClipType.Difference, FillRule.EvenOdd, result);
+            return result;
+        }
+        
+        /// <summary>
+        /// Boolean operation, takes all contours and unions them
+        /// </summary>
+        /// <param name="contours"></param>
+        /// <returns></returns>
+        private static Paths64 UnionContoursToPaths64(List<List<float2>> contours)
+        { 
+            if (contours == null || contours.Count == 0)
+                return new Paths64();
+
+            Clipper.Clear();
+            foreach(var polygon in contours)
+            {
+                var initialPath = Converters.Float2ToPath64(polygon);
+                Clipper.AddSubject(initialPath);
+            }
+            var result = new Paths64();
+            Clipper.Execute(ClipType.Union, FillRule.EvenOdd, result);
+            return result;
+        }
+
+        /// <summary>
+        /// Takes paths and offserts them
+        /// </summary>
+        /// <param name="polygons"></param>
+        /// <param name="joinType"></param>
+        /// <param name="offset"></param>
+        /// <param name="miterLimit"></param>
+        /// <returns></returns>
+        private static Paths64 OffsetPolygons(Paths64 polygons, JoinType joinType, float offset, float miterLimit)
+        {
+            //TODO: think about allocations of paths64
+            ClipperOffset.Clear();
+            ClipperOffset.AddPaths(polygons, (JoinType)joinType, EndType.Polygon);
+            ClipperOffset.MiterLimit = miterLimit;
+            var offsetResult = new Paths64(ClipperOffset.Execute(Converters.DoubleToClipper(offset))) ;
+            return offsetResult;
+        }
+        
+        /// <summary>
+        /// Takes Clipper paths64 and converts them to Unity mesh
+        /// </summary>
+        /// <param name="contours">the contours to convert</param>
+        /// <param name="mesh">the mesh to be filled. the new one is created when null passed</param>
+        /// <returns></returns>
+        private static Mesh CreateMeshFromClipper(Paths64 contours, Mesh mesh = null)
+        {
+            foreach (var contour in contours)
+                Tess.AddContour(Converters.Path64ToContourVertexArr(contour));
+            Tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, combineCallback: null, normal: new Vec3(0,0,-1));
+            mesh = Tess.TessToUnityMesh(mesh);
+            return mesh;
+        }
+
+        #endregion
     }
 }

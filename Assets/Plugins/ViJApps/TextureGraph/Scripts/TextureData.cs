@@ -32,8 +32,10 @@ namespace ViJApps.TextureGraph
 
         public RenderTexture RenderTexture { get; private set; }
 
-        private float3x3 m_aspectMatrix = float3x3.identity;
-        private float3x3 m_inverseAspectMatrix = float3x3.identity;
+        private float3x3 m_aspectMatrix2d = float3x3.identity;
+        private float3x3 m_inverseAspectMatrix2d = float3x3.identity;
+        private float4x4 m_aspectMatrix3d = float4x4.identity;
+        private float4x4 m_inverseAspectMatrix3d = float4x4.identity;
         private float m_aspect = 1f;
 
         /// <summary>
@@ -45,8 +47,11 @@ namespace ViJApps.TextureGraph
             set
             {
                 m_aspect = math.max(value, 0.0001f);
-                m_aspectMatrix = Utils.MathUtils.CreateMatrix2d_S(new float2(m_aspect, 1));
-                m_inverseAspectMatrix = math.inverse(m_aspectMatrix);
+                m_aspectMatrix2d = Utils.MathUtils.CreateMatrix2d_S(new float2(m_aspect, 1));
+                m_inverseAspectMatrix2d = math.inverse(m_aspectMatrix2d);
+                
+                m_aspectMatrix3d = Utils.MathUtils.CreateMatrix3d_S(new float3(m_aspect, 1, 1));
+                m_inverseAspectMatrix3d = math.inverse(m_aspectMatrix3d);
             }
         }
 
@@ -86,10 +91,10 @@ namespace ViJApps.TextureGraph
             m_cmd.SetRenderTarget(RenderTexture);
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
-
-        //Draw polygon
+        
         public void DrawComplexPolygon(
             List<List<float2>> solidPolygons,
+            List<List<float2>> holesPolygons,
             float lineThickness,
             Color fillColor,
             Color lineColor,
@@ -99,9 +104,15 @@ namespace ViJApps.TextureGraph
         {
             var (fillMesh, fillBlock) = AllocateMeshAndPropertyBlock();
             var (lineMesh, lineBlock) = AllocateMeshAndPropertyBlock();
+            
+            //Transform points with aspect matrix
+            var solidPolygonsTransformed = solidPolygons.TransformPoints(m_inverseAspectMatrix2d);
+            var holesPolygonsTransformed = holesPolygons.TransformPoints(m_inverseAspectMatrix2d);
+            //transform points from solidPolygons to solidPolygonsTransformed
 
             MeshTools.CreatePolygon(
-                solidPolygons,
+                solidPolygonsTransformed,
+                holesPolygonsTransformed,
                 lineThickness,
                 lineOffset,
                 joinType,
@@ -115,9 +126,37 @@ namespace ViJApps.TextureGraph
             fillBlock.SetColor(MaterialProvider.ColorPropertyId, fillColor);
             lineBlock.SetColor(MaterialProvider.ColorPropertyId, lineColor);
 
-            m_cmd.DrawMesh(fillMesh, Matrix4x4.identity, fillMaterial, 0, 0, fillBlock);
-            m_cmd.DrawMesh(lineMesh, Matrix4x4.identity, lineMaterial, 0, 0, lineBlock);
+            m_cmd.DrawMesh(fillMesh, m_aspectMatrix3d, fillMaterial, 0, 0, fillBlock);
+            m_cmd.DrawMesh(lineMesh, m_aspectMatrix3d, lineMaterial, 0, 0, lineBlock);
         }
+
+        /// <summary>
+        /// Draw complex polygon
+        /// </summary>
+        /// <param name="solidPolygons"></param>
+        /// <param name="lineThickness"></param>
+        /// <param name="fillColor"></param>
+        /// <param name="lineColor"></param>
+        /// <param name="lineOffset"></param>
+        /// <param name="joinType"></param>
+        /// <param name="miterLimit"></param>
+        public void DrawComplexPolygon(
+            List<List<float2>> solidPolygons,
+            float lineThickness,
+            Color fillColor,
+            Color lineColor,
+            float lineOffset = 0.5f,
+            LineJoinType joinType = LineJoinType.Miter,
+            float miterLimit = 0f)
+            => DrawComplexPolygon(
+                solidPolygons,
+                new List<List<float2>>(),
+                lineThickness,
+                fillColor,
+                lineColor,
+                lineOffset,
+                joinType,
+                miterLimit);
 
         public void DrawSimplePolygon(List<List<float2>> contours, Color color)
         {
@@ -134,7 +173,7 @@ namespace ViJApps.TextureGraph
         {
             //Convert to texture coordinates
             var center = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
-            var ab = pixelsCenter.TransformDirection(m_textureCoordSystem.WorldToZeroOne2d);
+            var ab = abPixels.TransformDirection(m_textureCoordSystem.WorldToZeroOne2d);
 
             //Draw in texture coordinates
             DrawEllipsePercent(center, ab, color);
@@ -144,7 +183,7 @@ namespace ViJApps.TextureGraph
         {
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
             //Prepare ellipse mesh. its a rectangle with 4 vertices / 2 triangles 
-            mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix, mesh);
+            mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix2d, mesh);
 
             //Prepare property block parameters for ellipse
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
@@ -172,7 +211,7 @@ namespace ViJApps.TextureGraph
         {
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
 
-            var rectMesh = MeshTools.CreateRect(center, size, m_aspectMatrix, mesh);
+            var rectMesh = MeshTools.CreateRect(center, size, m_aspectMatrix2d, mesh);
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
 
             var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
@@ -198,7 +237,7 @@ namespace ViJApps.TextureGraph
 
             propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, Aspect);
 
-            var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), m_aspectMatrix, mesh);
+            var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), m_aspectMatrix2d, mesh);
             var lineMaterial =
                 MaterialProvider.GetMaterial(MaterialProvider.SimpleCircleUnlitShaderId);
 
@@ -254,14 +293,14 @@ namespace ViJApps.TextureGraph
             switch (endingStyle)
             {
                 case SimpleLineEndingStyle.None:
-                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix,
+                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix2d,
                         percentHeightThickness, false,
                         lineMesh);
                     lineMaterial =
                         MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
                     break;
                 case SimpleLineEndingStyle.Round:
-                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix,
+                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix2d,
                         percentHeightThickness, true,
                         lineMesh);
                     lineMaterial =

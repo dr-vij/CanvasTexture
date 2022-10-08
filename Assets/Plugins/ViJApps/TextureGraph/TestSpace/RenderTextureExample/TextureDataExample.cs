@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Serialization;
+using ViJApps.TextureGraph.Utils;
 
 namespace ViJApps.TextureGraph.TestSpace
 {
@@ -70,7 +71,7 @@ namespace ViJApps.TextureGraph.TestSpace
 
             var list = new List<List<float2>> { m_points };
             //m_textureData.DrawSimplePolygon(list, Color.white);
-            m_textureData.DrawComplexPolygon(list, m_polyLineWidth, m_fillColor, m_polyLineColor);
+            m_textureData.DrawComplexPolygon(list, m_polyLineWidth, m_fillColor, m_polyLineColor, joinType: LineJoinType.Round);
             
             //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
             m_textureData.Flush();

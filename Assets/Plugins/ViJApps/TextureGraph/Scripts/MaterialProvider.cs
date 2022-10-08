@@ -1,18 +1,26 @@
 using System;
-using UnityEngine;
 
 namespace ViJApps.TextureGraph
 {
+    /// <summary>
+    /// This attribute is used for SourceGenerator. Add it to partial static class to make it int properties provider
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class ShaderPropertiesProviderAttribute: Attribute
     {
     }
 
+    /// <summary>
+    /// This attribute is used for SourceGenerator. Add it to a string constant with shader name to make a shader property for it
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class ShaderAttribute : Attribute
     {
     }
     
+    /// <summary>
+    /// This attribute is used for SourceGenerator. Add it to a string constant with a shader property name to make a shader property for it
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class ShaderPropertyAttribute : Attribute
     {
@@ -22,31 +30,19 @@ namespace ViJApps.TextureGraph
     public static partial class MaterialProvider
     {
         //Shader Names
-        [Shader]
-        public const string SIMPLE_UNLIT = "ViJApps.SimpleUnlit";
-        [Shader]
-        public const string SIMPLE_UNLIT_TRANSPARENT = "ViJApps.SimpleUnlitTransparent";
-        [Shader]
-        public const string SIMPLE_LINE_UNLIT = "ViJApps.SimpleLineUnlit";
-        [Shader]
-        public const string SIMPLE_CIRCLE_UNLIT = "ViJApps.SimpleCircleUnlit";
-        [Shader]
-        public const string SIMPLE_ELLIPSE_UNLIT = "ViJApps.SimpleEllipseUnlit";
+        [Shader] private const string SIMPLE_UNLIT = "ViJApps.SimpleUnlit";
+        [Shader] private const string SIMPLE_UNLIT_TRANSPARENT = "ViJApps.SimpleUnlitTransparent";
+        [Shader] private const string SIMPLE_LINE_UNLIT = "ViJApps.SimpleLineUnlit";
+        [Shader] private const string SIMPLE_CIRCLE_UNLIT = "ViJApps.SimpleCircleUnlit";
+        [Shader] private const string SIMPLE_ELLIPSE_UNLIT = "ViJApps.SimpleEllipseUnlit";
 
         //Property 
-        [ShaderProperty]
-        public const string COLOR = "_Color";
-        [ShaderProperty]
-        public const string THICKNESS = "_Thickness";
-        [ShaderProperty]
-        public const string FROM_TO_COORD = "_FromToCoord";
-        [ShaderProperty]
-        public const string ASPECT = "_Aspect";
-        [ShaderProperty]
-        public const string RADIUS = "_Radius";
-        [ShaderProperty]
-        public const string CENTER = "_Center";
-        [ShaderProperty]
-        public const string AB = "_AB";
+        [ShaderProperty] private const string COLOR = "_Color";
+        [ShaderProperty] private const string THICKNESS = "_Thickness";
+        [ShaderProperty] private const string FROM_TO_COORD = "_FromToCoord";
+        [ShaderProperty] private const string ASPECT = "_Aspect";
+        [ShaderProperty] private const string RADIUS = "_Radius";
+        [ShaderProperty] private const string CENTER = "_Center";
+        [ShaderProperty] private const string AB = "_AB";
     }
 }
