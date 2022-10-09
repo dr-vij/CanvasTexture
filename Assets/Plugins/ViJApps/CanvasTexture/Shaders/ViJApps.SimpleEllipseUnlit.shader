@@ -2,11 +2,10 @@ Shader "ViJApps.SimpleEllipseUnlit"
 {
     Properties
     {
+        _AbFillStroke("_AbFillStroke", Vector) = (1, 1, 1.1, 1.1)
+        _FillColor ("_FillColor", Color) = (1, 1, 1, 1)
+        _StrokeColor("_StrokeColor", Color) = (0, 0, 0, 1)
         _Center("_Center", Vector) = (0, 0, 0, 0)
-        _AB("_AB", Vector) = (1, 1, 0, 0)
-        _Color ("_Color", Color) = (0, 0, 0, 1)
-
-        _Aspect("_Aspect", Float) = 1
     }
     SubShader
     {
@@ -35,22 +34,24 @@ Shader "ViJApps.SimpleEllipseUnlit"
             #include "Math.hlsl"
 
             //Figure data
-            uniform half4 _Center;
-            uniform half2 _AB;
-            uniform half4 _Color;
-
-            //Aspect data
+            uniform half4 _AbFillStroke;
+            uniform half4 _FillColor;
+            uniform half4 _StrokeColor;
+            uniform half3 _Center;
+            uniform float3x3 _InverseAspectMatrix;
+            uniform float4x4 _TransformMatrix;
             uniform half _Aspect;
-            uniform half3x3 _InverseAspectMatrix;
 
             struct appdata
             {
                 float4 vertex : POSITION;
+                float4 texCoord: TEXCOORD0;
             };
 
             struct v2f
             {
                 float4 vertex : SV_POSITION;
+                float4 texCoord : TEXCOORD0;
                 float3 localPos: COLOR0;
             };
 
@@ -59,18 +60,25 @@ Shader "ViJApps.SimpleEllipseUnlit"
                 v2f o;
                 o.vertex = TransformObjectToHClip(v.vertex.xyz);
                 o.localPos = v.vertex.xyz;
+                o.texCoord = v.texCoord;
                 return o;
             }
 
             half4 frag(v2f i) : SV_Target
             {
-                _InverseAspectMatrix = InverseScaleMatrixFromAspect(_Aspect);
-                float2 p = TransformPoint(_InverseAspectMatrix, i.localPos.xy);
-                float2 c = TransformPoint(_InverseAspectMatrix, _Center.xy);
-                float2 pc = p - c;
-                float distance = sdEllipse(pc, _AB);
-                float isCircle = step(distance, 0);
-                return lerp(float4(0, 0, 0, 0), _Color, isCircle);
+                float2 p = TransformPoint(_TransformMatrix, i.localPos.xy);
+                float2 abFill = _AbFillStroke.xy;
+                float2 abStroke = _AbFillStroke.zw;
+
+                float fillDistance = sdEllipse(p, abFill);
+                float strokeDistance = sdfSubtract(sdEllipse(p, abStroke), fillDistance);
+
+                float isFill = step(fillDistance, 0);
+                float isStroke = step(strokeDistance, 0);
+
+                half4 result = lerp(float4(0, 0, 0, 0), _StrokeColor, isStroke);
+                result = lerp(result, _FillColor, isFill);
+                return result;
             }
             ENDHLSL
         }

@@ -38,6 +38,10 @@ namespace ViJApps.CanvasTexture.Utils
         /// </summary>
         public static readonly float2 Float2MinusOne = new float2(-1, -1);
 
+        public static float4 XYZ1(this float3 point) => new float4(point, 1);
+
+        public static float4 XYZ0(this float3 point) => new float4(point, 0);
+
         /// <summary>
         /// Rotates vector on half pi clockwise
         /// </summary>
@@ -215,8 +219,9 @@ namespace ViJApps.CanvasTexture.Utils
         public static float3x3 CreateMatrix2d_R(float rotation) =>
             new float3x3(
                 new float3(math.cos(rotation), math.sin(rotation), 0),
-                new float3(math.sin(rotation), math.cos(rotation), 0),
+                new float3(-math.sin(rotation), math.cos(rotation), 0),
                 new float3(0, 0, 1));
+
 
         /// <summary>
         /// Creates scale matrix for 2d
@@ -286,8 +291,8 @@ namespace ViJApps.CanvasTexture.Utils
 
         public static float4x4 CreateRemapMatrix3d_SpaceToMinusOnePlusOne(float3 minA, float3 maxA)
             => CreateRemapMatrix3d_RemapSpaceToSpace(minA, maxA, new float3(-1, -1, -1), new float3(1, 1, 1));
-        
-        public  static float4x4 CreateRemapMatrix3d_MinusOnePlusOneToSpace(float3 minA, float3 maxA)
+
+        public static float4x4 CreateRemapMatrix3d_MinusOnePlusOneToSpace(float3 minA, float3 maxA)
             => math.inverse(CreateRemapMatrix3d_SpaceToMinusOnePlusOne(minA, maxA));
 
         public static float4x4 CreateRemapMatrix3d_ZeroOneToSpace(float3 minA, float3 maxA)

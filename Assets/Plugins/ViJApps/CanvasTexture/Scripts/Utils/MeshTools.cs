@@ -17,21 +17,33 @@ namespace ViJApps.CanvasTexture.Utils
         Square,
         Round
     }
-        
+
     public enum LineJoinType
     {
         Square,
         Round,
         Miter
     };
-    
+
+    public struct VertexDataPositionUV
+    {
+        public float3 Pos;
+        public float2 TextCoord;
+
+        public VertexDataPositionUV(float3 pos, float2 textCoord)
+        {
+            Pos = pos;
+            TextCoord = textCoord;
+        }
+    }
+
     public static class MeshTools
     {
         private static readonly Tess Tess = new Tess(new DefaultPool());
         private static readonly Clipper64 Clipper = new();
         private static readonly ClipperOffset ClipperOffset = new();
 
-        #region  Lines, polygons
+        #region Lines, polygons
 
         /// <summary>
         /// Creates polyline that can be opened or closed
@@ -44,24 +56,24 @@ namespace ViJApps.CanvasTexture.Utils
         /// <param name="mesh"></param>
         /// <returns></returns>
         public static Mesh CreatePolyLine(
-            List<float2> polyline, 
-            float lineThickness,  
-            LineEndingType lineEndType = LineEndingType.Butt, 
-            LineJoinType joinType = LineJoinType.Miter, 
-            float miterLimit = 0f, 
+            List<float2> polyline,
+            float lineThickness,
+            LineEndingType lineEndType = LineEndingType.Butt,
+            LineJoinType joinType = LineJoinType.Miter,
+            float miterLimit = 0f,
             Mesh mesh = null)
         {
             mesh = CreateMeshOrClear(ref mesh);
             miterLimit = math.max(0, miterLimit);
-            
+
             //CLIPPER CANNOT CREATE SIGNED OFFSETS FOR OPEN LINES, TODO: IMPLEMENT IT
             ClipperOffset.Clear();
             var initialPath = Converters.Float2ToPath64(polyline);
-            var offsetPath =  new Paths64();
+            var offsetPath = new Paths64();
             ClipperOffset.AddPath(initialPath, (JoinType)joinType, lineEndType.GetLineEndType());
             ClipperOffset.MiterLimit = miterLimit;
             offsetPath.AddRange(ClipperOffset.Execute(Converters.DoubleToClipper(lineThickness)));
-            
+
             //now lets make all inside filled
             Clipper.Clear();
             Clipper.AddSubject(offsetPath);
@@ -79,9 +91,9 @@ namespace ViJApps.CanvasTexture.Utils
             LineJoinType joinType = LineJoinType.Miter,
             float miterLimit = 0f,
             Mesh polygonMesh = null,
-            Mesh lineMesh = null) => 
-        CreatePolygon(solidPolygons, null, lineThickness, lineOffset, joinType, miterLimit, polygonMesh, lineMesh);
-        
+            Mesh lineMesh = null) =>
+            CreatePolygon(solidPolygons, null, lineThickness, lineOffset, joinType, miterLimit, polygonMesh, lineMesh);
+
         public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
             List<List<float2>> solidPolygons,
             List<List<float2>> holePolygons,
@@ -95,17 +107,19 @@ namespace ViJApps.CanvasTexture.Utils
             miterLimit = math.max(0f, miterLimit);
             lineThickness = math.max(0f, lineThickness);
             lineOffset = math.clamp(lineOffset, 0f, 1f);
-            
+
             var solidResult = UnionContoursToPaths64(solidPolygons);
             var holeResult = UnionContoursToPaths64(holePolygons);
 
             //Now subtract them. Result is a polygon with holes
             var initialPoly = Subtract(solidResult, holeResult);
-            
+
             //Now we create offsets to render lines
-            var positiveResult = OffsetPolygons(initialPoly, (JoinType)joinType, lineThickness * lineOffset, miterLimit);
-            var negativeResult = OffsetPolygons(initialPoly, (JoinType)joinType, -lineThickness * (1f - lineOffset) , miterLimit);
-            
+            var positiveResult =
+                OffsetPolygons(initialPoly, (JoinType)joinType, lineThickness * lineOffset, miterLimit);
+            var negativeResult = OffsetPolygons(initialPoly, (JoinType)joinType, -lineThickness * (1f - lineOffset),
+                miterLimit);
+
             var linePoly = Subtract(positiveResult, negativeResult);
 
             polygonMesh = CreateMeshFromClipper(negativeResult, polygonMesh);
@@ -113,16 +127,18 @@ namespace ViJApps.CanvasTexture.Utils
 
             return (polygonMesh, lineMesh);
         }
-        
-        public static Mesh CreateMeshFromContourPolygons(List<List<float2>> contours, Mesh mesh = null, WindingRule windingRule = WindingRule.EvenOdd)
+
+        public static Mesh CreateMeshFromContourPolygons(List<List<float2>> contours, Mesh mesh = null,
+            WindingRule windingRule = WindingRule.EvenOdd)
         {
             foreach (var contour in contours)
                 Tess.AddContour(contour.ToContourVertices());
-            Tess.Tessellate(windingRule, ElementType.Polygons, polySize: 3, combineCallback: null, normal: new Vec3(0, 0, -1));
+            Tess.Tessellate(windingRule, ElementType.Polygons, polySize: 3, combineCallback: null,
+                normal: new Vec3(0, 0, -1));
             mesh = Tess.TessToUnityMesh(mesh);
             return mesh;
         }
-        
+
         /// <summary>
         /// Creates mesh for simple line
         /// </summary>
@@ -166,13 +182,15 @@ namespace ViJApps.CanvasTexture.Utils
             return mesh;
         }
 
-        private static Mesh CreateMeshFromNativeArrays(NativeArray<float3> positions, NativeArray<ushort> indices, Mesh mesh = null)
+        private static Mesh CreateMeshFromNativeArrays(NativeArray<float3> positions, NativeArray<ushort> indices,
+            Mesh mesh = null)
         {
             mesh = CreateMeshOrClear(ref mesh);
 
             var meshDataArr = Mesh.AllocateWritableMeshData(1);
             var meshData = meshDataArr[0];
-            meshData.SetVertexBufferParams(positions.Length, new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3));
+            meshData.SetVertexBufferParams(positions.Length,
+                new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3));
             meshData.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
 
             meshData.GetVertexData<float3>().CopyFrom(positions);
@@ -188,22 +206,36 @@ namespace ViJApps.CanvasTexture.Utils
         }
 
         #endregion
-        
+
         public static Mesh CreateRect(float2 centerCoord, float2 size, float3x3 aspectMatrix, Mesh mesh = null)
         {
             mesh = CreateMeshOrClear(ref mesh);
             var aspectSize = size.TransformDirection(aspectMatrix);
-            
+
             var halfSize = aspectSize / 2;
             var p0 = centerCoord + new float2(-halfSize.x, -halfSize.y);
             var p1 = centerCoord + new float2(-halfSize.x, +halfSize.y);
             var p2 = centerCoord + new float2(+halfSize.x, +halfSize.y);
             var p3 = centerCoord + new float2(+halfSize.x, -halfSize.y);
-            
+
             mesh = CreateMeshFromFourPoints(p0, p1, p2, p3, mesh);
             return mesh;
         }
-        
+
+        public static Mesh CreateRectTransformed(float2 size, float3x3 transform, Mesh mesh = null)
+        {
+            mesh = CreateMeshOrClear(ref mesh);
+            var halfSize = size / 2;
+            
+            var p0 = new float2(-halfSize.x, -halfSize.y).TransformPoint(transform);
+            var p1 = new float2(-halfSize.x, +halfSize.y).TransformPoint(transform);
+            var p2 =  new float2(+halfSize.x, +halfSize.y).TransformPoint(transform);
+            var p3 =  new float2(+halfSize.x, -halfSize.y).TransformPoint(transform);
+
+            mesh = CreateMeshFromFourPoints(p0,p1,p2,p3, mesh);
+            return mesh;
+        }
+
         public static List<List<float2>> TransformPoints(this List<List<float2>> points, float3x3 matrix)
         {
             var result = new List<List<float2>>();
@@ -214,6 +246,7 @@ namespace ViJApps.CanvasTexture.Utils
                     transformed.Add(p.TransformPoint(matrix));
                 result.Add(transformed);
             }
+
             return result;
         }
 
@@ -232,15 +265,16 @@ namespace ViJApps.CanvasTexture.Utils
             var meshDataArr = Mesh.AllocateWritableMeshData(1);
             var meshData = meshDataArr[0];
             meshData.SetVertexBufferParams(4,
-                new VertexAttributeDescriptor(VertexAttribute.Position, dimension: 3, stream: 0));
+                new VertexAttributeDescriptor(VertexAttribute.Position, dimension: 3, stream: 0),
+                new VertexAttributeDescriptor(VertexAttribute.TexCoord0, dimension: 2, stream: 0));
             meshData.SetIndexBufferParams(6, IndexFormat.UInt16);
 
-            var vertices = meshData.GetVertexData<float3>();
+            var vertices = meshData.GetVertexData<VertexDataPositionUV>();
             var indices = meshData.GetIndexData<ushort>();
-            vertices[0] = p0.ToFloat3();
-            vertices[1] = p1.ToFloat3();
-            vertices[2] = p2.ToFloat3();
-            vertices[3] = p3.ToFloat3();
+            vertices[0] = new VertexDataPositionUV(p0.ToFloat3(), new float2(0f, 0f));
+            vertices[1] = new VertexDataPositionUV(p1.ToFloat3(), new float2(0f, 1f));
+            vertices[2] = new VertexDataPositionUV(p2.ToFloat3(), new float2(1f, 1f));
+            vertices[3] = new VertexDataPositionUV(p3.ToFloat3(), new float2(1f, 0f));
 
             indices[0] = 0;
             indices[1] = 1;
@@ -262,7 +296,7 @@ namespace ViJApps.CanvasTexture.Utils
 
             return mesh;
         }
-        
+
         private static Mesh CreateMeshOrClear(ref Mesh mesh)
         {
             if (mesh == null)
@@ -272,7 +306,7 @@ namespace ViJApps.CanvasTexture.Utils
             return mesh;
         }
 
-        #region  Clipper operations for mesh
+        #region Clipper operations for mesh
 
         /// <summary>
         /// Boolean 2d operation, takes operandsA and subtracts operandsB from it
@@ -289,23 +323,24 @@ namespace ViJApps.CanvasTexture.Utils
             Clipper.Execute(ClipType.Difference, FillRule.EvenOdd, result);
             return result;
         }
-        
+
         /// <summary>
         /// Boolean operation, takes all contours and unions them
         /// </summary>
         /// <param name="contours"></param>
         /// <returns></returns>
         private static Paths64 UnionContoursToPaths64(List<List<float2>> contours)
-        { 
+        {
             if (contours == null || contours.Count == 0)
                 return new Paths64();
 
             Clipper.Clear();
-            foreach(var polygon in contours)
+            foreach (var polygon in contours)
             {
                 var initialPath = Converters.Float2ToPath64(polygon);
                 Clipper.AddSubject(initialPath);
             }
+
             var result = new Paths64();
             Clipper.Execute(ClipType.Union, FillRule.EvenOdd, result);
             return result;
@@ -325,10 +360,10 @@ namespace ViJApps.CanvasTexture.Utils
             ClipperOffset.Clear();
             ClipperOffset.AddPaths(polygons, (JoinType)joinType, EndType.Polygon);
             ClipperOffset.MiterLimit = miterLimit;
-            var offsetResult = new Paths64(ClipperOffset.Execute(Converters.DoubleToClipper(offset))) ;
+            var offsetResult = new Paths64(ClipperOffset.Execute(Converters.DoubleToClipper(offset)));
             return offsetResult;
         }
-        
+
         /// <summary>
         /// Takes Clipper paths64 and converts them to Unity mesh
         /// </summary>
@@ -339,7 +374,8 @@ namespace ViJApps.CanvasTexture.Utils
         {
             foreach (var contour in contours)
                 Tess.AddContour(Converters.Path64ToContourVertexArr(contour));
-            Tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, combineCallback: null, normal: new Vec3(0,0,-1));
+            Tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, combineCallback: null,
+                normal: new Vec3(0, 0, -1));
             mesh = Tess.TessToUnityMesh(mesh);
             return mesh;
         }

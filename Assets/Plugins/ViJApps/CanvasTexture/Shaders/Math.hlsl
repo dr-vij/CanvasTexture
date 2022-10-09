@@ -24,6 +24,17 @@ float2 TransformDirection(in float3x3 m, in float2 point2d)
     return mul(m, float3(point2d.x, point2d.y, 0)).xy;
 }
 
+float sdfUnion(float sdf1, float sdf2)
+{
+    return min(sdf1, sdf2);
+}
+
+float sdfSubtract(float sdf1, float sdf2)
+{
+    return max(sdf1, -sdf2);
+}
+
+
 //SDF LINE
 float sdLineSegment(in half2 p, in half2 a, in half2 b)
 {
@@ -69,6 +80,12 @@ float msign(in float x) { return (x < 0.0) ? -1.0 : 1.0; }
 //
 // and iquilezles.org/articles/distfunctions2d
 
+/**
+ * \brief 
+ * \param p point position
+ * \param ab radius of the ellipse
+ * \return 
+ */
 float sdEllipse(float2 p, float2 ab)
 {
     // symmetry

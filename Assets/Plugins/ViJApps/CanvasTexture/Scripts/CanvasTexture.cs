@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using ViJApps.CanvasTexture.Utils;
+using MathUtils = ViJApps.CanvasTexture.Utils.MathUtils;
 
 namespace ViJApps.CanvasTexture
 {
@@ -27,11 +28,11 @@ namespace ViJApps.CanvasTexture
         private readonly List<MaterialPropertyBlock> m_allocatedPropertyBlocks = new();
         private readonly TextComponentsPool m_textComponentsPool = new();
         private readonly List<TextComponent> m_allocatedTextComponents = new();
-        
+
         //coord systems used for painting
         private LinearCoordSystem m_textureCoordSystem;
-        
-        public readonly AspectSettings AspectSettings = new AspectSettings();
+
+        public readonly AspectSettings AspectSettings = new();
 
         public RenderTexture RenderTexture { get; private set; }
 
@@ -71,7 +72,7 @@ namespace ViJApps.CanvasTexture
             m_cmd.SetRenderTarget(RenderTexture);
             m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
         }
-        
+
         public void DrawComplexPolygon(
             List<List<float2>> solidPolygons,
             List<List<float2>> holesPolygons,
@@ -84,7 +85,7 @@ namespace ViJApps.CanvasTexture
         {
             var (fillMesh, fillBlock) = AllocateMeshAndPropertyBlock();
             var (lineMesh, lineBlock) = AllocateMeshAndPropertyBlock();
-            
+
             //Transform points with aspect matrix
             var solidPolygonsTransformed = solidPolygons.TransformPoints(AspectSettings.InverseAspectMatrix2d);
             var holesPolygonsTransformed = holesPolygons.TransformPoints(AspectSettings.InverseAspectMatrix2d);
@@ -102,7 +103,7 @@ namespace ViJApps.CanvasTexture
 
             var fillMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
             var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
-            
+
             fillBlock.SetColor(MaterialProvider.ColorPropertyId, fillColor);
             lineBlock.SetColor(MaterialProvider.ColorPropertyId, lineColor);
 
@@ -149,33 +150,42 @@ namespace ViJApps.CanvasTexture
         }
 
         //Draw ellipse
-        public void DrawEllipsePixels(float2 pixelsCenter, float2 abPixels, Color color)
+        public void DrawEllipsePixels(float2 pixelsCenter, float2 radiusAbPixels, Color color)
         {
             //Convert to texture coordinates
             var center = pixelsCenter.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
-            var ab = abPixels.TransformDirection(m_textureCoordSystem.WorldToZeroOne2d);
+            var ab = radiusAbPixels.TransformDirection(m_textureCoordSystem.WorldToZeroOne2d);
 
             //Draw in texture coordinates
-            DrawEllipsePercent(center, ab, color);
+            DrawEllipsePercent(center, ab, 0f, color, color);
         }
 
-        public void DrawEllipsePercent(float2 center, float2 ab, Color color)
+        public void DrawEllipsePercent(float2 center, float2 radiusAb, float strokeWidth, Color fillColor, Color strokeColor, float strokeOffset = 0.5f)
         {
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
-            //Prepare ellipse mesh. its a rectangle with 4 vertices / 2 triangles 
-            mesh = MeshTools.CreateRect(center, ab * 2, AspectSettings.AspectMatrix2d, mesh);
+            var transform = AspectSettings.AspectMatrix2d;
+
+            //We create rect for this ellipse, so we use 2x radius and 2x strokeWidth
+            var (positiveOffset, negativeOffset) = GetOffsets(strokeOffset, strokeWidth);
+            var innerPart = math.max(radiusAb + new float2(negativeOffset, negativeOffset), float2.zero) ;
+            var outerPart = math.max(radiusAb + new float2(positiveOffset, positiveOffset), float2.zero)  ;
+
+            mesh = MeshTools.CreateRectTransformed(outerPart * 2, transform, mesh);
 
             //Prepare property block parameters for ellipse
-            propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
-            propertyBlock.SetVector(MaterialProvider.AbPropertyId, new Vector4(ab.x, ab.y, 0, 0));
-            propertyBlock.SetVector(MaterialProvider.CenterPropertyId, new Vector4(center.x, center.y, 0, 0));
-            propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, AspectSettings.Aspect);
+            propertyBlock.SetColor(MaterialProvider.FillColorPropertyId, fillColor);
+            propertyBlock.SetColor(MaterialProvider.StrokeColorPropertyId, strokeColor);
+            propertyBlock.SetVector(MaterialProvider.AbFillStrokePropertyId, new Vector4(innerPart.x, innerPart.y, outerPart.x, outerPart.y));
+
+            var inverseTransform = math.inverse(transform);
+            propertyBlock.SetMatrix(MaterialProvider.TransformMatrixPropertyId,
+                new Matrix4x4(inverseTransform.c0.XYZ0(), inverseTransform.c1.XYZ0(), inverseTransform.c2.XYZ0(), new float4(0, 0, 0, 1)));
 
             //Ellipse material
             var material = MaterialProvider.GetMaterial(MaterialProvider.SimpleEllipseUnlitShaderId);
 
-            //Draw
-            m_cmd.DrawMesh(mesh, Matrix4x4.identity, material, 0, -1, propertyBlock);
+            //Draw with offset by center
+            m_cmd.DrawMesh(mesh, MathUtils.CreateMatrix3d_T(new float3(center, 0)), material, 0, -1, propertyBlock);
         }
 
         //Draw rect
@@ -218,15 +228,13 @@ namespace ViJApps.CanvasTexture
             propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, AspectSettings.Aspect);
 
             var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), AspectSettings.AspectMatrix2d, mesh);
-            var lineMaterial =
-                MaterialProvider.GetMaterial(MaterialProvider.SimpleCircleUnlitShaderId);
+            var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleCircleUnlitShaderId);
 
             m_cmd.DrawMesh(circleMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
 
         //Draw line
-        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
-            SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
+        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
             var texFromCoord = pixelFromCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
             var texToCoord = pixelToCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
@@ -238,12 +246,10 @@ namespace ViJApps.CanvasTexture
         public void DrawText(string text, TextSettings textSettings, float2 position, float rotation = 0)
             => DrawText(text, textSettings, position, sizeDelta: new float2(1, 1), rotation: rotation);
 
-        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta,
-            float rotation = 0)
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation = 0)
             => DrawText(text, textSettings, position, sizeDelta, rotation, pivot: new float2(0.5f, 0.5f));
 
-        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation,
-            float2 pivot)
+        public void DrawText(string text, TextSettings textSettings, float2 position, float2 sizeDelta, float rotation, float2 pivot)
         {
             //Prepare text mesh
             var textComponent = m_textComponentsPool.Get();
@@ -263,8 +269,7 @@ namespace ViJApps.CanvasTexture
             m_cmd.DrawRenderer(textComponent.Renderer, textComponent.Material);
         }
 
-        public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness,
-            Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
+        public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness, Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
             var (lineMesh, propertyBlock) = AllocateMeshAndPropertyBlock();
 
@@ -343,7 +348,7 @@ namespace ViJApps.CanvasTexture
                 RenderTexture = null;
             }
         }
-        
+
         private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndPropertyBlock()
         {
             var mesh = m_meshPool.Get();
@@ -352,6 +357,12 @@ namespace ViJApps.CanvasTexture
             var propertyBlock = m_propertyBlockPool.Get();
             m_allocatedPropertyBlocks.Add(propertyBlock);
             return (mesh, propertyBlock);
+        }
+
+        private (float positiveOffset, float negativeOffset) GetOffsets(float strokeOffset, float strokeThickness)
+        {
+            strokeOffset = math.clamp(strokeOffset, 0, 1);
+            return (strokeThickness * strokeOffset, -strokeThickness * (1f - strokeOffset));
         }
 
         private void ResetCmd()
