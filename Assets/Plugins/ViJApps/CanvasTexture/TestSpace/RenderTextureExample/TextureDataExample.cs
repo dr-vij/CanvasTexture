@@ -5,14 +5,14 @@ using System.Text.RegularExpressions;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ViJApps.TextureGraph.Utils;
+using ViJApps.CanvasTexture.Utils;
 
-namespace ViJApps.TextureGraph.TestSpace
+namespace ViJApps.CanvasTexture.TestSpace
 {
     public class TextureDataExample : MonoBehaviour
     {
-        private TextureData m_textureData;
-        
+        private CanvasTexture m_CanvasTexture;
+
         [SerializeField] private Texture2D m_testTexture;
         [SerializeField] private Renderer m_testRenderer;
 
@@ -35,48 +35,50 @@ namespace ViJApps.TextureGraph.TestSpace
         [SerializeField] private float m_polyLineWidth = 0.05f;
         [SerializeField] private Color m_polyLineColor = Color.white;
         [SerializeField] private Color m_fillColor = Color.red;
-        [SerializeField] private Transform m_PointsRoot; 
-        
+        [SerializeField] private Transform m_PointsRoot;
+
         private List<float2> m_points = new List<float2>();
-        
+
         private void Update()
         {
-            m_textureData = m_textureData ?? new TextureData();
+            m_CanvasTexture = m_CanvasTexture ?? new CanvasTexture();
 
             m_points.Clear();
-            m_PointsRoot.GetComponentsInChildren<Transform>().Where(c=>c != m_PointsRoot).ToList().ForEach(c =>
+            m_PointsRoot.GetComponentsInChildren<Transform>().Where(c => c != m_PointsRoot).ToList().ForEach(c =>
             {
                 m_points.Add(new float2(c.position.x, c.position.y));
             });
-            
+
             var w = 1024;
             var h = 512;
             var offset = 64f;
 
-            m_textureData.Init(w, h);
-            m_textureData.Aspect = m_aspect;
-            m_textureData.ClearWithColor(Color.blue);
+            m_CanvasTexture.Init(w, h);
+            m_CanvasTexture.AspectSettings.Aspect = m_aspect;
+            m_CanvasTexture.ClearWithColor(Color.blue);
 
-            m_textureData.DrawLinePixels(new float2(0 + offset, h - offset), new float2(w - offset, 0 + offset),
+            m_CanvasTexture.DrawLinePixels(new float2(0 + offset, h - offset), new float2(w - offset, 0 + offset),
                 m_lineThickness, Color.yellow, SimpleLineEndingStyle.Round);
-            m_textureData.DrawLinePixels(new float2(0 + offset, 0 + offset), new float2(w - offset, h - offset),
+            m_CanvasTexture.DrawLinePixels(new float2(0 + offset, 0 + offset), new float2(w - offset, h - offset),
                 m_lineThickness, Color.grey);
 
-            m_textureData.DrawLinePercent(m_point0, m_point1, m_thickness, Color.black, SimpleLineEndingStyle.Round);
-            
+            m_CanvasTexture.DrawLinePercent(m_point0, m_point1, m_thickness, Color.black, SimpleLineEndingStyle.Round);
+
             //m_textureData.DrawCirclePercent(m_circlePosition, m_circleRadius, Color.cyan);
-            
-            m_textureData.DrawEllipsePercent(m_circlePosition, new float2(m_circleRadius, m_circleRadius), Color.cyan);
-            m_textureData.DrawText("Test Text", m_textSettings, m_position, m_size, m_rotation);
+
+            m_CanvasTexture.DrawEllipsePercent(m_circlePosition, new float2(m_circleRadius, m_circleRadius),
+                Color.cyan);
+            m_CanvasTexture.DrawText("Test Text", m_textSettings, m_position, m_size, m_rotation);
 
             var list = new List<List<float2>> { m_points };
             //m_textureData.DrawSimplePolygon(list, Color.white);
-            m_textureData.DrawComplexPolygon(list, m_polyLineWidth, m_fillColor, m_polyLineColor, joinType: LineJoinType.Round);
-            
-            //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
-            m_textureData.Flush();
+            m_CanvasTexture.DrawComplexPolygon(list, m_polyLineWidth, m_fillColor, m_polyLineColor,
+                joinType: LineJoinType.Round);
 
-            m_testTexture = m_textureData.ToTexture2D(m_testTexture);
+            //m_TextureData.DrawLinePixels(mPoint0, mPoint1, m_LineThickness, Color.grey);
+            m_CanvasTexture.Flush();
+
+            m_testTexture = m_CanvasTexture.ToTexture2D(m_testTexture);
             m_testRenderer.material.mainTexture = m_testTexture;
         }
     }

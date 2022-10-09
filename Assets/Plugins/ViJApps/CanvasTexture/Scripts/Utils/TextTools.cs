@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-namespace ViJApps.TextureGraph.Utils
+namespace ViJApps.CanvasTexture.Utils
 {
     public static class TextTools
     {

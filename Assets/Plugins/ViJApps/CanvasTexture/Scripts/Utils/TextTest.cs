@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using ViJApps.TextureGraph.Utils;
+using ViJApps.CanvasTexture.Utils;
 
 public class TextTest : MonoBehaviour
 {

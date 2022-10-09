@@ -4,9 +4,9 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using ViJApps.TextureGraph.Utils;
+using ViJApps.CanvasTexture.Utils;
 
-namespace ViJApps.TextureGraph
+namespace ViJApps.CanvasTexture
 {
     public enum SimpleLineEndingStyle
     {
@@ -14,46 +14,26 @@ namespace ViJApps.TextureGraph
         Round = 1,
     }
 
-    public partial class TextureData : IDisposable
+    public partial class CanvasTexture : IDisposable
     {
         //Data
         private CommandBuffer m_cmd;
         private RenderTextureDescriptor m_textureDescriptor;
 
-        //Pool parts
+        //Pools
         private readonly MeshPool m_meshPool = new();
         private readonly List<Mesh> m_allocatedMeshes = new();
         private readonly PropertyBlockPool m_propertyBlockPool = new();
         private readonly List<MaterialPropertyBlock> m_allocatedPropertyBlocks = new();
         private readonly TextComponentsPool m_textComponentsPool = new();
         private readonly List<TextComponent> m_allocatedTextComponents = new();
-
+        
+        //coord systems used for painting
         private LinearCoordSystem m_textureCoordSystem;
+        
+        public readonly AspectSettings AspectSettings = new AspectSettings();
 
         public RenderTexture RenderTexture { get; private set; }
-
-        private float3x3 m_aspectMatrix2d = float3x3.identity;
-        private float3x3 m_inverseAspectMatrix2d = float3x3.identity;
-        private float4x4 m_aspectMatrix3d = float4x4.identity;
-        private float4x4 m_inverseAspectMatrix3d = float4x4.identity;
-        private float m_aspect = 1f;
-
-        /// <summary>
-        /// Aspect interpretation
-        /// </summary>
-        public float Aspect
-        {
-            get => m_aspect;
-            set
-            {
-                m_aspect = math.max(value, 0.0001f);
-                m_aspectMatrix2d = Utils.MathUtils.CreateMatrix2d_S(new float2(m_aspect, 1));
-                m_inverseAspectMatrix2d = math.inverse(m_aspectMatrix2d);
-                
-                m_aspectMatrix3d = Utils.MathUtils.CreateMatrix3d_S(new float3(m_aspect, 1, 1));
-                m_inverseAspectMatrix3d = math.inverse(m_aspectMatrix3d);
-            }
-        }
 
         public void Init(RenderTexture renderTexture)
         {
@@ -106,8 +86,8 @@ namespace ViJApps.TextureGraph
             var (lineMesh, lineBlock) = AllocateMeshAndPropertyBlock();
             
             //Transform points with aspect matrix
-            var solidPolygonsTransformed = solidPolygons.TransformPoints(m_inverseAspectMatrix2d);
-            var holesPolygonsTransformed = holesPolygons.TransformPoints(m_inverseAspectMatrix2d);
+            var solidPolygonsTransformed = solidPolygons.TransformPoints(AspectSettings.InverseAspectMatrix2d);
+            var holesPolygonsTransformed = holesPolygons.TransformPoints(AspectSettings.InverseAspectMatrix2d);
             //transform points from solidPolygons to solidPolygonsTransformed
 
             MeshTools.CreatePolygon(
@@ -126,8 +106,8 @@ namespace ViJApps.TextureGraph
             fillBlock.SetColor(MaterialProvider.ColorPropertyId, fillColor);
             lineBlock.SetColor(MaterialProvider.ColorPropertyId, lineColor);
 
-            m_cmd.DrawMesh(fillMesh, m_aspectMatrix3d, fillMaterial, 0, 0, fillBlock);
-            m_cmd.DrawMesh(lineMesh, m_aspectMatrix3d, lineMaterial, 0, 0, lineBlock);
+            m_cmd.DrawMesh(fillMesh, AspectSettings.AspectMatrix3d, fillMaterial, 0, 0, fillBlock);
+            m_cmd.DrawMesh(lineMesh, AspectSettings.AspectMatrix3d, lineMaterial, 0, 0, lineBlock);
         }
 
         /// <summary>
@@ -183,13 +163,13 @@ namespace ViJApps.TextureGraph
         {
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
             //Prepare ellipse mesh. its a rectangle with 4 vertices / 2 triangles 
-            mesh = MeshTools.CreateRect(center, ab * 2, m_aspectMatrix2d, mesh);
+            mesh = MeshTools.CreateRect(center, ab * 2, AspectSettings.AspectMatrix2d, mesh);
 
             //Prepare property block parameters for ellipse
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
             propertyBlock.SetVector(MaterialProvider.AbPropertyId, new Vector4(ab.x, ab.y, 0, 0));
             propertyBlock.SetVector(MaterialProvider.CenterPropertyId, new Vector4(center.x, center.y, 0, 0));
-            propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, m_aspect);
+            propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, AspectSettings.Aspect);
 
             //Ellipse material
             var material = MaterialProvider.GetMaterial(MaterialProvider.SimpleEllipseUnlitShaderId);
@@ -211,7 +191,7 @@ namespace ViJApps.TextureGraph
         {
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
 
-            var rectMesh = MeshTools.CreateRect(center, size, m_aspectMatrix2d, mesh);
+            var rectMesh = MeshTools.CreateRect(center, size, AspectSettings.AspectMatrix2d, mesh);
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
 
             var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
@@ -235,9 +215,9 @@ namespace ViJApps.TextureGraph
             propertyBlock.SetFloat(MaterialProvider.RadiusPropertyId, radius);
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
 
-            propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, Aspect);
+            propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, AspectSettings.Aspect);
 
-            var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), m_aspectMatrix2d, mesh);
+            var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), AspectSettings.AspectMatrix2d, mesh);
             var lineMaterial =
                 MaterialProvider.GetMaterial(MaterialProvider.SimpleCircleUnlitShaderId);
 
@@ -275,7 +255,7 @@ namespace ViJApps.TextureGraph
             textComponent.Position = position;
             textComponent.SizeDelta = sizeDelta;
             textComponent.Rotation = rotation;
-            textComponent.Aspect = Aspect;
+            textComponent.Aspect = AspectSettings.Aspect;
 
             //Set settings, update mesh and add to render
             textComponent.SetSettings(textSettings);
@@ -293,19 +273,19 @@ namespace ViJApps.TextureGraph
             switch (endingStyle)
             {
                 case SimpleLineEndingStyle.None:
-                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix2d,
+                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, AspectSettings.AspectMatrix2d,
                         percentHeightThickness, false,
                         lineMesh);
                     lineMaterial =
                         MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
                     break;
                 case SimpleLineEndingStyle.Round:
-                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, m_aspectMatrix2d,
+                    lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, AspectSettings.AspectMatrix2d,
                         percentHeightThickness, true,
                         lineMesh);
                     lineMaterial =
                         MaterialProvider.GetMaterial(MaterialProvider.SimpleLineUnlitShaderId);
-                    propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, Aspect);
+                    propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, AspectSettings.Aspect);
                     propertyBlock.SetFloat(MaterialProvider.ThicknessPropertyId, percentHeightThickness);
                     propertyBlock.SetVector(MaterialProvider.FromToCoordPropertyId,
                         new Vector4(percentFromCoord.x, percentFromCoord.y, percentToCoord.x, percentToCoord.y));
@@ -344,6 +324,26 @@ namespace ViJApps.TextureGraph
 #endif
         }
 
+        public void Dispose()
+        {
+            ReleaseToPools();
+            m_meshPool.Clear();
+            m_propertyBlockPool.Clear();
+            m_textComponentsPool.Clear();
+
+            if (m_cmd != null)
+            {
+                m_cmd.Dispose();
+                m_cmd = null;
+            }
+
+            if (RenderTexture != null)
+            {
+                UnityEngine.Object.Destroy(RenderTexture);
+                RenderTexture = null;
+            }
+        }
+        
         private (Mesh mesh, MaterialPropertyBlock block) AllocateMeshAndPropertyBlock()
         {
             var mesh = m_meshPool.Get();
@@ -396,25 +396,6 @@ namespace ViJApps.TextureGraph
             foreach (var text in m_allocatedTextComponents)
                 m_textComponentsPool.Release(text);
             m_allocatedTextComponents.Clear();
-        }
-
-        public void Dispose()
-        {
-            ReleaseToPools();
-            m_meshPool.Clear();
-            m_propertyBlockPool.Clear();
-
-            if (m_cmd != null)
-            {
-                m_cmd.Dispose();
-                m_cmd = null;
-            }
-
-            if (RenderTexture != null)
-            {
-                UnityEngine.Object.Destroy(RenderTexture);
-                RenderTexture = null;
-            }
         }
     }
 }

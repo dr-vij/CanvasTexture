@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 
-namespace ViJApps.TextureGraph
+namespace ViJApps.CanvasTexture
 {
     public class MeshPool : ObjectPool<Mesh>
     {

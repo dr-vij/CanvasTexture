@@ -4,11 +4,11 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using LibTessDotNet;
 using Unity.Collections;
-using ViJApps.TextureGraph.ThirdParty;
 using Mesh = UnityEngine.Mesh;
 using Clipper2Lib;
+using ViJApps.CanvasTexture.ThirdParty;
 
-namespace ViJApps.TextureGraph.Utils
+namespace ViJApps.CanvasTexture.Utils
 {
     public enum LineEndingType
     {

@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-namespace ViJApps.TextureGraph.Utils
+namespace ViJApps.CanvasTexture.Utils
 {
     public static class MathUtils
     {

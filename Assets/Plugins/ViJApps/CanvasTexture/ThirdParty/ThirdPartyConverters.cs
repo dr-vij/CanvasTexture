@@ -6,9 +6,9 @@ using LibTessDotNet;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using ViJApps.TextureGraph.Utils;
+using ViJApps.CanvasTexture.Utils;
 
-namespace ViJApps.TextureGraph.ThirdParty
+namespace ViJApps.CanvasTexture.ThirdParty
 {
     /// <summary>
     /// Class helper for conversion from tess data to unity data

@@ -1,6 +1,6 @@
 using System;
 
-namespace ViJApps.TextureGraph
+namespace ViJApps.CanvasTexture
 {
     /// <summary>
     /// This attribute is used for SourceGenerator. Add it to partial static class to make it int properties provider

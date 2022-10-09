@@ -2,9 +2,9 @@ using System;
 using UnityEngine;
 using TMPro;
 using Unity.Mathematics;
-using ViJApps.TextureGraph.Utils;
+using ViJApps.CanvasTexture.Utils;
 
-namespace ViJApps.TextureGraph
+namespace ViJApps.CanvasTexture
 {
     public class TextComponent : MonoBehaviour
     {

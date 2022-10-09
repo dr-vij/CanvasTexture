@@ -2,7 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 
-namespace ViJApps.TextureGraph
+namespace ViJApps.CanvasTexture
 {
     [Serializable]
     public struct SpacingOptions

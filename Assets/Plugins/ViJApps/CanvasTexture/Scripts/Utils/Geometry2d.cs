@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace ViJApps.TextureGraph.Utils
+namespace ViJApps.CanvasTexture.Utils
 {
     /// <summary>
     /// Line to line intersection

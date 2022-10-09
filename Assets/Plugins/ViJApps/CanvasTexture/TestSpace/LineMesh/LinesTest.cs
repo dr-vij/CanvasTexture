@@ -4,10 +4,10 @@ using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ViJApps.TextureGraph.Utils;
+using ViJApps.CanvasTexture.Utils;
 using Mesh = UnityEngine.Mesh;
 
-namespace ViJApps.TextureGraph.ThirdParty
+namespace ViJApps.CanvasTexture.ThirdParty
 {
     [ExecuteInEditMode]
     public class LinesTest : MonoBehaviour

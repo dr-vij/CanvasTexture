@@ -1,7 +1,7 @@
 using Unity.Mathematics;
-using ViJApps.TextureGraph.Utils;
+using ViJApps.CanvasTexture.Utils;
 
-namespace ViJApps.TextureGraph
+namespace ViJApps.CanvasTexture
 {
     /// <summary>
     /// This class helps to convert from given space to 0..1 and -1..1 spaces 
