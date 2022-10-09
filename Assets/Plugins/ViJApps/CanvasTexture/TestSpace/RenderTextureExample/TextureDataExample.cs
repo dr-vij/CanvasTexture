@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
-using ViJApps.CanvasTexture.Utils;
 
 namespace ViJApps.CanvasTexture.TestSpace
 {
