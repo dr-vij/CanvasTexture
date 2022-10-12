@@ -55,15 +55,15 @@ namespace ViJApps.CanvasTexture.TestSpace
 
         private void Start()
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
             {
                 var polyLine = new PolyLineTestSettings()
                 {
-                    TimeOffset = UnityEngine.Random.Range(0f,1f),
+                    TimeOffset = UnityEngine.Random.Range(0f, 1f),
                     RotationSpeed = UnityEngine.Random.Range(0.5f, 1f),
-                    Center = new float2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f)),
+                    Center = new float2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0.3f, 0.7f)),
                     Radius = UnityEngine.Random.Range(0.1f, 0.4f),
-                    StrokeThickness = UnityEngine.Random.Range(0.01f, 0.05f),
+                    StrokeThickness = UnityEngine.Random.Range(0.005f, 0.01f),
                     StrokeColor = UnityEngine.Random.ColorHSV(),
                     FillColor = UnityEngine.Random.ColorHSV(),
                 };
@@ -85,7 +85,7 @@ namespace ViJApps.CanvasTexture.TestSpace
             {
                 var offsetMatrix = MathUtils.CreateMatrix2d_T(-polyLine.Center);
                 var offsetBackMatrix = math.inverse(offsetMatrix);
-                var rotationMatrix = MathUtils.CreateMatrix2d_R(m_Rotation);
+                var rotationMatrix = MathUtils.CreateMatrix2d_R(m_Rotation * polyLine.RotationSpeed);
                 var rotateAroundMatrix = math.mul(offsetBackMatrix, math.mul(rotationMatrix, offsetMatrix));
 
                 var star = polyLine.PrepareStar();
@@ -101,6 +101,29 @@ namespace ViJApps.CanvasTexture.TestSpace
                     polyLine.StrokeColor,
                     polyLine.StrokeOffset,
                     polyLine.LineJoinType
+                );
+            }
+
+            var count = 10;
+            var step = 1f / count;
+            for (int i = 0; i < count; i++)
+            {
+                var angle = i * step * math.PI * 2 + Time.time;
+                var x = math.cos(angle);
+                var y = math.sin(angle);
+                var point = new float2(x, y) * 0.25f;
+
+                x = math.cos(-angle);
+                y = math.sin(-angle);
+                var minusPoint = new float2(x, y) * 0.25f;
+
+                m_CanvasTexture.DrawCirclePercent(point + new float2(0.5f, 0.5f), 0.125f, Color.red * 0.5f);
+                m_CanvasTexture.DrawEllipsePercent(
+                    minusPoint * 1.75f + new float2(0.5f, 0.5f),
+                    new float2(0.125f, 0.125f * (math.sin(Time.time) + 1) / 2),
+                    0.005f,
+                    Color.green * 0.5f,
+                    Color.black
                 );
             }
 

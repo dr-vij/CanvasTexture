@@ -39,7 +39,7 @@ namespace ViJApps.CanvasTexture.Utils
 
     public static class MeshTools
     {
-        private static readonly Tess Tess = new Tess();
+        private static readonly Tess Tess = new Tess(new NullPool());
         private static readonly Clipper64 Clipper = new();
         private static readonly ClipperOffset ClipperOffset = new();
 
