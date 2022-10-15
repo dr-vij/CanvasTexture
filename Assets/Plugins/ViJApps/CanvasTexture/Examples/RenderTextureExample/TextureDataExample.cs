@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using ViJApps.CanvasTexture.Utils;
 
-namespace ViJApps.CanvasTexture.TestSpace
+namespace ViJApps.CanvasTexture.Examples
 {
     public class PolyLineTestSettings
     {

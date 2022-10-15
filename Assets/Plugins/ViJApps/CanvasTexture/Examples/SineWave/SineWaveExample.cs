@@ -14,7 +14,9 @@ namespace ViJApps.CanvasTexture.Examples
         [SerializeField] private Renderer m_testRenderer;
         [SerializeField] private int m_width = 256;
         [SerializeField] private int m_height = 256;
-        [SerializeField] private float m_aspect = 1f;
+
+        //interpretation of Image Aspect (influences on strokes and basic figures, like circles and rectangles, that respect aspect ratio)
+        [SerializeField] private float m_aspect = 0.5f;
 
         //Line draw example settings
         [SerializeField] private Color m_bgColor = Color.black;
@@ -31,10 +33,7 @@ namespace ViJApps.CanvasTexture.Examples
         private CanvasTexture m_canvasTexture;
         private float m_time;
 
-        private void Start()
-        {
-            m_canvasTexture = new CanvasTexture();
-        }
+        private void Start() => m_canvasTexture = new CanvasTexture();
 
         private void Update()
         {

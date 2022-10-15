@@ -108,7 +108,7 @@ namespace ViJApps.CanvasTexture.ThirdParty
 
         #region Clipper Converters
 
-        private const double DefaultMult = 1e3;
+        private const double DefaultMult = 1e4;
 
         public static double2 Point64ToDouble2(Point64 clipperPoint, double mult = DefaultMult) =>
             new double2(clipperPoint.X / mult, clipperPoint.Y / mult);

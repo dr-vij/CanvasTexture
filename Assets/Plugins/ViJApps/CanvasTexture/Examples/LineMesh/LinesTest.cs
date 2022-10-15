@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 using ViJApps.CanvasTexture.Utils;
 using Mesh = UnityEngine.Mesh;
 
-namespace ViJApps.CanvasTexture.ThirdParty
+namespace ViJApps.CanvasTexture.Examples
 {
     [ExecuteInEditMode]
     public class LinesTest : MonoBehaviour
