@@ -249,11 +249,12 @@ MonoBehaviour:
   m_bgColor: {r: 0, g: 0, b: 0, a: 1}
   m_lineColor: {r: 1, g: 1, b: 1, a: 1}
   m_lineWidth: 0.01
-  m_pointsCount: 100
-  m_amplitude: 0.5
-  m_frequency: 1
+  m_pointsCount: 256
+  m_amplitude: 0.25
+  m_frequency: 3
   m_lineEndingType: 1
   m_lineJoinType: 2
+  m_speed: 3
 --- !u!1 &1112046153
 GameObject:
   m_ObjectHideFlags: 0
