@@ -46,17 +46,16 @@ namespace ViJApps.CanvasTexture.ThirdParty
         /// </summary>
         /// <param name="tess"></param>
         /// <returns></returns>
-        public static (NativeArray<float3> positions, NativeArray<ushort> indices)
-            ToPositionsAndUshortIndicesNativeArrays(this Tess tess)
+        public static (NativeArray<float3> positions, NativeArray<ushort> indices) ToPositionsAndUshortIndicesNativeArrays(this Tess tess)
         {
             if (tess.Vertices == null || tess.Elements == null)
-                return new(new NativeArray<float3>(0, Allocator.Persistent),
-                    new NativeArray<ushort>(0, Allocator.Persistent));
+                return new(new NativeArray<float3>(0, Allocator.Temp), new NativeArray<ushort>(0, Allocator.Temp));
 
-            var positions = new NativeArray<float3>(tess.Vertices.Length, Allocator.Persistent);
-            var indices = new NativeArray<ushort>(tess.Elements.Length, Allocator.Persistent);
+            var positions = new NativeArray<float3>(tess.Vertices.Length, Allocator.Temp);
             for (int i = 0; i < tess.Vertices.Length; i++)
                 positions[i] = tess.Vertices[i].Position.ToFloat3();
+
+            var indices = new NativeArray<ushort>(tess.Elements.Length, Allocator.Temp);
             for (int i = 0; i < tess.Elements.Length; i++)
                 indices[i] = (ushort)tess.Elements[i];
             return (positions, indices);
@@ -67,8 +66,7 @@ namespace ViJApps.CanvasTexture.ThirdParty
         /// </summary>
         /// <param name="tess"></param>
         /// <returns></returns>
-        public static (NativeArray<float3> positions, NativeArray<int> indices) ToPositionsAndIntIndicesNativeArrays(
-            this Tess tess)
+        public static (NativeArray<float3> positions, NativeArray<int> indices) ToPositionsAndIntIndicesNativeArrays(this Tess tess)
         {
             var positions = new NativeArray<float3>(tess.Vertices.Length, Allocator.Persistent);
             var indices = new NativeArray<int>(tess.Elements.Length, Allocator.Persistent);
@@ -111,7 +109,6 @@ namespace ViJApps.CanvasTexture.ThirdParty
         #region Clipper Converters
 
         private const double DefaultMult = 1e3;
-
 
         public static double2 Point64ToDouble2(Point64 clipperPoint, double mult = DefaultMult) =>
             new double2(clipperPoint.X / mult, clipperPoint.Y / mult);

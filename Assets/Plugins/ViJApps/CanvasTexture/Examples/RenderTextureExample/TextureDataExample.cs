@@ -77,7 +77,7 @@ namespace ViJApps.CanvasTexture.TestSpace
             m_CanvasTexture ??= new CanvasTexture();
             m_CanvasTexture.Init(m_TextureSettings.Width, m_TextureSettings.Height);
             m_CanvasTexture.AspectSettings.Aspect = m_TextureSettings.Aspect;
-            m_CanvasTexture.ClearWithColor(m_TextureSettings.BackgroundColor);
+           // m_CanvasTexture.ClearWithColor(m_TextureSettings.BackgroundColor);
 
             //Prepare star points
             m_Rotation += Time.deltaTime;

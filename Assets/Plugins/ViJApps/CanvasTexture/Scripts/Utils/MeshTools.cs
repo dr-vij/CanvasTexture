@@ -39,7 +39,7 @@ namespace ViJApps.CanvasTexture.Utils
 
     public static class MeshTools
     {
-        private static readonly Tess Tess = new Tess(new NullPool());
+        private static readonly Tess Tess = new Tess(new NullPool()); //TODO: Implement JobSystem Version
         private static readonly Clipper64 Clipper = new();
         private static readonly ClipperOffset ClipperOffset = new();
 
@@ -48,17 +48,17 @@ namespace ViJApps.CanvasTexture.Utils
         /// <summary>
         /// Creates polyline that can be opened or closed
         /// </summary>
-        /// <param name="polyline">points of the polyline</param>
-        /// <param name="lineThickness">line thickness</param>
-        /// <param name="lineEndType">line ending type: round, butt, square, joined (closed spline)</param>
+        /// <param name="points">points of the polyline</param>
+        /// <param name="thickness">line thickness</param>
+        /// <param name="endType">line ending type: round, butt, square, joined (closed spline)</param>
         /// <param name="joinType">connection type between segments: round, butt, square, miter</param>
         /// <param name="miterLimit">the ratio between line thickness and </param>
         /// <param name="mesh"></param>
         /// <returns></returns>
         public static Mesh CreatePolyLine(
-            List<float2> polyline,
-            float lineThickness,
-            LineEndingType lineEndType = LineEndingType.Butt,
+            List<float2> points,
+            float thickness,
+            LineEndingType endType = LineEndingType.Butt,
             LineJoinType joinType = LineJoinType.Miter,
             float miterLimit = 0f,
             Mesh mesh = null)
@@ -68,11 +68,11 @@ namespace ViJApps.CanvasTexture.Utils
 
             //CLIPPER CANNOT CREATE SIGNED OFFSETS FOR OPEN LINES, TODO: IMPLEMENT IT
             ClipperOffset.Clear();
-            var initialPath = Converters.Float2ToPath64(polyline);
+            var initialPath = Converters.Float2ToPath64(points);
             var offsetPath = new Paths64();
-            ClipperOffset.AddPath(initialPath, (JoinType)joinType, lineEndType.GetLineEndType());
+            ClipperOffset.AddPath(initialPath, (JoinType)joinType, endType.GetLineEndType());
             ClipperOffset.MiterLimit = miterLimit;
-            offsetPath.AddRange(ClipperOffset.Execute(Converters.DoubleToClipper(lineThickness)));
+            offsetPath.AddRange(ClipperOffset.Execute(Converters.DoubleToClipper(thickness)));
 
             //now lets make all inside filled
             Clipper.Clear();
@@ -173,40 +173,6 @@ namespace ViJApps.CanvasTexture.Utils
 
         #endregion
 
-        #region Converters
-
-        private static Mesh TessToUnityMesh(this Tess tess, Mesh mesh)
-        {
-            var (positions, indices) = tess.ToPositionsAndUshortIndicesNativeArrays();
-            mesh = CreateMeshFromNativeArrays(positions, indices, mesh);
-            return mesh;
-        }
-
-        private static Mesh CreateMeshFromNativeArrays(NativeArray<float3> positions, NativeArray<ushort> indices,
-            Mesh mesh = null)
-        {
-            mesh = CreateMeshOrClear(ref mesh);
-
-            var meshDataArr = Mesh.AllocateWritableMeshData(1);
-            var meshData = meshDataArr[0];
-            meshData.SetVertexBufferParams(positions.Length,
-                new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3));
-            meshData.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
-
-            meshData.GetVertexData<float3>().CopyFrom(positions);
-            meshData.GetIndexData<ushort>().CopyFrom(indices);
-
-            meshData.subMeshCount = 1;
-            meshData.SetSubMesh(0, new SubMeshDescriptor(0, indices.Length));
-            Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh, MeshUpdateFlags.Default);
-            mesh.RecalculateBounds();
-            mesh.RecalculateTangents();
-            mesh.RecalculateNormals();
-            return mesh;
-        }
-
-        #endregion
-
         public static Mesh CreateRect(float2 centerCoord, float2 size, float3x3 aspectMatrix, Mesh mesh = null)
         {
             mesh = CreateMeshOrClear(ref mesh);
@@ -226,27 +192,29 @@ namespace ViJApps.CanvasTexture.Utils
         {
             mesh = CreateMeshOrClear(ref mesh);
             var halfSize = size / 2;
-            
+
             var p0 = new float2(-halfSize.x, -halfSize.y).TransformPoint(transform);
             var p1 = new float2(-halfSize.x, +halfSize.y).TransformPoint(transform);
-            var p2 =  new float2(+halfSize.x, +halfSize.y).TransformPoint(transform);
-            var p3 =  new float2(+halfSize.x, -halfSize.y).TransformPoint(transform);
+            var p2 = new float2(+halfSize.x, +halfSize.y).TransformPoint(transform);
+            var p3 = new float2(+halfSize.x, -halfSize.y).TransformPoint(transform);
 
-            mesh = CreateMeshFromFourPoints(p0,p1,p2,p3, mesh);
+            mesh = CreateMeshFromFourPoints(p0, p1, p2, p3, mesh);
             return mesh;
         }
 
-        public static List<List<float2>> TransformPoints(this List<List<float2>> points, float3x3 matrix)
+        public static List<List<float2>> TransformPoints(this List<List<float2>> pointLists, float3x3 matrix)
         {
-            var result = new List<List<float2>>();
-            foreach (var point in points)
-            {
-                var transformed = new List<float2>();
-                foreach (var p in point)
-                    transformed.Add(p.TransformPoint(matrix));
-                result.Add(transformed);
-            }
+            var result = new List<List<float2>>(pointLists.Count);
+            foreach (var pointsList in pointLists)
+                result.Add(pointsList.TransformPoints(matrix));
+            return result;
+        }
 
+        public static List<float2> TransformPoints(this List<float2> points, float3x3 matrix)
+        {
+            var result = new List<float2>(points.Count);
+            foreach (var point in points)
+                result.Add(point.TransformPoint(matrix));
             return result;
         }
 
@@ -377,6 +345,41 @@ namespace ViJApps.CanvasTexture.Utils
             Tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, combineCallback: null,
                 normal: new Vec3(0, 0, -1));
             mesh = Tess.TessToUnityMesh(mesh);
+            return mesh;
+        }
+
+        #endregion
+        
+        #region Converters
+
+        private static Mesh TessToUnityMesh(this Tess tess, Mesh mesh)
+        {
+            var (positions, indices) = tess.ToPositionsAndUshortIndicesNativeArrays();
+            mesh = CreateMeshFromNativeArrays(positions, indices, mesh);
+            positions.Dispose();
+            indices.Dispose();
+            return mesh;
+        }
+
+        private static Mesh CreateMeshFromNativeArrays(NativeArray<float3> positions, NativeArray<ushort> indices, Mesh mesh = null)
+        {
+            mesh = CreateMeshOrClear(ref mesh);
+
+            var meshDataArr = Mesh.AllocateWritableMeshData(1);
+            var meshData = meshDataArr[0];
+            meshData.SetVertexBufferParams(positions.Length,
+                new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3));
+            meshData.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
+
+            meshData.GetVertexData<float3>().CopyFrom(positions);
+            meshData.GetIndexData<ushort>().CopyFrom(indices);
+
+            meshData.subMeshCount = 1;
+            meshData.SetSubMesh(0, new SubMeshDescriptor(0, indices.Length));
+            Mesh.ApplyAndDisposeWritableMeshData(meshDataArr, mesh, MeshUpdateFlags.Default);
+            mesh.RecalculateBounds();
+            mesh.RecalculateTangents();
+            mesh.RecalculateNormals();
             return mesh;
         }
 
