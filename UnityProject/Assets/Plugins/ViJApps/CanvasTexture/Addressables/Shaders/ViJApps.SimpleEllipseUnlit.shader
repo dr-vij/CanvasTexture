@@ -5,7 +5,6 @@ Shader "ViJApps.SimpleEllipseUnlit"
         _AbFillStroke("_AbFillStroke", Vector) = (1, 1, 1.1, 1.1)
         _FillColor ("_FillColor", Color) = (1, 1, 1, 1)
         _StrokeColor("_StrokeColor", Color) = (0, 0, 0, 1)
-        _Center("_Center", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {
@@ -37,7 +36,6 @@ Shader "ViJApps.SimpleEllipseUnlit"
             uniform half4 _AbFillStroke;
             uniform half4 _FillColor;
             uniform half4 _StrokeColor;
-            uniform half3 _Center;
             uniform float3x3 _InverseAspectMatrix;
             uniform float4x4 _TransformMatrix;
             uniform half _Aspect;

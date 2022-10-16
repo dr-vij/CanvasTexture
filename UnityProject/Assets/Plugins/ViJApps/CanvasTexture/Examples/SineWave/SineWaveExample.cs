@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using ViJApps.CanvasTexture;
 using ViJApps.CanvasTexture.Utils;
 
@@ -33,11 +35,18 @@ namespace ViJApps.CanvasTexture.Examples
         private CanvasTexture m_canvasTexture;
         private float m_time;
 
-        private void Start() => m_canvasTexture = new CanvasTexture();
+        private async void Start()
+        {
+            m_canvasTexture = new CanvasTexture();
+            await MaterialProvider.Initialization;
+        }
 
         private void Update()
         {
-            //Create points list for line
+            if (!MaterialProvider.Initialization.IsCompleted)
+                return;
+
+            //Prepare points list for line
             m_time += Time.deltaTime * m_speed;
             var sinePoints = GetSine(m_pointsCount, m_time, m_amplitude, m_frequency).TransformPoints(MathUtils.CreateMatrix2d_T(new float2(0, 0.5f)));
 
@@ -49,9 +58,6 @@ namespace ViJApps.CanvasTexture.Examples
             m_canvasTexture.ClearWithColor(m_bgColor);
             //Draw the line
             m_canvasTexture.DrawPolyLine(sinePoints, m_lineWidth, m_lineColor, m_lineEndingType, m_lineJoinType, 1f);
-
-            m_canvasTexture.DrawRectPercent(new float2(0.5f, 0.5f), new float2(0.1f, 0.1f), 0.01f, Color.red, Color.white, LineJoinType.Round, 0.5f, 1f);
-
             //Apply operations to the canvas texture
             m_canvasTexture.Flush();
 
@@ -66,7 +72,7 @@ namespace ViJApps.CanvasTexture.Examples
             for (int i = 0; i < pointCount; i++)
             {
                 var t = i * step * math.PI * 2f + tOffset;
-                var x = i * step;
+                var x = 0.1f + (i * step) * 0.8f;
                 var y = math.sin(t * frequency) * amplitude;
                 points.Add(new float2(x, y));
             }

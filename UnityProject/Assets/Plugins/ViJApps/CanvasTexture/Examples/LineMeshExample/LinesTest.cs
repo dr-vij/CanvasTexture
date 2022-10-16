@@ -46,7 +46,7 @@ namespace ViJApps.CanvasTexture.Examples
             }).ToList();
             
             // m_meshFilter.mesh = MeshTools.CreatePolyLine(points.ToList(), m_thickness, m_endType, m_joinType, m_miter, mesh: m_meshFilter.mesh);
-            (m_meshFilter.sharedMesh, m_meshFilter2.sharedMesh) = MeshTools.CreatePolygon(new List<List<float2>>(){ positivePoints}, null, m_thickness, m_lineOffset, m_joinType, m_miter, m_meshFilter.sharedMesh, m_meshFilter2.sharedMesh);
+            (m_meshFilter.sharedMesh, m_meshFilter2.sharedMesh) = MeshTools.CreatePolygon( positivePoints, negativePoints, m_thickness, m_lineOffset, m_joinType, m_miter, m_meshFilter.sharedMesh, m_meshFilter2.sharedMesh);
         }
     }
 }

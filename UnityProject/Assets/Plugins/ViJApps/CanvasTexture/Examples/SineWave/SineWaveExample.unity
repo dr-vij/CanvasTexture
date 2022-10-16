@@ -224,7 +224,7 @@ Transform:
   m_GameObject: {fileID: 144416401}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -243,17 +243,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_testRenderer: {fileID: 144416403}
-  m_width: 256
-  m_height: 256
-  m_aspect: 1
+  m_width: 512
+  m_height: 512
+  m_aspect: 0.5
   m_bgColor: {r: 0, g: 0, b: 0, a: 1}
-  m_lineColor: {r: 1, g: 1, b: 1, a: 1}
-  m_lineWidth: 0.01
+  m_lineColor: {r: 0, g: 0.9254902, b: 1, a: 1}
+  m_lineWidth: 0.1
   m_pointsCount: 256
   m_amplitude: 0.25
   m_frequency: 3
-  m_lineEndingType: 1
-  m_lineJoinType: 2
+  m_lineEndingType: 3
+  m_lineJoinType: 1
   m_speed: 3
 --- !u!1 &1112046153
 GameObject:

@@ -55,7 +55,6 @@ namespace ViJApps.CanvasTexture.Examples
 
         private void Start()
         {
-        
             for (int i = 0; i < 5; i++)
             {
                 var polyLine = new PolyLineTestSettings()
@@ -70,14 +69,24 @@ namespace ViJApps.CanvasTexture.Examples
                 };
                 m_testPolyLines.Add((polyLine));
             }
+
+            m_CanvasTexture = new CanvasTexture();
+            m_CanvasTexture.Init(m_TextureSettings.Width, m_TextureSettings.Height);
+            m_CanvasTexture.AspectSettings.Aspect = m_TextureSettings.Aspect;
+            m_testRenderer.material.mainTexture = m_CanvasTexture.RenderTexture;
         }
 
         private void Update()
         {
-            //Reinit texture (if needed) and clear it
-            m_CanvasTexture ??= new CanvasTexture();
+            if (!MaterialProvider.Initialization.IsCompleted)
+                return;
+
+#if UNITY_EDITOR
             m_CanvasTexture.Init(m_TextureSettings.Width, m_TextureSettings.Height);
             m_CanvasTexture.AspectSettings.Aspect = m_TextureSettings.Aspect;
+#endif
+
+            //Reinit texture (if needed) and clear it
             m_CanvasTexture.ClearWithColor(m_TextureSettings.BackgroundColor);
 
             //Prepare star points
@@ -91,9 +100,7 @@ namespace ViJApps.CanvasTexture.Examples
 
                 var star = polyLine.PrepareStar();
                 for (int i = 0; i < star.Count; i++)
-                {
                     star[i] = star[i].TransformPoint(rotateAroundMatrix);
-                }
 
                 m_CanvasTexture.DrawComplexPolygon(
                     new List<List<float2>>() { star },
@@ -132,7 +139,9 @@ namespace ViJApps.CanvasTexture.Examples
             m_CanvasTexture.Flush();
 
             //Export to texture
+            #if UNITY_EDITOR
             m_testRenderer.material.mainTexture = m_CanvasTexture.RenderTexture;
+            #endif
         }
     }
 }
