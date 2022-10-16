@@ -22,17 +22,17 @@ namespace ViJApps.CanvasTexture
         private RenderTextureDescriptor m_textureDescriptor;
 
         //Pools
-        private readonly MeshPool m_meshPool = new();
-        private readonly List<Mesh> m_allocatedMeshes = new();
-        private readonly PropertyBlockPool m_propertyBlockPool = new();
-        private readonly List<MaterialPropertyBlock> m_allocatedPropertyBlocks = new();
-        private readonly TextComponentsPool m_textComponentsPool = new();
-        private readonly List<TextComponent> m_allocatedTextComponents = new();
+        private readonly MeshPool m_meshPool = new MeshPool();
+        private readonly List<Mesh> m_allocatedMeshes = new List<Mesh>();
+        private readonly PropertyBlockPool m_propertyBlockPool = new PropertyBlockPool();
+        private readonly List<MaterialPropertyBlock> m_allocatedPropertyBlocks = new List<MaterialPropertyBlock>();
+        private readonly TextComponentsPool m_textComponentsPool = new TextComponentsPool();
+        private readonly List<TextComponent> m_allocatedTextComponents = new List<TextComponent> ();
 
         //coord systems used for painting
         private LinearCoordSystem m_textureCoordSystem;
 
-        public readonly AspectSettings AspectSettings = new();
+        public readonly AspectSettings AspectSettings = new AspectSettings();
 
         public RenderTexture RenderTexture { get; private set; }
 
@@ -81,6 +81,7 @@ namespace ViJApps.CanvasTexture
         /// Clears texture with given color
         /// </summary>
         /// <param name="color"></param>
+        
         public void ClearWithColor(Color color) => m_cmd.ClearRenderTarget(RTClearFlags.All, color, 1f, 0);
 
         public Texture2D ToTexture2D(Texture2D texture = null)

@@ -49,7 +49,7 @@ namespace ViJApps.CanvasTexture.ThirdParty
         public static (NativeArray<float3> positions, NativeArray<ushort> indices) ToPositionsAndUshortIndicesNativeArrays(this Tess tess)
         {
             if (tess.Vertices == null || tess.Elements == null)
-                return new(new NativeArray<float3>(0, Allocator.Temp), new NativeArray<ushort>(0, Allocator.Temp));
+                return (new NativeArray<float3>(0, Allocator.Temp), new NativeArray<ushort>(0, Allocator.Temp));
 
             var positions = new NativeArray<float3>(tess.Vertices.Length, Allocator.Temp);
             for (int i = 0; i < tess.Vertices.Length; i++)
