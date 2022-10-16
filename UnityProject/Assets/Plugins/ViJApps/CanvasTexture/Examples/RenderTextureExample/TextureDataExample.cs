@@ -55,6 +55,7 @@ namespace ViJApps.CanvasTexture.Examples
 
         private void Start()
         {
+        
             for (int i = 0; i < 5; i++)
             {
                 var polyLine = new PolyLineTestSettings()

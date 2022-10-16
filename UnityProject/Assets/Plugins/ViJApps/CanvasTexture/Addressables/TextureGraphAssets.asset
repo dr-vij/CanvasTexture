@@ -23,27 +23,27 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 26b9a03543106464683b46dd83a26f00
-    m_Address: ViJApps.SimpleCircleUnlit.shader
+    m_Address: ViJApps.SimpleCircleUnlit
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4dd5b660af4984bbd9841d9969f2852f
-    m_Address: ViJApps.SimpleEllipseUnlit.shader
+    m_Address: ViJApps.SimpleEllipseUnlit
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b09d729afc2ff4021926ec997f8d2f3e
-    m_Address: ViJApps.SimpleLineUnlit.shader
+    m_Address: ViJApps.SimpleLineUnlit
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6f1a9ba37d7064e7d974f186fc90abe2
-    m_Address: ViJApps.SimpleUnlit.shader
+    m_Address: ViJApps.SimpleUnlit
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 108a0ad936c4e409d87d23278732bd4a
-    m_Address: ViJApps.SimpleUnlitTransparent.shader
+    m_Address: ViJApps.SimpleUnlitTransparent
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
