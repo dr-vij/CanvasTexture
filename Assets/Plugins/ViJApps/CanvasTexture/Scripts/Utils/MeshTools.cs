@@ -85,6 +85,17 @@ namespace ViJApps.CanvasTexture.Utils
         }
 
         public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
+            List<float2> solidPolygon,
+            float lineThickness,
+            float lineOffset = 0.5f,
+            LineJoinType joinType = LineJoinType.Miter,
+            float miterLimit = 0f,
+            Mesh polygonMesh = null,
+            Mesh lineMesh = null) =>
+            CreatePolygon(new List<List<float2>>() { solidPolygon }, lineThickness, lineOffset, joinType, miterLimit, polygonMesh, lineMesh);
+
+
+        public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
             List<List<float2>> solidPolygons,
             float lineThickness,
             float lineOffset = 0.5f,
@@ -93,6 +104,17 @@ namespace ViJApps.CanvasTexture.Utils
             Mesh polygonMesh = null,
             Mesh lineMesh = null) =>
             CreatePolygon(solidPolygons, null, lineThickness, lineOffset, joinType, miterLimit, polygonMesh, lineMesh);
+
+        public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
+            List<float2> solidPolygon,
+            List<float2> holePolygon,
+            float lineThickness,
+            float lineOffset = 0.5f,
+            LineJoinType joinType = LineJoinType.Miter,
+            float miterLimit = 0f,
+            Mesh polygonMesh = null,
+            Mesh lineMesh = null) => CreatePolygon(new List<List<float2>>() { solidPolygon }, new List<List<float2>>() { holePolygon }, lineThickness, lineOffset, joinType, miterLimit, polygonMesh,
+            lineMesh);
 
         public static (Mesh polygonMesh, Mesh lineMesh) CreatePolygon(
             List<List<float2>> solidPolygons,
@@ -128,8 +150,7 @@ namespace ViJApps.CanvasTexture.Utils
             return (polygonMesh, lineMesh);
         }
 
-        public static Mesh CreateMeshFromContourPolygons(List<List<float2>> contours, Mesh mesh = null,
-            WindingRule windingRule = WindingRule.EvenOdd)
+        public static Mesh CreateMeshFromContourPolygons(List<List<float2>> contours, Mesh mesh = null, WindingRule windingRule = WindingRule.EvenOdd)
         {
             foreach (var contour in contours)
                 Tess.AddContour(contour.ToContourVertices());
@@ -349,7 +370,7 @@ namespace ViJApps.CanvasTexture.Utils
         }
 
         #endregion
-        
+
         #region Converters
 
         private static Mesh TessToUnityMesh(this Tess tess, Mesh mesh)

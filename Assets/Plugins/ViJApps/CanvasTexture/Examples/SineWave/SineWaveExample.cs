@@ -49,6 +49,9 @@ namespace ViJApps.CanvasTexture.Examples
             m_canvasTexture.ClearWithColor(m_bgColor);
             //Draw the line
             m_canvasTexture.DrawPolyLine(sinePoints, m_lineWidth, m_lineColor, m_lineEndingType, m_lineJoinType, 1f);
+
+            m_canvasTexture.DrawRectPercent(new float2(0.5f, 0.5f), new float2(0.1f, 0.1f), 0.01f, Color.red, Color.white, LineJoinType.Round, 0.5f, 1f);
+
             //Apply operations to the canvas texture
             m_canvasTexture.Flush();
 

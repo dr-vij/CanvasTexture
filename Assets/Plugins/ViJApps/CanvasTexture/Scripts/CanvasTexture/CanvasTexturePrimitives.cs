@@ -128,5 +128,44 @@ namespace ViJApps.CanvasTexture
             var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
             m_cmd.DrawMesh(rectMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
+
+        /// <summary>
+        /// Draws rect in percent coordinates with strokes
+        /// </summary>
+        /// <param name="center"></param>
+        /// <param name="size"></param>
+        /// <param name="strokeWidth"></param>
+        /// <param name="fillColor"></param>
+        /// <param name="strokeColor"></param>
+        /// <param name="joinType"></param>
+        /// <param name="strokeOffset"></param>
+        /// <param name="miterLimit"></param>
+        public void DrawRectPercent(float2 center, float2 size, float strokeWidth, Color fillColor, Color strokeColor, LineJoinType joinType = LineJoinType.Miter, float strokeOffset = 0.5f,
+            float miterLimit = 1f)
+        {
+            var (fillMesh, fillPropertyBlock) = AllocateMeshAndPropertyBlock();
+            var (strokeMesh, strokePropertyBlock) = AllocateMeshAndPropertyBlock();
+
+            var halfSize = size * 0.5f;
+            var points = new List<float2>()
+            {
+                center + new float2(-halfSize.x, -halfSize.y),
+                center + new float2(-halfSize.x, halfSize.y),
+                center + new float2(halfSize.x, halfSize.y),
+                center + new float2(halfSize.x, -halfSize.y)
+            };
+
+            var pointsTransformed = points.TransformPoints(AspectSettings.InverseAspectMatrix2d);
+            MeshTools.CreatePolygon(pointsTransformed, strokeWidth, strokeOffset, joinType, miterLimit, fillMesh, strokeMesh);
+
+            var fillMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
+            var strokeMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
+
+            fillPropertyBlock.SetColor(MaterialProvider.ColorPropertyId, fillColor);
+            strokePropertyBlock.SetColor(MaterialProvider.ColorPropertyId, strokeColor);
+
+            m_cmd.DrawMesh(fillMesh, AspectSettings.AspectMatrix3d, fillMaterial, 0, 0, fillPropertyBlock);
+            m_cmd.DrawMesh(strokeMesh, AspectSettings.AspectMatrix3d, strokeMaterial, 0, 0, strokePropertyBlock);
+        }
     }
 }

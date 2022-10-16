@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Plugins/ViJApps/CanvasTexture/Examples/RenderTextureExample/TextureGraphExampleScene.unity
-    guid: c89fb8e849a214881afa1ea4197d2a85
+    path: Assets/Plugins/ViJApps/CanvasTexture/Examples/SineWave/SineWaveExample.unity
+    guid: 38f7bae9e81d140469a541e2e6c75ae9
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: fffcfc9e9b7e14dfebd333d18b75f60f, type: 2}

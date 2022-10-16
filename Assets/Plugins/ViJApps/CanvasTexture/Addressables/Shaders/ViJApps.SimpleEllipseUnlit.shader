@@ -66,7 +66,8 @@ Shader "ViJApps.SimpleEllipseUnlit"
 
             half4 frag(v2f i) : SV_Target
             {
-                float2 p = TransformPoint(_TransformMatrix, i.localPos.xy);
+                float3x3 transformMatrix = float3x3(_TransformMatrix[0].xyz, _TransformMatrix[1].xyz, _TransformMatrix[2].xyz);
+                float2 p = TransformPoint(transformMatrix, i.localPos.xy);
                 float2 abFill = _AbFillStroke.xy;
                 float2 abStroke = _AbFillStroke.zw;
 
