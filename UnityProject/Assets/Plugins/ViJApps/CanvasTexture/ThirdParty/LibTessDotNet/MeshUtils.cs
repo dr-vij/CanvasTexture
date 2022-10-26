@@ -40,6 +40,7 @@ using Real = System.Double;
 namespace LibTessDotNet.Double
 #else
 using Real = System.Single;
+
 namespace LibTessDotNet
 #endif
 {
@@ -116,139 +117,10 @@ namespace LibTessDotNet
             return string.Format("{0}, {1}, {2}", X, Y, Z);
         }
     }
-
-    public interface ITypePool
-    {
-        object Get();
-        void Return(object obj);
-    }
-
-    public class DefaultTypePool<T> : ITypePool where T: class, Pooled<T>, new()
-    {
-        private Queue<T> _pool = new Queue<T>();
-
-        private static readonly Func<T> Creator = Expression.Lambda<Func<T>>(Expression.New(typeof(T))).Compile();
-
-        public object Get()
-        {
-            lock (_pool)
-            {
-                if (_pool.Count > 0)
-                {
-                    return _pool.Dequeue();
-                }
-            }
-            return Creator();
-        }
-
-        public void Return(object obj)
-        {
-            lock (_pool)
-            {
-#if DEBUG
-                foreach (var other in _pool)
-                {
-                    if (other == obj)
-                    {
-                        throw new InvalidOperationException("object already pooled");
-                    }
-                }
-#endif
-                _pool.Enqueue(obj as T);
-            }
-        }
-    }
-
-    public abstract class IPool
-    {
-        public IPool()
-        {
-            Register<Mesh>(new DefaultTypePool<Mesh>());
-            Register<MeshUtils.Vertex>(new DefaultTypePool<MeshUtils.Vertex>());
-            Register<MeshUtils.Face>(new DefaultTypePool<MeshUtils.Face>());
-            Register<MeshUtils.Edge>(new DefaultTypePool<MeshUtils.Edge>());
-            Register<Tess.ActiveRegion>(new DefaultTypePool<Tess.ActiveRegion>());
-            Register<Dict<Tess.ActiveRegion>.Node>(new DefaultTypePool<Dict<Tess.ActiveRegion>.Node>());
-        }
-        public abstract void Register<T>(ITypePool typePool) where T : class, Pooled<T>, new();
-        public abstract T Get<T>() where T : class, Pooled<T>, new();
-        public abstract void Return<T>(ref T obj) where T : class, Pooled<T>, new();
-    }
-
-    public class NullPool : IPool
-    {
-        public override T Get<T>()
-        {
-            var obj = new T();
-            obj.Init(this);
-            return obj;
-        }
-
-        public override void Register<T>(ITypePool typePool)
-        {
-        }
-
-        public override void Return<T>(ref T obj)
-        {
-            obj = null;
-        }
-    }
-
-    public class DefaultPool : IPool
-    {
-        private IDictionary<Type, ITypePool> _register;
-
-        public override void Register<T>(ITypePool typePool)
-        {
-            if (_register == null)
-            {
-                // can support multiple readers as long as it's not modified
-                _register = new Dictionary<Type, ITypePool>();
-            }
-            _register[typeof(T)] = typePool;
-        }
-
-        public override T Get<T>()
-        {
-            ITypePool typePool;
-            T obj = null;
-            if (_register.TryGetValue(typeof(T), out typePool))
-            {
-                obj = typePool.Get() as T;
-            }
-            if (obj == null)
-            {
-                throw new InvalidOperationException("Type not registered with type tool");
-            }
-            obj.Init(this);
-            return obj;
-        }
-
-        public override void Return<T>(ref T obj)
-        {
-            if (obj == null)
-            {
-                return;
-            }
-            obj.Reset(this);
-            ITypePool typePool;
-            if (_register.TryGetValue(typeof(T), out typePool))
-            {
-                typePool.Return(obj);
-            }
-            obj = null;
-        }
-    }
-
-    public interface Pooled<T> where T : class, Pooled<T>, new()
-    {
-        void Init(IPool pool);
-        void Reset(IPool pool);
-    }
-
+    
     internal static class MeshUtils
     {
-        internal class Vertex : Pooled<Vertex>
+        internal class Vertex
         {
             internal Vertex _prev, _next;
             internal Edge _anEdge;
@@ -258,25 +130,9 @@ namespace LibTessDotNet
             internal PQHandle _pqHandle;
             internal int _n;
             internal object _data;
-
-            public void Init(IPool pool)
-            {
-            }
-
-            public void Reset(IPool pool)
-            {
-                _prev = _next = null;
-                _anEdge = null;
-                _coords = Vec3.Zero;
-                _s = 0;
-                _t = 0;
-                _pqHandle = new PQHandle();
-                _n = 0;
-                _data = null;
-            }
         }
 
-        internal class Face : Pooled<Face>
+        internal class Face
         {
             internal Face _prev, _next;
             internal Edge _anEdge;
@@ -291,26 +147,14 @@ namespace LibTessDotNet
                 {
                     int n = 0;
                     var eCur = _anEdge;
-                    do {
+                    do
+                    {
                         n++;
                         eCur = eCur._Lnext;
                     } while (eCur != _anEdge);
+
                     return n;
                 }
-            }
-
-            public void Init(IPool pool)
-            {
-            }
-
-            public void Reset(IPool pool)
-            {
-                _prev = _next = null;
-                _anEdge = null;
-                _trail = null;
-                _n = 0;
-                _marked = false;
-                _inside = false;
             }
         }
 
@@ -318,10 +162,10 @@ namespace LibTessDotNet
         {
             internal Edge _e, _eSym;
 
-            public static EdgePair Create(IPool pool)
+            public static EdgePair Create()
             {
-                var e = pool.Get<MeshUtils.Edge>();
-                var eSym = pool.Get<MeshUtils.Edge>();
+                var e = new Edge();
+                var eSym = new Edge();
 
                 e._pair._e = e;
                 e._pair._eSym = eSym;
@@ -329,13 +173,13 @@ namespace LibTessDotNet
                 return e._pair;
             }
 
-            public void Reset(IPool pool)
+            public void Reset()
             {
                 _e = _eSym = null;
             }
         }
 
-        internal class Edge : Pooled<Edge>
+        internal class Edge
         {
             internal EdgePair _pair;
             internal Edge _next, _Sym, _Onext, _Lnext;
@@ -344,15 +188,53 @@ namespace LibTessDotNet
             internal Tess.ActiveRegion _activeRegion;
             internal int _winding;
 
-            internal Face _Rface { get { return _Sym._Lface; } set { _Sym._Lface = value; } }
-            internal Vertex _Dst { get { return _Sym._Org; }  set { _Sym._Org = value; } }
+            internal Face _Rface
+            {
+                get { return _Sym._Lface; }
+                set { _Sym._Lface = value; }
+            }
 
-            internal Edge _Oprev { get { return _Sym._Lnext; } set { _Sym._Lnext = value; } }
-            internal Edge _Lprev { get { return _Onext._Sym; } set { _Onext._Sym = value; } }
-            internal Edge _Dprev { get { return _Lnext._Sym; } set { _Lnext._Sym = value; } }
-            internal Edge _Rprev { get { return _Sym._Onext; } set { _Sym._Onext = value; } }
-            internal Edge _Dnext { get { return _Rprev._Sym; } set { _Rprev._Sym = value; } }
-            internal Edge _Rnext { get { return _Oprev._Sym; } set { _Oprev._Sym = value; } }
+            internal Vertex _Dst
+            {
+                get { return _Sym._Org; }
+                set { _Sym._Org = value; }
+            }
+
+            internal Edge _Oprev
+            {
+                get { return _Sym._Lnext; }
+                set { _Sym._Lnext = value; }
+            }
+
+            internal Edge _Lprev
+            {
+                get { return _Onext._Sym; }
+                set { _Onext._Sym = value; }
+            }
+
+            internal Edge _Dprev
+            {
+                get { return _Lnext._Sym; }
+                set { _Lnext._Sym = value; }
+            }
+
+            internal Edge _Rprev
+            {
+                get { return _Sym._Onext; }
+                set { _Sym._Onext = value; }
+            }
+
+            internal Edge _Dnext
+            {
+                get { return _Rprev._Sym; }
+                set { _Rprev._Sym = value; }
+            }
+
+            internal Edge _Rnext
+            {
+                get { return _Oprev._Sym; }
+                set { _Oprev._Sym = value; }
+            }
 
             internal static void EnsureFirst(ref Edge e)
             {
@@ -360,20 +242,6 @@ namespace LibTessDotNet
                 {
                     e = e._Sym;
                 }
-            }
-
-            public void Init(IPool pool)
-            {
-            }
-
-            public void Reset(IPool pool)
-            {
-                _pair.Reset(pool);
-                _next = _Sym = _Onext = _Lnext = null;
-                _Org = null;
-                _Lface = null;
-                _activeRegion = null;
-                _winding = 0;
             }
         }
 
@@ -402,9 +270,9 @@ namespace LibTessDotNet
         /// the new vertex *before* vNext so that algorithms which walk the vertex
         /// list will not see the newly created vertices.
         /// </summary>
-        public static void MakeVertex(IPool pool, Edge eOrig, Vertex vNext)
+        public static void MakeVertex(Edge eOrig, Vertex vNext)
         {
-            var vNew = pool.Get<MeshUtils.Vertex>();
+            var vNew = new Vertex();
 
             // insert in circular doubly-linked list before vNext
             var vPrev = vNext._prev;
@@ -418,7 +286,8 @@ namespace LibTessDotNet
 
             // fix other edges on this vertex loop
             var e = eOrig;
-            do {
+            do
+            {
                 e._Org = vNew;
                 e = e._Onext;
             } while (e != eOrig);
@@ -431,9 +300,9 @@ namespace LibTessDotNet
         /// the new face *before* fNext so that algorithms which walk the face
         /// list will not see the newly created faces.
         /// </summary>
-        public static void MakeFace(IPool pool, Edge eOrig, Face fNext)
+        public static void MakeFace(Edge eOrig, Face fNext)
         {
-            var fNew = pool.Get<MeshUtils.Face>();
+            var fNew = new Face();
 
             // insert in circular doubly-linked list before fNext
             var fPrev = fNext._prev;
@@ -452,7 +321,8 @@ namespace LibTessDotNet
 
             // fix other edges on this face loop
             var e = eOrig;
-            do {
+            do
+            {
                 e._Lface = fNew;
                 e = e._Lnext;
             } while (e != eOrig);
@@ -463,11 +333,11 @@ namespace LibTessDotNet
         /// No vertex or face structures are allocated, but these must be assigned
         /// before the current edge operation is completed.
         /// </summary>
-        public static MeshUtils.Edge MakeEdge(IPool pool, MeshUtils.Edge eNext)
+        public static MeshUtils.Edge MakeEdge(MeshUtils.Edge eNext)
         {
             Debug.Assert(eNext != null);
 
-            var pair = MeshUtils.EdgePair.Create(pool);
+            var pair = MeshUtils.EdgePair.Create();
             var e = pair._e;
             var eSym = pair._eSym;
 
@@ -505,7 +375,7 @@ namespace LibTessDotNet
         /// KillEdge( eDel ) destroys an edge (the half-edges eDel and eDel->Sym),
         /// and removes from the global edge list.
         /// </summary>
-        public static void KillEdge(IPool pool, Edge eDel)
+        public static void KillEdge(Edge eDel)
         {
             // Half-edges are allocated in pairs, see EdgePair above
             Edge.EnsureFirst(ref eDel);
@@ -516,21 +386,21 @@ namespace LibTessDotNet
             eNext._Sym._next = ePrev;
             ePrev._Sym._next = eNext;
 
-            pool.Return(ref eDel._Sym);
-            pool.Return(ref eDel);
+            eDel._Sym = null;
         }
 
         /// <summary>
         /// KillVertex( vDel ) destroys a vertex and removes it from the global
         /// vertex list. It updates the vertex loop to point to a given new vertex.
         /// </summary>
-        public static void KillVertex(IPool pool, Vertex vDel, Vertex newOrg)
+        public static void KillVertex(Vertex vDel, Vertex newOrg)
         {
             var eStart = vDel._anEdge;
 
             // change the origin of all affected edges
             var e = eStart;
-            do {
+            do
+            {
                 e._Org = newOrg;
                 e = e._Onext;
             } while (e != eStart);
@@ -540,21 +410,20 @@ namespace LibTessDotNet
             var vNext = vDel._next;
             vNext._prev = vPrev;
             vPrev._next = vNext;
-
-            pool.Return(ref vDel);
         }
 
         /// <summary>
         /// KillFace( fDel ) destroys a face and removes it from the global face
         /// list. It updates the face loop to point to a given new face.
         /// </summary>
-        public static void KillFace(IPool pool, Face fDel, Face newLFace)
+        public static void KillFace(Face fDel, Face newLFace)
         {
             var eStart = fDel._anEdge;
 
             // change the left face of all affected edges
             var e = eStart;
-            do {
+            do
+            {
                 e._Lface = newLFace;
                 e = e._Lnext;
             } while (e != eStart);
@@ -564,8 +433,6 @@ namespace LibTessDotNet
             var fNext = fDel._next;
             fNext._prev = fPrev;
             fPrev._next = fNext;
-
-            pool.Return(ref fDel);
         }
 
         /// <summary>
@@ -580,6 +447,7 @@ namespace LibTessDotNet
                 area += (e._Org._s - e._Dst._s) * (e._Org._t + e._Dst._t);
                 e = e._Lnext;
             } while (e != f._anEdge);
+
             return area;
         }
     }

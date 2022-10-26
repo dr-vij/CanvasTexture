@@ -39,7 +39,7 @@ namespace LibTessDotNet
 {
     internal class Dict<TValue> where TValue : class
     {
-        public class Node : Pooled<Node>
+        public class Node
         {
             internal TValue _key;
             internal Node _prev, _next;
@@ -47,33 +47,17 @@ namespace LibTessDotNet
             public TValue Key { get { return _key; } }
             public Node Prev { get { return _prev; } }
             public Node Next { get { return _next; } }
-
-            public void Init(IPool pool)
-            {
-                _key = null;
-                _prev = null;
-                _next = null;
-            }
-
-            public void Reset(IPool pool)
-            {
-                _key = null;
-                _prev = null;
-                _next = null;
-            }
         }
 
         public delegate bool LessOrEqual(TValue lhs, TValue rhs);
-
-        private IPool _pool;
+        
         private LessOrEqual _leq;
         Node _head;
 
         public bool Empty { get { return _head._next == _head; } }
 
-        public Dict(IPool pool, LessOrEqual leq)
+        public Dict( LessOrEqual leq)
         {
-            _pool = pool;
             _leq = leq;
 
             Init();
@@ -81,14 +65,14 @@ namespace LibTessDotNet
 
         public void Init()
         {
-            _head = _pool.Get<Node>();
+            _head = new Node();
             _head._prev = _head;
             _head._next = _head;
         }
 
         public void Reset()
         {
-            _pool.Return(ref _head);
+            _head = null;
         }
 
         public Node Insert(TValue key)
@@ -102,7 +86,7 @@ namespace LibTessDotNet
                 node = node._prev;
             } while (node._key != null && !_leq(node._key, key));
 
-            var newNode = _pool.Get<Node>();
+            var newNode = new Node();
             newNode._key = key;
             newNode._next = node._next;
             node._next._prev = newNode;
@@ -130,7 +114,6 @@ namespace LibTessDotNet
         {
             node._next._prev = node._prev;
             node._prev._next = node._next;
-            _pool.Return(ref node);
         }
     }
 }

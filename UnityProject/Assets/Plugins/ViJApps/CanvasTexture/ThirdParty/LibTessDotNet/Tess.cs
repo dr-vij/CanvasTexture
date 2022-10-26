@@ -130,7 +130,6 @@ namespace LibTessDotNet
     /// </example>
     public partial class Tess
     {
-        private IPool _pool;
         private Mesh _mesh;
         private Vec3 _normal;
         private Vec3 _sUnit;
@@ -194,21 +193,11 @@ namespace LibTessDotNet
         public int ElementCount { get { return _elementCount; } }
 
         public Tess()
-            : this(new DefaultPool())
         {
-        }
-        public Tess(IPool pool)
-        {
-            if (pool == null)
-            {
-                throw new ArgumentNullException("pool");
-            }
-
             _normal = Vec3.Zero;
             _bminX = _bminY = _bmaxX = _bmaxY = 0;
 
             _windingRule = WindingRule.EvenOdd;
-            _pool = pool;
             _mesh = null;
 
             _vertices = null;
@@ -407,7 +396,7 @@ namespace LibTessDotNet
                     while (lo._Lnext != up && (Geom.EdgeGoesLeft(lo._Lnext)
                         || Geom.EdgeSign(lo._Org, lo._Dst, lo._Lnext._Dst) <= 0.0f))
                     {
-                        lo = _mesh.Connect(_pool, lo._Lnext, lo)._Sym;
+                        lo = _mesh.Connect(lo._Lnext, lo)._Sym;
                     }
                     lo = lo._Lprev;
                 }
@@ -417,7 +406,7 @@ namespace LibTessDotNet
                     while (lo._Lnext != up && (Geom.EdgeGoesRight(up._Lprev)
                         || Geom.EdgeSign(up._Dst, up._Org, up._Lprev._Org) >= 0.0f))
                     {
-                        up = _mesh.Connect(_pool, up, up._Lprev)._Sym;
+                        up = _mesh.Connect(up, up._Lprev)._Sym;
                     }
                     up = up._Lnext;
                 }
@@ -428,7 +417,7 @@ namespace LibTessDotNet
             Debug.Assert(lo._Lnext != up);
             while (lo._Lnext._Lnext != up)
             {
-                lo = _mesh.Connect(_pool, lo._Lnext, lo)._Sym;
+                lo = _mesh.Connect( lo._Lnext, lo)._Sym;
             }
         }
 
@@ -466,7 +455,7 @@ namespace LibTessDotNet
                 // Since f will be destroyed, save its next pointer.
                 next = f._next;
                 if( ! f._inside ) {
-                    _mesh.ZapFace(_pool, f);
+                    _mesh.ZapFace( f);
                 }
             }
         }
@@ -503,7 +492,7 @@ namespace LibTessDotNet
                     }
                     else
                     {
-                        _mesh.Delete(_pool, e);
+                        _mesh.Delete(e);
                     }
                 }
             }
@@ -536,7 +525,7 @@ namespace LibTessDotNet
             // Try to merge as many polygons as possible
             if (polySize > 3)
             {
-                _mesh.MergeConvexFaces(_pool, polySize);
+                _mesh.MergeConvexFaces( polySize);
             }
 
             // Mark unused
@@ -749,7 +738,7 @@ namespace LibTessDotNet
         {
             if (_mesh == null)
             {
-                _mesh = _pool.Get<Mesh>();
+                _mesh = new Mesh();
             }
 
             bool reverse = false;
@@ -764,14 +753,14 @@ namespace LibTessDotNet
             {
                 if (e == null)
                 {
-                    e = _mesh.MakeEdge(_pool);
-                    _mesh.Splice(_pool, e, e._Sym);
+                    e = _mesh.MakeEdge();
+                    _mesh.Splice(e, e._Sym);
                 }
                 else
                 {
                     // Create a new vertex and edge which immediately follow e
                     // in the ordering around the left face.
-                    _mesh.SplitEdge(_pool, e);
+                    _mesh.SplitEdge( e);
                     e = e._Lnext;
                 }
 
@@ -846,7 +835,7 @@ namespace LibTessDotNet
                 OutputPolymesh(elementType, polySize);
             }
 
-            _pool.Return(ref _mesh);
+            _mesh = null;
         }
     }
 }
