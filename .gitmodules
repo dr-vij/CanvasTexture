@@ -1,3 +1,0 @@
-[submodule "SourceGenerator"]
-	path = SourceGenerator
-	url = https://github.com/dr-vij/ShaderPropertyToID
