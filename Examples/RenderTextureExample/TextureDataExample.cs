@@ -78,9 +78,6 @@ namespace ViJApps.CanvasTexture.Examples
 
         private void Update()
         {
-            if (!MaterialProvider.Initialization.IsCompleted)
-                return;
-
 #if UNITY_EDITOR
             m_CanvasTexture.Init(m_TextureSettings.Width, m_TextureSettings.Height);
             m_CanvasTexture.AspectSettings.Aspect = m_TextureSettings.Aspect;

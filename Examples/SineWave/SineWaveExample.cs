@@ -35,17 +35,13 @@ namespace ViJApps.CanvasTexture.Examples
         private CanvasTexture m_canvasTexture;
         private float m_time;
 
-        private async void Start()
+        private void Start()
         {
             m_canvasTexture = new CanvasTexture();
-            await MaterialProvider.Initialization;
         }
 
         private void Update()
         {
-            if (!MaterialProvider.Initialization.IsCompleted)
-                return;
-
             //Prepare points list for line
             m_time += Time.deltaTime * m_speed;
             var sinePoints = GetSine(m_pointsCount, m_time, m_amplitude, m_frequency).TransformPoints(MathUtils.CreateMatrix2d_T(new float2(0, 0.5f)));

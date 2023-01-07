@@ -17,11 +17,11 @@ The project is still in development, so more features will be added in the futur
 
 Stars and ellipses example: https://vij.app/texturecanvas/starscircles/
 
-<img src="readmeImages/example1.gif" alt="drawing" width="300"/>
+<img src="readmeResources/example1.gif" alt="drawing" width="300"/>
 
 Sine wave example: https://vij.app/texturecanvas/sinewave/
 
-<img src="readmeImages/example2.gif" alt="drawing" width="300"/>
+<img src="readmeResources/example2.gif" alt="drawing" width="300"/>
 
 ## License:
 MIT License (MIT) - see LICENSE.txt file for details
