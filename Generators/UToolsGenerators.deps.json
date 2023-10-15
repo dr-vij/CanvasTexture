@@ -7,13 +7,13 @@
   "targets": {
     ".NETStandard,Version=v2.0": {},
     ".NETStandard,Version=v2.0/": {
-      "ShaderCodeGen/1.0.0": {
+      "UToolsGenerators/1.0.0": {
         "dependencies": {
           "Microsoft.CodeAnalysis": "3.8.0",
           "NETStandard.Library": "2.0.3"
         },
         "runtime": {
-          "ShaderCodeGen.dll": {}
+          "UToolsGenerators.dll": {}
         }
       },
       "Humanizer.Core/2.2.0": {
@@ -789,7 +789,7 @@
     }
   },
   "libraries": {
-    "ShaderCodeGen/1.0.0": {
+    "UToolsGenerators/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
