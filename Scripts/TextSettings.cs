@@ -12,7 +12,7 @@ namespace ViJApps.CanvasTexture
         public float Line;
         public float Paragraph;
     }
-    
+
     [Serializable]
     public struct TextSettings
     {
@@ -24,7 +24,7 @@ namespace ViJApps.CanvasTexture
 
         public SpacingOptions SpacingOptions;
 
-        public bool Wrapping;
+        public TextWrappingModes Wrapping;
         public TextOverflowModes OverflowMode;
 
         public static TextSettings Default =>
@@ -35,10 +35,10 @@ namespace ViJApps.CanvasTexture
                 FontStyle = FontStyles.Normal,
                 FontWeight = FontWeight.Regular,
                 TextAlignment = TextAlignmentOptions.TopLeft,
-                
+
                 SpacingOptions = new SpacingOptions(),
-                
-                Wrapping = true,
+
+                Wrapping = TextWrappingModes.Normal,
                 OverflowMode = TextOverflowModes.Overflow,
             };
     }

@@ -2,114 +2,116 @@ using System;
 using UnityEngine;
 using TMPro;
 using Unity.Mathematics;
+using UnityEngine.Serialization;
 using ViJApps.CanvasTexture.Utils;
 
 namespace ViJApps.CanvasTexture
 {
     public class TextComponent : MonoBehaviour
     {
-        [SerializeField] private TextMeshPro m_tmpComponent;
-        [SerializeField] private RectTransform m_rectTransform;
+        [SerializeField] private TextMeshPro m_TMPComponent;
+        [SerializeField] private RectTransform m_RectTransform;
 
-        private float m_rotation = 0f;
-        private float2 m_position = float2.zero;
-        private float m_aspect = 1f;
+        private float m_Rotation = 0f;
+        private float2 m_Position = float2.zero;
+        private float m_Aspect = 1f;
 
         public float Aspect
         {
-            get => m_aspect;
+            get => m_Aspect;
             set
             {
-                m_aspect = value;
+                m_Aspect = value;
                 transform.localScale = new Vector3(value, 1f, 1f);
             }
         }
-        
+
         public float Rotation
         {
-            get => m_rotation;
+            get => m_Rotation;
             set
             {
-                m_rotation = value;
-                m_rectTransform.localRotation = Quaternion.Euler(0f, 0f, m_rotation);
-                m_rectTransform.localPosition = Vector3.zero;
+                m_Rotation = value;
+                m_RectTransform.localRotation = Quaternion.Euler(0f, 0f, m_Rotation);
+                m_RectTransform.localPosition = Vector3.zero;
             }
         }
 
         public string Text
         {
-            get => m_tmpComponent.text;
-            set => m_tmpComponent.text = value;
+            get => m_TMPComponent.text;
+            set => m_TMPComponent.text = value;
         }
 
         public Vector2 Position
         {
-            get => m_position;
+            get => m_Position;
             set
             {
-                m_position = value;
-                m_rectTransform.localPosition = Vector3.zero;
-                transform.position = new Vector3(m_position.x, m_position.y, 0f);
+                m_Position = value;
+                m_RectTransform.localPosition = Vector3.zero;
+                transform.position = new Vector3(m_Position.x, m_Position.y, 0f);
             }
         }
 
         public Vector2 SizeDelta
         {
-            get => m_rectTransform.sizeDelta;
-            set => m_rectTransform.sizeDelta = value;
+            get => m_RectTransform.sizeDelta;
+            set => m_RectTransform.sizeDelta = value;
         }
+
         public Vector2 Pivot
         {
-            get => m_rectTransform.pivot;
-            set => m_rectTransform.pivot = value;
+            get => m_RectTransform.pivot;
+            set => m_RectTransform.pivot = value;
         }
 
         public Vector2 AnchorMin
         {
-            get => m_rectTransform.anchorMin;
-            set => m_rectTransform.anchorMin = value;
+            get => m_RectTransform.anchorMin;
+            set => m_RectTransform.anchorMin = value;
         }
 
         public Vector2 AnchorMax
         {
-            get => m_rectTransform.anchorMax;
-            set => m_rectTransform.anchorMax = value;
+            get => m_RectTransform.anchorMax;
+            set => m_RectTransform.anchorMax = value;
         }
 
         public void UpdateText()
         {
-            m_tmpComponent.SetVerticesDirty();
-            m_tmpComponent.SetLayoutDirty();
-            m_tmpComponent.ForceMeshUpdate();
+            m_TMPComponent.SetVerticesDirty();
+            m_TMPComponent.SetLayoutDirty();
+            m_TMPComponent.ForceMeshUpdate();
         }
 
-        public Material Material => m_tmpComponent.renderer.material;
-        
-        public Renderer Renderer => m_tmpComponent.renderer;
-        
+        public Material Material => m_TMPComponent.renderer.material;
+
+        public Renderer Renderer => m_TMPComponent.renderer;
+
         public void Clear()
         {
-            m_tmpComponent.text = string.Empty;
+            m_TMPComponent.text = string.Empty;
             var settings = TextSettings.Default;
             SetSettings(settings);
         }
 
         public void SetSettings(TextSettings settings)
         {
-            m_tmpComponent.fontSize = m_tmpComponent.font.GetFontSizeToFitWorldSize(settings.FontSize);
-            m_tmpComponent.fontWeight = settings.FontWeight;
-            m_tmpComponent.fontStyle = settings.FontStyle;
-            m_tmpComponent.color = settings.FontColor;
-            m_tmpComponent.alignment = settings.TextAlignment;
-            
+            m_TMPComponent.fontSize = m_TMPComponent.font.GetFontSizeToFitWorldSize(settings.FontSize);
+            m_TMPComponent.fontWeight = settings.FontWeight;
+            m_TMPComponent.fontStyle = settings.FontStyle;
+            m_TMPComponent.color = settings.FontColor;
+            m_TMPComponent.alignment = settings.TextAlignment;
+
             //Spacing
-            m_tmpComponent.lineSpacing = settings.SpacingOptions.Line;
-            m_tmpComponent.wordSpacing = settings.SpacingOptions.Word;
-            m_tmpComponent.characterSpacing = settings.SpacingOptions.Character;
-            m_tmpComponent.paragraphSpacing = settings.SpacingOptions.Paragraph;
-            
-            m_tmpComponent.enableWordWrapping = settings.Wrapping;
-            m_tmpComponent.overflowMode = settings.OverflowMode;
+            m_TMPComponent.lineSpacing = settings.SpacingOptions.Line;
+            m_TMPComponent.wordSpacing = settings.SpacingOptions.Word;
+            m_TMPComponent.characterSpacing = settings.SpacingOptions.Character;
+            m_TMPComponent.paragraphSpacing = settings.SpacingOptions.Paragraph;
+
+            m_TMPComponent.textWrappingMode =  settings.Wrapping;
+            m_TMPComponent.overflowMode = settings.OverflowMode;
         }
     }
 }
