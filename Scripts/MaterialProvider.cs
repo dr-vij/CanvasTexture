@@ -1,5 +1,5 @@
 using System;
-using UTools.Attributes;
+using UTools.SourceGeneratorAttributes;
 
 namespace ViJApps.CanvasTexture
 {
@@ -7,11 +7,11 @@ namespace ViJApps.CanvasTexture
     public static partial class MaterialProvider
     {
         //Shader Names
-        [Shader] private const string SIMPLE_UNLIT = "Shaders/ViJApps.SimpleUnlit";
-        [Shader] private const string SIMPLE_UNLIT_TRANSPARENT = "Shaders/ViJApps.SimpleUnlitTransparent";
-        [Shader] private const string SIMPLE_LINE_UNLIT = "Shaders/ViJApps.SimpleLineUnlit";
-        [Shader] private const string SIMPLE_CIRCLE_UNLIT = "Shaders/ViJApps.SimpleCircleUnlit";
-        [Shader] private const string SIMPLE_ELLIPSE_UNLIT = "Shaders/ViJApps.SimpleEllipseUnlit";
+        [ShaderName] private const string SIMPLE_UNLIT = "Shaders/ViJApps.SimpleUnlit";
+        [ShaderName] private const string SIMPLE_UNLIT_TRANSPARENT = "Shaders/ViJApps.SimpleUnlitTransparent";
+        [ShaderName] private const string SIMPLE_LINE_UNLIT = "Shaders/ViJApps.SimpleLineUnlit";
+        [ShaderName] private const string SIMPLE_CIRCLE_UNLIT = "Shaders/ViJApps.SimpleCircleUnlit";
+        [ShaderName] private const string SIMPLE_ELLIPSE_UNLIT = "Shaders/ViJApps.SimpleEllipseUnlit";
 
         //Property 
         [ShaderProperty] private const string COLOR = "_Color";

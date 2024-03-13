@@ -40,7 +40,7 @@ namespace ViJApps.CanvasTexture
             propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, AspectSettings.Aspect);
 
             var circleMesh = MeshTools.CreateRect(center, new float2(radius, radius), AspectSettings.AspectMatrix2d, mesh);
-            var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleCircleUnlitShaderId);
+            var lineMaterial = MaterialProvider.SimpleCircleUnlitShaderId.GetMaterialByShader();
 
             m_cmd.DrawMesh(circleMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
@@ -92,7 +92,7 @@ namespace ViJApps.CanvasTexture
                 new Matrix4x4(inverseTransform.c0.XYZ0(), inverseTransform.c1.XYZ0(), inverseTransform.c2.XYZ0(), new float4(0, 0, 0, 1)));
 
             //Ellipse material
-            var material = MaterialProvider.GetMaterial(MaterialProvider.SimpleEllipseUnlitShaderId);
+            var material = MaterialProvider.SimpleEllipseUnlitShaderId.GetMaterialByShader();
 
             //Draw with offset by center
             m_cmd.DrawMesh(mesh, MathUtils.CreateMatrix3d_T(new float3(center, 0)), material, 0, -1, propertyBlock);
@@ -125,7 +125,7 @@ namespace ViJApps.CanvasTexture
             var rectMesh = MeshTools.CreateRect(center, size, AspectSettings.AspectMatrix2d, mesh);
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
 
-            var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
+            var lineMaterial = MaterialProvider.SimpleUnlitShaderId.GetMaterialByShader();
             m_cmd.DrawMesh(rectMesh, Matrix4x4.identity, lineMaterial, 0, -1, propertyBlock);
         }
 
@@ -158,8 +158,8 @@ namespace ViJApps.CanvasTexture
             var pointsTransformed = points.TransformPoints(AspectSettings.InverseAspectMatrix2d);
             MeshTools.CreatePolygon(pointsTransformed, strokeWidth, strokeOffset, joinType, miterLimit, fillMesh, strokeMesh);
 
-            var fillMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
-            var strokeMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
+            var fillMaterial = MaterialProvider.SimpleUnlitTransparentShaderId.GetMaterialByShader();
+            var strokeMaterial = MaterialProvider.SimpleUnlitTransparentShaderId.GetMaterialByShader();
 
             fillPropertyBlock.SetColor(MaterialProvider.ColorPropertyId, fillColor);
             strokePropertyBlock.SetColor(MaterialProvider.ColorPropertyId, strokeColor);

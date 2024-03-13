@@ -29,8 +29,8 @@ namespace ViJApps.CanvasTexture
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
             var pointsTransformed = points.TransformPoints(AspectSettings.InverseAspectMatrix2d);
             MeshTools.CreatePolyLine(pointsTransformed, thickness, endType, joinType, miterLimit, mesh);
-            
-            var material = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
+
+            var material = MaterialProvider.SimpleUnlitTransparentShaderId.GetMaterialByShader();
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
             m_cmd.DrawMesh(mesh, AspectSettings.AspectMatrix3d, material, 0, 0, propertyBlock);
         }
@@ -65,8 +65,8 @@ namespace ViJApps.CanvasTexture
 
             MeshTools.CreatePolygon(solidTransformed, holesTransformed, strokeThickness, strokeOffset, joinType, miterLimit, fillMesh, lineMesh);
 
-            var fillMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
-            var lineMaterial = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitTransparentShaderId);
+            var fillMaterial = MaterialProvider.SimpleUnlitTransparentShaderId.GetMaterialByShader();
+            var lineMaterial = MaterialProvider.SimpleUnlitTransparentShaderId.GetMaterialByShader();
 
             fillBlock.SetColor(MaterialProvider.ColorPropertyId, fillColor);
             lineBlock.SetColor(MaterialProvider.ColorPropertyId, strokeColor);
@@ -113,7 +113,7 @@ namespace ViJApps.CanvasTexture
             var (mesh, propertyBlock) = AllocateMeshAndPropertyBlock();
             mesh = MeshTools.CreateMeshFromContourPolygons(contours, mesh);
 
-            var material = MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
+            var material = MaterialProvider.SimpleUnlitShaderId.GetMaterialByShader();
             propertyBlock.SetColor(MaterialProvider.ColorPropertyId, color);
             m_cmd.DrawMesh(mesh, Matrix4x4.identity, material, 0, 0, propertyBlock);
         }
@@ -126,7 +126,8 @@ namespace ViJApps.CanvasTexture
         /// <param name="pixelThickness"></param>
         /// <param name="color"></param>
         /// <param name="endingStyle"></param>
-        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
+        public void DrawLinePixels(float2 pixelFromCoord, float2 pixelToCoord, float pixelThickness, Color color,
+            SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
             var texFromCoord = pixelFromCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
             var texToCoord = pixelToCoord.TransformPoint(m_textureCoordSystem.WorldToZeroOne2d);
@@ -144,7 +145,8 @@ namespace ViJApps.CanvasTexture
         /// <param name="color"></param>
         /// <param name="endingStyle"></param>  //TODO: add Square/round/butt endings
         /// <exception cref="Exception"></exception>
-        public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness, Color color, SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
+        public void DrawLinePercent(float2 percentFromCoord, float2 percentToCoord, float percentHeightThickness, Color color,
+            SimpleLineEndingStyle endingStyle = SimpleLineEndingStyle.None)
         {
             var (lineMesh, propertyBlock) = AllocateMeshAndPropertyBlock();
 
@@ -157,14 +159,12 @@ namespace ViJApps.CanvasTexture
                         percentHeightThickness, false,
                         lineMesh);
                     lineMaterial =
-                        MaterialProvider.GetMaterial(MaterialProvider.SimpleUnlitShaderId);
+                        MaterialProvider.SimpleUnlitShaderId.GetMaterialByShader();
                     break;
                 case SimpleLineEndingStyle.Round:
                     lineMesh = MeshTools.CreateLine(percentFromCoord, percentToCoord, AspectSettings.AspectMatrix2d,
-                        percentHeightThickness, true,
-                        lineMesh);
-                    lineMaterial =
-                        MaterialProvider.GetMaterial(MaterialProvider.SimpleLineUnlitShaderId);
+                        percentHeightThickness, true, lineMesh);
+                    lineMaterial = MaterialProvider.SimpleLineUnlitShaderId.GetMaterialByShader();
                     propertyBlock.SetFloat(MaterialProvider.AspectPropertyId, AspectSettings.Aspect);
                     propertyBlock.SetFloat(MaterialProvider.ThicknessPropertyId, percentHeightThickness);
                     propertyBlock.SetVector(MaterialProvider.FromToCoordPropertyId,
